@@ -1,0 +1,16 @@
+export const TW = {
+  paper: '#F6F2EA',
+  bone: '#FBF9F5',
+  white: '#FFFFFF',
+  ink: '#1B1B1A',
+  ink2: '#5B5852',
+  ink3: '#9A968D',
+  ink4: '#C8C3B6',
+  line: '#E3DDD0',
+  lineSoft: '#EDE8DC',
+  bronze: '#6B5A3E',
+  bronzeSoft: '#A8946E',
+  green: '#4A6B4F',
+  amber: '#9C7A3C',
+  rose: '#8C4A4A',
+};
