@@ -17,12 +17,6 @@ export const LISTINGS = [
   { id: 'fieldstone',      addr: 'Fieldstone House',   street: '660 Yorkshire Road',   loc: 'Birmingham, MI',       price: '$3,400,000',  specs: '5 BD · 5 BA · 5,100 SF · 0.5 AC',    status: 'Sold',    tone: 'warm', tag: 'Sold 2025',           img: PHOTOS.deck,             blurb: 'A 1936 fieldstone Tudor on half an acre — sold to its second viewer.' },
 ];
 
-export const TESTIMONIALS = [
-  { q: 'Tawny found us a house we did not know existed, in a neighborhood we had not considered, for a price that surprised us. The whole thing took six weeks.',           a: 'Lena & Idris Okafor', r: 'Buyers · Birmingham' },
-  { q: 'She sold our place in eleven days, off-market, to the second person she showed it to. The photography alone was worth the commission.',                            a: 'David Hsu',           r: 'Seller · Bloomfield Hills' },
-  { q: "I have worked with three of the biggest names in Michigan luxury. None of them returned my emails on a Saturday. Tawny does, and she is better.",                  a: 'Marisol Vega',        r: 'Investor · Family Office' },
-];
-
 // Three qualitative pillars of the practice — used on the landing intro and
 // on the About credibility band.
 export const PILLARS = [

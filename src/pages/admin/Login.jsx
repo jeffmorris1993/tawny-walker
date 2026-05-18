@@ -95,10 +95,11 @@ function LoginA() {
           <p style={{
             marginTop: 14,
             fontFamily: t.fonts.display, fontWeight: 400,
-            fontSize: 'clamp(22px, 2.4vw, 30px)', lineHeight: 1.35,
-            color: '#FFFFFF', maxWidth: 520, letterSpacing: '-0.005em',
+            fontSize: 'clamp(28px, 3.2vw, 40px)', lineHeight: 1.2,
+            color: '#FFFFFF', maxWidth: 520, letterSpacing: '-0.01em',
           }}>
-            "A quiet room where every lead, every listing, and every conversation is kept in one careful place."
+            More than an agent.<br />
+            <em style={{ fontStyle: 'italic' }}>A network.</em>
           </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 24 }}>
             <span style={{ width: 28, height: 1, background: 'rgba(255,255,255,0.5)' }} />
@@ -267,7 +268,7 @@ function LoginB() {
               fontFamily: t.eyebrowFont,
               fontSize: 10, fontWeight: 600, letterSpacing: '0.32em', textTransform: 'uppercase',
               color: t.palette.gold,
-            }}>— Volume IX · Spring</div>
+            }}>— The Studio</div>
             <div style={{
               fontFamily: t.fonts.display, fontWeight: 400,
               fontSize: 'clamp(22px, 2.4vw, 30px)', color: '#FFFFFF',
@@ -287,10 +288,13 @@ function LoginB() {
           borderTop: '1px solid rgba(217,197,162,0.25)', position: 'relative',
         }}>
           <div style={{
-            fontFamily: t.fonts.display, fontStyle: 'italic',
-            fontWeight: 400, fontSize: 'clamp(17px, 1.7vw, 21px)', lineHeight: 1.5,
-            color: '#FFFFFF', maxWidth: 540,
-          }}>"A house, like a sentence, is improved by careful punctuation."</div>
+            fontFamily: t.fonts.display,
+            fontWeight: 400, fontSize: 'clamp(22px, 2.4vw, 30px)', lineHeight: 1.25,
+            color: '#FFFFFF', maxWidth: 540, letterSpacing: '-0.01em',
+          }}>
+            More than an agent.{' '}
+            <em style={{ fontStyle: 'italic' }}>A network.</em>
+          </div>
           <div style={{
             marginTop: 16,
             fontFamily: t.eyebrowFont,
