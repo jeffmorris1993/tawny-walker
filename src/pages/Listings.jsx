@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useTheme } from '../theme/DirectionContext';
 import Photo from '../components/Photo';
 import TopNav from '../components/TopNav';
@@ -8,6 +9,9 @@ import StatusChip from '../components/StatusChip';
 import Button from '../components/Button';
 import Rule from '../components/Rule';
 import { LISTINGS, STUDIO } from '../data/listings';
+
+// Each listing card links into its detail page.
+const linkStyle = { textDecoration: 'none', color: 'inherit', display: 'block' };
 
 // Both directions share the editorial mixed-scale grid (big + 2 stacked,
 // 3 across, 2 stacked + big). The skin per listing card differs.
@@ -125,7 +129,7 @@ function FullEditorialA({ listings }) {
 function ListingCardBigA({ listing, num, archive }) {
   const t = useTheme();
   return (
-    <div>
+    <Link to={`/listings/${listing.id}`} style={linkStyle}>
       <div style={{ position: 'relative' }}>
         <Photo label={`${num} — ${listing.addr.toUpperCase()}`} tone={listing.tone} height={620} />
         <div style={{ position: 'absolute', top: 20, left: 20, padding: '6px 12px', background: 'rgba(251,249,245,0.95)' }}>
@@ -144,14 +148,14 @@ function ListingCardBigA({ listing, num, archive }) {
           <div style={{ fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.fgFaint, marginTop: 6 }}>{listing.specs}</div>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
 function ListingCardStdA({ listing, num }) {
   const t = useTheme();
   return (
-    <div>
+    <Link to={`/listings/${listing.id}`} style={linkStyle}>
       <div style={{ position: 'relative' }}>
         <Photo label={`${num} — ${listing.addr.toUpperCase()}`} tone={listing.tone} height={280} />
         <div style={{ position: 'absolute', top: 14, left: 14, padding: '5px 10px', background: 'rgba(251,249,245,0.95)' }}>
@@ -170,7 +174,7 @@ function ListingCardStdA({ listing, num }) {
         <span style={{ fontFamily: t.fonts.display, fontSize: 22, color: listing.status === 'Sold' ? t.fgFaint : t.fgPage }}>{listing.price}</span>
         <span style={{ fontSize: 9.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: t.fgFaint }}>{listing.specs}</span>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -286,7 +290,7 @@ function FullEditorialB({ listings }) {
 function ListingCardBigB({ listing, num, archive }) {
   const t = useTheme();
   return (
-    <div style={{ background: '#fff', border: `1px solid ${t.line}` }}>
+    <Link to={`/listings/${listing.id}`} style={{ ...linkStyle, background: '#fff', border: `1px solid ${t.line}` }}>
       <div style={{ position: 'relative' }}>
         <Photo label={`${num} — ${listing.addr.toUpperCase()}`} tone={listing.tone} height={620} />
         <div style={{ position: 'absolute', top: 20, left: 20, padding: '6px 12px', background: '#fff' }}>
@@ -305,14 +309,14 @@ function ListingCardBigB({ listing, num, archive }) {
           <span style={{ fontFamily: t.eyebrowFont, fontSize: 10, fontWeight: 600, letterSpacing: '0.26em', textTransform: 'uppercase', color: t.fgFaint }}>{listing.specs}</span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
 function ListingCardStdB({ listing, num }) {
   const t = useTheme();
   return (
-    <div style={{ background: '#fff', border: `1px solid ${t.line}` }}>
+    <Link to={`/listings/${listing.id}`} style={{ ...linkStyle, background: '#fff', border: `1px solid ${t.line}` }}>
       <div style={{ position: 'relative' }}>
         <Photo label={`${num} — ${listing.addr.toUpperCase()}`} tone={listing.tone} height={260} />
         <div style={{ position: 'absolute', top: 14, left: 14, padding: '5px 10px', background: '#fff' }}>
@@ -329,7 +333,7 @@ function ListingCardStdB({ listing, num }) {
           <span style={{ fontFamily: t.eyebrowFont, fontSize: 9, fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.fgFaint }}>{listing.specs}</span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 

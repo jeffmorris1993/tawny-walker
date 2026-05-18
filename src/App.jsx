@@ -4,6 +4,7 @@ import { DirectionProvider } from './theme/DirectionContext';
 import DirectionToggle from './components/DirectionToggle';
 import Landing from './pages/Landing';
 import Listings from './pages/Listings';
+import ListingDetail from './pages/ListingDetail';
 import Inquiry from './pages/Inquiry';
 import About from './pages/About';
 import LeadsInbox from './pages/admin/LeadsInbox';
@@ -52,6 +53,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/listings" element={<Listings />} />
+          <Route path="/listings/:id" element={<ListingDetail />} />
           <Route path="/inquiry" element={<Inquiry />} />
           <Route path="/about" element={<About />} />
           <Route path="/admin/login" element={<Login />} />

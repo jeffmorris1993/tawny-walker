@@ -176,7 +176,7 @@ function LandingA() {
 function FeaturedBigA({ listing, num }) {
   const t = useTheme();
   return (
-    <div>
+    <Link to={`/listings/${listing.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
       <div style={{ position: 'relative' }}>
         <Photo label={`${num} — ${listing.addr.toUpperCase()}`} tone={listing.tone} height={620} />
         <div style={{ position: 'absolute', top: 20, left: 20, padding: '6px 12px', background: 'rgba(251,249,245,0.95)' }}>
@@ -199,14 +199,14 @@ function FeaturedBigA({ listing, num }) {
       <p style={{ fontSize: 15, lineHeight: 1.65, color: t.fgMuted, maxWidth: 620, marginTop: 18, fontWeight: 300 }}>
         {listing.blurb}
       </p>
-    </div>
+    </Link>
   );
 }
 
 function FeaturedSmallA({ listing }) {
   const t = useTheme();
   return (
-    <div>
+    <Link to={`/listings/${listing.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
       <div style={{ position: 'relative' }}>
         <Photo label={listing.addr.toUpperCase()} tone={listing.tone} height={260} />
         <div style={{ position: 'absolute', top: 14, left: 14, padding: '5px 10px', background: 'rgba(251,249,245,0.95)' }}>
@@ -224,7 +224,7 @@ function FeaturedSmallA({ listing }) {
         </div>
       </div>
       {listing.blurb && <p style={{ fontSize: 13.5, lineHeight: 1.55, color: t.fgMuted, marginTop: 12, fontWeight: 300 }}>{listing.blurb}</p>}
-    </div>
+    </Link>
   );
 }
 
@@ -456,7 +456,7 @@ function LandingB() {
 function FeaturedBigB({ listing, num }) {
   const t = useTheme();
   return (
-    <div style={{ background: '#fff', border: `1px solid ${t.line}` }}>
+    <Link to={`/listings/${listing.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', background: '#fff', border: `1px solid ${t.line}` }}>
       <div style={{ position: 'relative' }}>
         <Photo label={`${listing.addr.toUpperCase()}`} tone={listing.tone} height={620} />
         <div style={{ position: 'absolute', top: 20, left: 20, padding: '6px 12px', background: '#fff' }}>
@@ -475,14 +475,14 @@ function FeaturedBigB({ listing, num }) {
           <span style={{ fontFamily: t.eyebrowFont, fontSize: 10, fontWeight: 600, letterSpacing: '0.26em', textTransform: 'uppercase', color: t.fgFaint }}>{listing.specs}</span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
 function FeaturedSmallB({ listing }) {
   const t = useTheme();
   return (
-    <div style={{ background: '#fff', border: `1px solid ${t.line}` }}>
+    <Link to={`/listings/${listing.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', background: '#fff', border: `1px solid ${t.line}` }}>
       <div style={{ position: 'relative' }}>
         <Photo label={listing.addr.toUpperCase()} tone={listing.tone} height={250} />
         <div style={{ position: 'absolute', top: 14, left: 14, padding: '5px 10px', background: '#fff' }}>
@@ -498,7 +498,7 @@ function FeaturedSmallB({ listing }) {
           <span style={{ fontFamily: t.eyebrowFont, fontSize: 9, fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.fgFaint }}>{listing.specs}</span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
 
