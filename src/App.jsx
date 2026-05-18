@@ -11,10 +11,10 @@ import LeadDetail from './pages/admin/LeadDetail';
 import ListingsManager from './pages/admin/ListingsManager';
 import AddListing from './pages/admin/AddListing';
 
-// Show the A/B toggle on public routes only — admin is intentionally fixed.
+// The A/B toggle now appears on admin too, since the studio chrome re-skins
+// per direction. Hide only if we ever route to something explicitly chromeless.
 function PublicChrome() {
-  const { pathname } = useLocation();
-  if (pathname.startsWith('/admin')) return null;
+  useLocation();
   return <DirectionToggle />;
 }
 

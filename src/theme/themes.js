@@ -120,6 +120,29 @@ export const THEMES = {
       ampersandFamily: '"Cormorant Garamond", serif',
     },
     rule: false,                     // B uses a centered '&' rule; A does not
+    // Admin / studio chrome
+    admin: {
+      sidebarBg: A_PALETTE.paper,
+      sidebarFg: A_PALETTE.ink,
+      sidebarMuted: A_PALETTE.ink3,
+      sidebarAccent: A_PALETTE.bronze,
+      sidebarSubLabel: A_PALETTE.ink3,
+      sidebarBorder: A_PALETTE.line,
+      sidebarActiveBg: A_PALETTE.bone,
+      sidebarActiveBorder: A_PALETTE.line,
+      sidebarBadge: A_PALETTE.ink3,
+      sidebarDivider: A_PALETTE.line,
+      avatarBg: A_PALETTE.ink,
+      avatarFg: A_PALETTE.bone,
+      navLabels: {
+        Leads: 'Leads', Listings: 'Listings', 'Sold Archive': 'Sold Archive',
+        Journal: 'Journal', Settings: 'Settings',
+      },
+      indexNavKey: 'Listings',
+      indexHeadline: 'Listings',
+      addCta: '+ Add a Listing',
+      composeHeadline: 'listing',
+    },
   },
 
   B: {
@@ -173,6 +196,28 @@ export const THEMES = {
       ampersandFamily: '"Cormorant Garamond", serif',
     },
     rule: true,
+    admin: {
+      sidebarBg: B_PALETTE.emerald,
+      sidebarFg: '#FFFFFF',
+      sidebarMuted: 'rgba(255,255,255,0.65)',
+      sidebarAccent: B_PALETTE.gold,
+      sidebarSubLabel: B_PALETTE.goldSoft,
+      sidebarBorder: 'rgba(255,255,255,0.14)',
+      sidebarActiveBg: 'rgba(255,255,255,0.08)',
+      sidebarActiveBorder: 'rgba(255,255,255,0.15)',
+      sidebarBadge: 'rgba(255,255,255,0.6)',
+      sidebarDivider: 'rgba(255,255,255,0.14)',
+      avatarBg: B_PALETTE.gold,
+      avatarFg: B_PALETTE.emerald,
+      navLabels: {
+        Leads: 'Leads', Listings: 'Residences', 'Sold Archive': 'Sold Archive',
+        Journal: 'Journal', Settings: 'Settings',
+      },
+      indexNavKey: 'Listings',
+      indexHeadline: 'Residences',
+      addCta: '+ Add a Residence',
+      composeHeadline: 'residence',
+    },
   },
 };
 

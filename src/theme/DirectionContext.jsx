@@ -23,11 +23,20 @@ function readStored() {
   }
 }
 
+const FAVICON_HREF = { A: '/favicon-a.svg', B: '/favicon-b.svg' };
+const APPLE_ICON_HREF = { A: '/logo-black.png', B: '/logo-white-on-green.png' };
+
 export function DirectionProvider({ children }) {
   const [direction, setDirectionState] = useState(readStored);
 
   useEffect(() => {
     try { window.localStorage.setItem(STORAGE_KEY, direction); } catch { /* noop */ }
+    // Swap the favicon + apple-touch-icon so the browser tab + iOS bookmark
+    // reflect the active design direction.
+    const fav = document.getElementById('tw-favicon');
+    if (fav) fav.setAttribute('href', FAVICON_HREF[direction] || FAVICON_HREF.A);
+    const apple = document.getElementById('tw-apple-icon');
+    if (apple) apple.setAttribute('href', APPLE_ICON_HREF[direction] || APPLE_ICON_HREF.A);
   }, [direction]);
 
   const value = useMemo(() => ({

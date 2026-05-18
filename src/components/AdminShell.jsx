@@ -1,76 +1,145 @@
 import { Link, useLocation } from 'react-router-dom';
-import { TW } from '../tokens';
+import { useTheme } from '../theme/DirectionContext';
 import Wordmark from './Wordmark';
+import { ADMIN_NAV_KEYS, ADMIN_NAV_COUNTS } from '../data/leads';
 
-const NAV_ITEMS = [
-  { l: 'Leads', path: '/admin', n: '12', dot: TW.bronze },
-  { l: 'Listings', path: '/admin/listings', n: '9' },
-  { l: 'Sold Archive', path: '#', n: '184' },
-  { l: 'Journal', path: '#' },
-  { l: 'Settings', path: '#' },
-];
+const NAV_PATHS = {
+  Leads: '/admin',
+  Listings: '/admin/listings',
+  'Sold Archive': '#',
+  Journal: '#',
+  Settings: '#',
+};
 
 export default function AdminShell({ children }) {
-  const location = useLocation();
+  const t = useTheme();
+  const isB = t.key === 'B';
+  const a = t.admin;
+  const { pathname } = useLocation();
 
-  const active = NAV_ITEMS.find(i => i.path !== '#' && location.pathname === i.path)?.l
-    || (location.pathname === '/admin' ? 'Leads' : 'Listings');
+  const activeKey = pathname.startsWith('/admin/listings') ? 'Listings' : 'Leads';
 
   return (
-    <div style={{ minHeight: '100vh', background: TW.bone, fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif', color: TW.ink, display: 'flex' }}>
+    <div className="tw-admin-root" style={{
+      minHeight: '100vh', background: t.bgPage,
+      fontFamily: t.fonts.body, color: t.fgPage, display: 'flex',
+    }}>
       {/* sidebar */}
-      <aside style={{ width: 240, borderRight: `1px solid ${TW.line}`, background: TW.paper, padding: '32px 24px', display: 'flex', flexDirection: 'column', flexShrink: 0 }} className="tw-admin-sidebar">
+      <aside className="tw-admin-sidebar" style={{
+        width: 240, flexShrink: 0,
+        background: a.sidebarBg, color: a.sidebarFg,
+        borderRight: `1px solid ${isB ? 'transparent' : t.line}`,
+        padding: '32px 24px',
+        display: 'flex', flexDirection: 'column',
+      }}>
         <Link to="/" style={{ textDecoration: 'none' }}>
-          <Wordmark size={18} sub={false} />
+          <Wordmark size={18} light={isB} sub={false} color={a.sidebarFg} />
         </Link>
-        <div style={{ fontSize: 9.5, letterSpacing: '0.28em', textTransform: 'uppercase', color: TW.ink3, marginTop: 4 }}>The Studio · Private</div>
+        <div style={{
+          fontFamily: t.eyebrowFont,
+          fontSize: isB ? 9 : 9.5,
+          fontWeight: isB ? 600 : 400,
+          letterSpacing: isB ? '0.32em' : '0.28em',
+          textTransform: 'uppercase',
+          color: a.sidebarSubLabel,
+          marginTop: isB ? 10 : 4,
+        }}>The Studio · Private</div>
 
-        <div style={{ marginTop: 48, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          {NAV_ITEMS.map(it => (
-            <Link key={it.l} to={it.path} style={{ textDecoration: 'none' }}>
-              <div style={{
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '12px 14px',
-                background: active === it.l ? TW.bone : 'transparent',
-                border: active === it.l ? `1px solid ${TW.line}` : '1px solid transparent',
-              }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  {it.dot && <span style={{ width: 6, height: 6, borderRadius: '50%', background: it.dot }} />}
-                  <span style={{ fontSize: 13, color: TW.ink }}>{it.l}</span>
-                </span>
-                {it.n && <span style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: 14, color: TW.ink3 }}>{it.n}</span>}
-              </div>
-            </Link>
-          ))}
-        </div>
+        <nav style={{ marginTop: 48, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {ADMIN_NAV_KEYS.map(key => {
+            const isActive = key === activeKey;
+            const label = a.navLabels[key] || key;
+            const count = ADMIN_NAV_COUNTS[key];
+            const path = NAV_PATHS[key] || '#';
+            const showDot = key === 'Leads';
+            return (
+              <Link key={key} to={path} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <div style={{
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  padding: '12px 14px',
+                  background: isActive ? a.sidebarActiveBg : 'transparent',
+                  border: `1px solid ${isActive ? a.sidebarActiveBorder : 'transparent'}`,
+                  transition: 'background 0.15s',
+                }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {showDot && <span style={{ width: 6, height: 6, borderRadius: '50%', background: a.sidebarAccent }} />}
+                    <span style={{ fontSize: 13, color: a.sidebarFg }}>{label}</span>
+                  </span>
+                  {count && (
+                    <span style={{
+                      fontFamily: t.fonts.display, fontStyle: 'italic',
+                      fontSize: 14, color: a.sidebarBadge,
+                    }}>{count}</span>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
+        </nav>
 
-        <div style={{ marginTop: 'auto', paddingTop: 24, borderTop: `1px solid ${TW.line}` }}>
+        <div style={{ marginTop: 'auto', paddingTop: 24, borderTop: `1px solid ${a.sidebarDivider}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
-              width: 32, height: 32, borderRadius: '50%', background: TW.ink, flexShrink: 0,
-              display: 'grid', placeItems: 'center',
-              color: TW.bone, fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: 15,
+              width: 32, height: 32, borderRadius: '50%',
+              background: a.avatarBg, color: a.avatarFg,
+              display: 'grid', placeItems: 'center', flexShrink: 0,
+              fontFamily: t.fonts.display, fontStyle: 'italic',
+              fontSize: 15, fontWeight: isB ? 500 : 400,
             }}>TW</div>
-            <div>
-              <div style={{ fontSize: 12, color: TW.ink }}>Tawny Walker</div>
-              <div style={{ fontSize: 9.5, letterSpacing: '0.2em', textTransform: 'uppercase', color: TW.ink3 }}>Principal</div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 12, color: a.sidebarFg }}>Tawny Walker</div>
+              <div style={{
+                fontFamily: t.eyebrowFont,
+                fontSize: isB ? 9 : 9.5,
+                fontWeight: isB ? 600 : 400,
+                letterSpacing: isB ? '0.26em' : '0.2em',
+                textTransform: 'uppercase',
+                color: a.sidebarSubLabel,
+              }}>Principal</div>
             </div>
           </div>
         </div>
       </aside>
 
-      {/* main */}
-      <main style={{ flex: 1, padding: '40px 56px 64px', minWidth: 0 }} className="tw-admin-main">
+      <main className="tw-admin-main" style={{
+        flex: 1, padding: 'clamp(24px, 3.5vw, 40px) clamp(24px, 4vw, 56px) 64px',
+        minWidth: 0,
+      }}>
         {children}
       </main>
 
       <style>{`
-        @media (max-width: 768px) {
-          .tw-admin-sidebar { width: 200px !important; padding: 24px 16px !important; }
-          .tw-admin-main { padding: 24px 24px 48px !important; }
+        @media (max-width: 900px) {
+          .tw-admin-root    { flex-direction: column !important; }
+          .tw-admin-sidebar {
+            width: 100% !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            padding: 16px 20px !important;
+            border-right: none !important;
+            border-bottom: 1px solid ${a.sidebarDivider} !important;
+            gap: 16px !important;
+            overflow-x: auto;
+          }
+          .tw-admin-sidebar > a:first-child { flex-shrink: 0; }
+          .tw-admin-sidebar > div:nth-child(2) { display: none !important; }
+          .tw-admin-sidebar nav {
+            margin-top: 0 !important;
+            flex-direction: row !important;
+            flex: 1;
+            gap: 4px !important;
+          }
+          .tw-admin-sidebar nav > a > div { padding: 8px 12px !important; }
+          .tw-admin-sidebar > div:last-child {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+            border-top: none !important;
+            flex-shrink: 0;
+          }
+          .tw-admin-sidebar > div:last-child > div > div:last-child { display: none; }
         }
         @media (max-width: 600px) {
-          .tw-admin-sidebar { display: none !important; }
+          .tw-admin-sidebar nav > a > div span:last-child { display: none; }
         }
       `}</style>
     </div>
