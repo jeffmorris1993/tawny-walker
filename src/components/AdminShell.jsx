@@ -7,7 +7,6 @@ const NAV_PATHS = {
   Leads: '/admin',
   Listings: '/admin/listings',
   'Sold Archive': '#',
-  Journal: '#',
   Settings: '#',
 };
 

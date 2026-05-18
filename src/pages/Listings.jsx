@@ -43,7 +43,7 @@ function ListingsA() {
       <div style={{ padding: 'clamp(48px, 6.1vw, 88px) clamp(24px, 4.4vw, 64px) clamp(32px, 3.9vw, 56px)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 24 }}>
           <div>
-            <Eyebrow>The Index · Spring 2026 · Vol. xii</Eyebrow>
+            <Eyebrow>The Index</Eyebrow>
             <h1 style={{ fontFamily: t.fonts.display, fontWeight: 300, fontSize: 'clamp(52px, 6.7vw, 96px)', letterSpacing: '-0.022em', margin: '24px 0 0', lineHeight: 0.95 }}>
               Current <em style={{ fontStyle: 'italic' }}>{t.listingNoun}</em>.
             </h1>
@@ -139,7 +139,7 @@ function ListingCardBigA({ listing, num, archive }) {
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 28, gap: 24, flexWrap: 'wrap' }}>
         <div>
-          <div style={{ fontSize: 11, letterSpacing: '0.24em', textTransform: 'uppercase', color: t.accent }}>№ {num} {archive ? '· Archive' : '· Spring Index'}</div>
+          <div style={{ fontSize: 11, letterSpacing: '0.24em', textTransform: 'uppercase', color: t.accent }}>№ {num}{archive ? ' · Archive' : ''}</div>
           <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 48, letterSpacing: '-0.018em', margin: '10px 0 0' }}>{listing.addr}</h3>
           <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 20, color: t.fgMuted, marginTop: 4 }}>{listing.street}, {listing.loc}</div>
         </div>
@@ -188,7 +188,7 @@ function ListingsB() {
       <TopNav active="Residences" />
 
       <div style={{ padding: 'clamp(56px, 7vw, 96px) clamp(24px, 5vw, 72px) clamp(32px, 4vw, 56px)', textAlign: 'center' }}>
-        <Eyebrow>The Spring Index · Volume xii</Eyebrow>
+        <Eyebrow>The Index</Eyebrow>
         <h1 style={{
           fontFamily: t.fonts.display, fontWeight: 300,
           fontSize: 'clamp(52px, 7vw, 96px)', letterSpacing: '-0.024em',
@@ -300,7 +300,7 @@ function ListingCardBigB({ listing, num, archive }) {
       </div>
       <div style={{ padding: '32px 40px 36px' }}>
         <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 15, color: t.accent }}>
-          № {num} {archive ? '· Archive' : '· Spring Index'}
+          № {num}{archive ? ' · Archive' : ''}
         </div>
         <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(32px, 3.4vw, 48px)', letterSpacing: '-0.02em', color: t.palette.emerald, margin: '10px 0 0', lineHeight: 1 }}>{listing.addr}</h3>
         <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 19, color: t.fgMuted, marginTop: 6 }}>{listing.street}, {listing.loc}</div>

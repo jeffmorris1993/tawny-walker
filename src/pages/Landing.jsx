@@ -7,7 +7,7 @@ import Eyebrow from '../components/Eyebrow';
 import StatusChip from '../components/StatusChip';
 import Button from '../components/Button';
 import Rule from '../components/Rule';
-import { LISTINGS, TESTIMONIALS, PILLARS, STUDIO } from '../data/listings';
+import { LISTINGS, PILLARS, STUDIO } from '../data/listings';
 import { InquiryWidget } from './Inquiry';
 
 const SCROLL_TO_INQUIRY = '/#inquiry';
@@ -92,7 +92,7 @@ function LandingA() {
       <div style={{ padding: 'clamp(56px, 8.3vw, 120px) clamp(20px, 4.4vw, 64px) clamp(56px, 9.7vw, 140px)', background: t.bgPanel }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 'clamp(28px, 4vw, 56px)', flexWrap: 'wrap', gap: 20 }}>
           <div>
-            <Eyebrow>§ 03 — Spring Index</Eyebrow>
+            <Eyebrow>§ 03 — The Index</Eyebrow>
             <h2 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(28px, 3.9vw, 56px)', letterSpacing: '-0.018em', margin: '20px 0 0', lineHeight: 1.05 }}>
               A selection of <em style={{ fontStyle: 'italic' }}>current</em> work.
             </h2>
@@ -109,23 +109,6 @@ function LandingA() {
             <FeaturedSmallA listing={LISTINGS[1]} />
             <FeaturedSmallA listing={LISTINGS[2]} />
           </div>
-        </div>
-      </div>
-
-      {/* TESTIMONIALS */}
-      <div style={{ padding: 'clamp(56px, 9.7vw, 140px) clamp(20px, 4.4vw, 64px)' }}>
-        <Eyebrow>§ 04 — Said of the studio</Eyebrow>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 'clamp(28px, 4vw, 64px)', marginTop: 'clamp(28px, 4vw, 56px)' }}>
-          {TESTIMONIALS.map((q, i) => (
-            <figure key={i} style={{ margin: 0 }}>
-              <div style={{ fontFamily: t.fonts.display, fontSize: 56, color: t.accent, lineHeight: 0.5, marginBottom: 18 }}>“</div>
-              <blockquote style={{ margin: 0, fontFamily: t.fonts.display, fontStyle: 'italic', fontWeight: 400, fontSize: 22, lineHeight: 1.45, color: t.fgPage }}>{q.q}</blockquote>
-              <figcaption style={{ marginTop: 24, paddingTop: 18, borderTop: `1px solid ${t.line}` }}>
-                <div style={{ fontSize: 13, color: t.fgPage, fontWeight: 500 }}>{q.a}</div>
-                <div style={{ fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.fgFaint, marginTop: 4 }}>{q.r}</div>
-              </figcaption>
-            </figure>
-          ))}
         </div>
       </div>
 
@@ -349,7 +332,7 @@ function LandingB() {
       {/* FEATURED */}
       <div style={{ background: t.bgPanel, padding: 'clamp(56px, 10vw, 140px) clamp(20px, 5vw, 72px)' }}>
         <div style={{ textAlign: 'center', marginBottom: 'clamp(40px, 6vw, 64px)' }}>
-          <Eyebrow>§ 03 — Spring {t.indexNoun}</Eyebrow>
+          <Eyebrow>§ 03 — The {t.indexNoun}</Eyebrow>
           <h2 style={{
             fontFamily: t.fonts.display, fontWeight: 400,
             fontSize: 'clamp(34px, 4.7vw, 64px)', lineHeight: 1, letterSpacing: '-0.02em',
@@ -370,32 +353,6 @@ function LandingB() {
         </div>
         <div style={{ textAlign: 'center', marginTop: 'clamp(40px, 5vw, 64px)' }}>
           <Button to="/listings" variant="secondary">View the Full Index ({LISTINGS.length})</Button>
-        </div>
-      </div>
-
-      {/* TESTIMONIALS */}
-      <div style={{ padding: 'clamp(56px, 10vw, 140px) clamp(20px, 5vw, 72px)', background: '#fff', borderTop: `1px solid ${t.line}` }}>
-        <div style={{ textAlign: 'center', marginBottom: 'clamp(40px, 6vw, 64px)' }}>
-          <Eyebrow>§ 04 — Said of the studio</Eyebrow>
-          <h2 style={{
-            fontFamily: t.fonts.display, fontWeight: 400,
-            fontSize: 'clamp(32px, 3.9vw, 56px)', lineHeight: 1.05, letterSpacing: '-0.02em',
-            color: t.palette.emerald, margin: '20px auto 0',
-          }}>
-            From those <em style={{ fontStyle: 'italic' }}>quietly</em> served.
-          </h2>
-        </div>
-        <div style={{ maxWidth: 1296, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'clamp(20px, 2.5vw, 32px)' }}>
-          {TESTIMONIALS.map((q, i) => (
-            <figure key={i} style={{ margin: 0, padding: 'clamp(28px, 3vw, 40px) clamp(20px, 2.5vw, 32px)', background: t.bgPanel, border: `1px solid ${t.line}`, display: 'flex', flexDirection: 'column' }}>
-              <div style={{ fontFamily: t.fonts.display, fontSize: 64, color: t.accent, lineHeight: 0.5, marginBottom: 24 }}>“</div>
-              <blockquote style={{ margin: 0, fontFamily: t.fonts.display, fontStyle: 'italic', fontWeight: 400, fontSize: 21, lineHeight: 1.5, color: t.palette.emerald, flex: 1 }}>{q.q}</blockquote>
-              <figcaption style={{ marginTop: 28, paddingTop: 18, borderTop: `1px solid ${t.line}` }}>
-                <div style={{ fontFamily: t.eyebrowFont, fontSize: 13, fontWeight: 600, color: t.fgPage }}>{q.a}</div>
-                <div style={{ fontFamily: t.eyebrowFont, fontSize: 9.5, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', color: t.fgFaint, marginTop: 6 }}>{q.r}</div>
-              </figcaption>
-            </figure>
-          ))}
         </div>
       </div>
 
@@ -448,7 +405,7 @@ function FeaturedBigB({ listing, num }) {
         </div>
       </div>
       <div style={{ padding: 'clamp(24px, 3vw, 40px)' }}>
-        <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 16, color: t.accent }}>№ {num} / Spring Index</div>
+        <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 16, color: t.accent }}>№ {num} / The Index</div>
         <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(28px, 3.4vw, 48px)', letterSpacing: '-0.018em', color: t.palette.emerald, margin: '12px 0 0', lineHeight: 1 }}>{listing.addr}</h3>
         <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 20, color: t.fgMuted, marginTop: 6 }}>
           {listing.street}, {listing.loc}

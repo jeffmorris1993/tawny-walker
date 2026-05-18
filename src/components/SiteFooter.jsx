@@ -1,6 +1,10 @@
+import { Link } from 'react-router-dom';
 import { useTheme } from '../theme/DirectionContext';
 import { STUDIO } from '../data/listings';
 import Wordmark from './Wordmark';
+
+const INSTAGRAM_URL = 'https://www.instagram.com/tawny2walker/';
+const LINKEDIN_URL = 'https://www.linkedin.com/in/tawnythieuwalker/';
 
 export default function SiteFooter() {
   const t = useTheme();
@@ -9,14 +13,19 @@ export default function SiteFooter() {
   // B uses an emerald-deep slab, ivory text. A uses warm paper + ink.
   const bg = isB ? t.palette.emeraldDeep : t.palette.paper;
   const fg = isB ? 'rgba(248,245,238,0.7)' : t.fgMuted;
-  const fgStrong = isB ? '#fff' : t.fgPage;
   const labelColor = isB ? t.accentSoft : t.fgFaint;
   const ruleColor = isB ? 'rgba(248,245,238,0.14)' : t.line;
 
   const columns = [
-    { h: 'Office', items: [...STUDIO.address, STUDIO.phone, STUDIO.email] },
-    { h: 'Explore', items: [`Active ${t.indexNoun}`, 'Sold Archive', 'Buyer Services', 'Seller Services'] },
-    { h: isB ? 'Follow' : 'Connect', items: ['Instagram', 'LinkedIn', 'Journal', 'Newsletter'] },
+    { h: 'Office', items: [...STUDIO.address, STUDIO.phone, STUDIO.email].map(label => ({ label })) },
+    { h: 'Explore', items: [
+      { label: 'Active Listings', to: '/listings' },
+      { label: 'Sold Archive', to: '/listings' },
+    ] },
+    { h: isB ? 'Follow' : 'Connect', items: [
+      { label: 'Instagram', href: INSTAGRAM_URL },
+      { label: 'LinkedIn', href: LINKEDIN_URL },
+    ] },
   ];
 
   return (
@@ -35,9 +44,9 @@ export default function SiteFooter() {
           <p style={{
             fontFamily: t.fonts.display, fontStyle: 'italic',
             fontSize: 17, color: isB ? 'rgba(248,245,238,0.78)' : t.fgMuted,
-            marginTop: 24, maxWidth: 340, lineHeight: 1.55, fontWeight: 400,
+            marginTop: 24, maxWidth: 380, lineHeight: 1.55, fontWeight: 400,
           }}>
-            A considered approach to buying, selling, and stewarding property along the Great Lakes coast.
+            I partner with the best in the business, experts who have your back from day one to closing day. I&apos;m more than a salesperson; I&apos;m your trusted advisor and advocate, here to guide you, protect your interests, and make every step of your real estate journey seamless.
           </p>
         </div>
         {columns.map(col => (
@@ -49,12 +58,29 @@ export default function SiteFooter() {
               textTransform: 'uppercase',
               color: labelColor, marginBottom: 16,
             }}>{col.h}</div>
-            {col.items.map(i => (
-              <div key={i} style={{
+            {col.items.map(item => {
+              const itemStyle = {
                 fontFamily: t.fonts.body, fontSize: 13,
                 color: fg, marginBottom: 8, lineHeight: 1.5,
-              }}>{i}</div>
-            ))}
+              };
+              if (item.href) {
+                return (
+                  <a key={item.label} href={item.href} target="_blank" rel="noopener noreferrer"
+                    style={{ ...itemStyle, display: 'block', textDecoration: 'none' }}>
+                    {item.label}
+                  </a>
+                );
+              }
+              if (item.to) {
+                return (
+                  <Link key={item.label} to={item.to}
+                    style={{ ...itemStyle, display: 'block', textDecoration: 'none' }}>
+                    {item.label}
+                  </Link>
+                );
+              }
+              return <div key={item.label} style={itemStyle}>{item.label}</div>;
+            })}
           </div>
         ))}
       </div>
