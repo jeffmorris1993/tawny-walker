@@ -270,8 +270,8 @@ function AboutB() {
       </div>
 
       {/* PORTRAIT */}
-      <div style={{ padding: '0 clamp(20px, 5vw, 72px) clamp(56px, 8vw, 96px)' }}>
-        <div style={{ position: 'relative', width: '100%', aspectRatio: '2 / 1', maxHeight: 720, background: '#fff' }}>
+      <div style={{ padding: '0 clamp(20px, 5vw, 72px)' }}>
+        <div style={{ position: 'relative', width: '100%', maxWidth: 640, aspectRatio: '1 / 1', margin: '0 auto', background: '#fff' }}>
           <Photo label="" tone="bloom" height="100%" src={PHOTOS.portraitWhite} fit="contain" bg="#fff" />
         </div>
       </div>

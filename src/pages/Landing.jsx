@@ -215,7 +215,7 @@ function LandingB() {
       {/* HERO */}
       <div style={{ position: 'relative', minHeight: 880, background: t.palette.emerald }}>
         <Photo label="HERO · INTERIOR — BIRMINGHAM" tone="dusk" height={880} src={PHOTOS.livingMarble} style={{ position: 'absolute', inset: 0 }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(8,42,32,0.85) 0%, rgba(8,42,32,0.55) 35%, rgba(8,42,32,0.45) 60%, rgba(8,42,32,0.92) 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(8,42,32,0.95) 0%, rgba(8,42,32,0.88) 35%, rgba(8,42,32,0.85) 60%, rgba(8,42,32,0.97) 100%)' }} />
         <div style={{ position: 'relative', zIndex: 2 }}>
           <TopNav dark={true} />
         </div>
@@ -257,7 +257,7 @@ function LandingB() {
       </div>
 
       {/* INTRO — centered, two columns */}
-      <div style={{ padding: 'clamp(64px, 11vw, 160px) clamp(20px, 5vw, 72px)' }}>
+      <div style={{ padding: 'clamp(64px, 11vw, 160px) clamp(20px, 5vw, 72px) 0' }}>
         <div style={{ textAlign: 'center', marginBottom: 'clamp(40px, 6vw, 80px)' }}>
           <Eyebrow>§ 01 — The practice</Eyebrow>
           <h2 style={{
@@ -272,10 +272,10 @@ function LandingB() {
           </div>
         </div>
         <div className="tw-listings-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'clamp(32px, 7vw, 96px)', alignItems: 'start', maxWidth: 1180, margin: '0 auto' }}>
-          <div style={{ position: 'relative', width: '100%', aspectRatio: '7 / 8.5', background: '#fff' }}>
-            <Photo label="PORTRAIT — TAWNY WALKER" tone="warm" height="100%" src={PHOTOS.portraitWhite} fit="contain" bg="#fff" />
+          <div style={{ position: 'relative', width: '100%', minHeight: 720, alignSelf: 'stretch', background: '#fff' }}>
+            <Photo label="" tone="warm" height="100%" src={PHOTOS.portraitWhite} fit="cover" objectPosition="center top" bg="#fff" />
           </div>
-          <div style={{ paddingTop: 24 }}>
+          <div>
             <p style={{
               fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 'clamp(20px, 2.2vw, 26px)',
               lineHeight: 1.45, color: t.palette.emerald, margin: 0, fontWeight: 400,

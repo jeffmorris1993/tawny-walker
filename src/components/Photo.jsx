@@ -8,7 +8,7 @@ import { useTheme } from '../theme/DirectionContext';
 // (useful for transparent portraits — bone in A, white in B).
 export default function Photo({
   label = 'PHOTOGRAPHY', tone = 'warm',
-  ratio, style, height, src, fit = 'cover', bg,
+  ratio, style, height, src, fit = 'cover', bg, objectPosition,
 }) {
   const t = useTheme();
   const p = t.photoPalettes[tone] || t.photoPalettes.warm;
@@ -24,7 +24,7 @@ export default function Photo({
       {src && (
         <img src={src} alt={label} style={{
           position: 'absolute', inset: 0, width: '100%', height: '100%',
-          objectFit: fit, display: 'block',
+          objectFit: fit, objectPosition, display: 'block',
         }} />
       )}
       {!src && (
