@@ -1,27 +1,26 @@
-import { TW } from '../tokens';
+import { useTheme } from '../theme/DirectionContext';
 
-const statusMap = {
-  Active:    { dot: TW.green,  label: 'Active' },
-  Pending:   { dot: TW.amber,  label: 'Pending' },
-  Sold:      { dot: TW.ink2,   label: 'Sold' },
-  New:       { dot: TW.bronze, label: 'New Lead' },
-  Contacted: { dot: TW.ink3,   label: 'Contacted' },
-  Qualified: { dot: TW.green,  label: 'Qualified' },
-  Cold:      { dot: TW.ink4,   label: 'Cold' },
-};
-
+// Uses theme.statusLabels so Direction A reads "Active / Pending / Sold"
+// and Direction B reads "Available / In Contract / Closed".
 export default function StatusChip({ status, size = 'sm' }) {
-  const m = statusMap[status] || { dot: TW.ink3, label: status };
+  const t = useTheme();
+  const label = t.statusLabels[status] || status;
+  const dot = t.statusDots[status] || t.fgFaint;
   const f = size === 'lg' ? 12 : 10.5;
+  const isB = t.key === 'B';
   return (
     <span style={{
       display: 'inline-flex', alignItems: 'center', gap: 7,
-      fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
-      fontSize: f, letterSpacing: '0.18em', textTransform: 'uppercase',
-      color: TW.ink, padding: size === 'lg' ? '4px 10px' : '0',
+      fontFamily: t.eyebrowFont,
+      fontWeight: isB ? 600 : 400,
+      fontSize: f,
+      letterSpacing: isB ? '0.24em' : '0.18em',
+      textTransform: 'uppercase',
+      color: isB ? t.palette.emerald : t.palette.ink,
+      padding: size === 'lg' ? '4px 10px' : '0',
     }}>
-      <span style={{ width: f * 0.55, height: f * 0.55, borderRadius: '50%', background: m.dot, flexShrink: 0 }} />
-      {m.label}
+      <span style={{ width: f * 0.55, height: f * 0.55, borderRadius: '50%', background: dot, flexShrink: 0 }} />
+      {label}
     </span>
   );
 }
