@@ -131,7 +131,7 @@ function ListingCardBigA({ listing, num, archive }) {
   return (
     <Link to={`/listings/${listing.id}`} style={linkStyle}>
       <div style={{ position: 'relative' }}>
-        <Photo label={`${num} — ${listing.addr.toUpperCase()}`} tone={listing.tone} height={620} />
+        <Photo label={`${num} — ${listing.addr.toUpperCase()}`} tone={listing.tone} height={620} src={listing.img} />
         <div style={{ position: 'absolute', top: 20, left: 20, padding: '6px 12px', background: 'rgba(251,249,245,0.95)' }}>
           <StatusChip status={listing.status} />
         </div>
@@ -157,7 +157,7 @@ function ListingCardStdA({ listing, num }) {
   return (
     <Link to={`/listings/${listing.id}`} style={linkStyle}>
       <div style={{ position: 'relative' }}>
-        <Photo label={`${num} — ${listing.addr.toUpperCase()}`} tone={listing.tone} height={280} />
+        <Photo label={`${num} — ${listing.addr.toUpperCase()}`} tone={listing.tone} height={280} src={listing.img} />
         <div style={{ position: 'absolute', top: 14, left: 14, padding: '5px 10px', background: 'rgba(251,249,245,0.95)' }}>
           <StatusChip status={listing.status} />
         </div>
@@ -292,7 +292,7 @@ function ListingCardBigB({ listing, num, archive }) {
   return (
     <Link to={`/listings/${listing.id}`} style={{ ...linkStyle, background: '#fff', border: `1px solid ${t.line}` }}>
       <div style={{ position: 'relative' }}>
-        <Photo label={`${num} — ${listing.addr.toUpperCase()}`} tone={listing.tone} height={620} />
+        <Photo label={`${num} — ${listing.addr.toUpperCase()}`} tone={listing.tone} height={620} src={listing.img} />
         <div style={{ position: 'absolute', top: 20, left: 20, padding: '6px 12px', background: '#fff' }}>
           <StatusChip status={listing.status} />
         </div>
@@ -318,7 +318,7 @@ function ListingCardStdB({ listing, num }) {
   return (
     <Link to={`/listings/${listing.id}`} style={{ ...linkStyle, background: '#fff', border: `1px solid ${t.line}` }}>
       <div style={{ position: 'relative' }}>
-        <Photo label={`${num} — ${listing.addr.toUpperCase()}`} tone={listing.tone} height={260} />
+        <Photo label={`${num} — ${listing.addr.toUpperCase()}`} tone={listing.tone} height={260} src={listing.img} />
         <div style={{ position: 'absolute', top: 14, left: 14, padding: '5px 10px', background: '#fff' }}>
           <StatusChip status={listing.status} />
         </div>

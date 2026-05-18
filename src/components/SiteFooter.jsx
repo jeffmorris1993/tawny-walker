@@ -68,7 +68,7 @@ export default function SiteFooter() {
         textTransform: 'uppercase',
         color: isB ? 'rgba(248,245,238,0.45)' : t.fgFaint,
       }}>
-        <span>© 2026 Tawny & Co. · License {STUDIO.license}</span>
+        <span>© 2026 Tawny & Co. · {STUDIO.brokeredBy}</span>
         <span>Equal Housing Opportunity</span>
       </div>
 

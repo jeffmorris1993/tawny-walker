@@ -1,13 +1,13 @@
 import { Link } from 'react-router-dom';
 import { useTheme } from '../theme/DirectionContext';
-import Photo from '../components/Photo';
+import Photo, { PHOTOS } from '../components/Photo';
 import TopNav from '../components/TopNav';
 import SiteFooter from '../components/SiteFooter';
 import Eyebrow from '../components/Eyebrow';
 import StatusChip from '../components/StatusChip';
 import Button from '../components/Button';
 import Rule from '../components/Rule';
-import { LISTINGS, TESTIMONIALS, STATS, STUDIO } from '../data/listings';
+import { LISTINGS, TESTIMONIALS, PILLARS, STUDIO } from '../data/listings';
 import { InquiryWidget } from './Inquiry';
 
 const SCROLL_TO_INQUIRY = '/#inquiry';
@@ -19,19 +19,18 @@ function LandingA() {
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
       {/* HERO */}
       <div style={{ position: 'relative', minHeight: 820 }}>
-        <Photo label="HERO — LAKEFRONT ESTATE, CHARLEVOIX, MI · 6400×4267" tone="dusk" height={820} style={{ position: 'absolute', inset: 0 }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.15) 35%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.65) 100%)' }} />
+        <Photo label="HERO · INTERIOR — BIRMINGHAM" tone="warm" height={820} src={PHOTOS.livingMarble} style={{ position: 'absolute', inset: 0 }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 35%, rgba(0,0,0,0.25) 60%, rgba(0,0,0,0.75) 100%)' }} />
         <div style={{ position: 'relative', zIndex: 2 }}>
           <TopNav dark={true} />
         </div>
         <div className="tw-hero-content" style={{ position: 'absolute', left: 'clamp(20px, 4.4vw, 64px)', bottom: 'clamp(40px, 6vw, 100px)', right: 'clamp(20px, 4.4vw, 64px)', color: '#fff', zIndex: 2 }}>
-          <Eyebrow color="rgba(255,255,255,0.78)">An Editorial Approach to Michigan Real Estate</Eyebrow>
-          <h1 style={{ fontFamily: t.fonts.display, fontWeight: 300, fontSize: 'clamp(48px, 9.2vw, 132px)', lineHeight: 0.92, letterSpacing: '-0.025em', margin: '32px 0 0', maxWidth: 1100 }}>
-            Quiet houses,<br /><em style={{ fontStyle: 'italic', fontWeight: 300 }}>loud</em> intentions.
+          <h1 style={{ fontFamily: t.fonts.display, fontWeight: 300, fontSize: 'clamp(48px, 9.2vw, 132px)', lineHeight: 0.92, letterSpacing: '-0.025em', margin: 0, maxWidth: 1100 }}>
+            Real estate,<br /><em style={{ fontStyle: 'italic', fontWeight: 300 }}>reimagined.</em>
           </h1>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 'clamp(28px, 4vw, 56px)', flexWrap: 'wrap', gap: 24 }}>
-            <p style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontWeight: 300, fontSize: 'clamp(16px, 1.7vw, 22px)', lineHeight: 1.5, maxWidth: 520, color: 'rgba(255,255,255,0.88)', margin: 0 }}>
-              Tawny & Co. represents a small portfolio of considered coastal homes — and the equally considered people who live in them.
+            <p style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontWeight: 300, fontSize: 'clamp(16px, 1.7vw, 22px)', lineHeight: 1.5, maxWidth: 560, color: 'rgba(255,255,255,0.88)', margin: 0 }}>
+              Tawny Walker is a Michigan agent, investor, and design-driven renovator — transforming overlooked properties into homes that leave a lasting impression.
             </p>
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
               <Button to="/listings" variant="on-dark-outline">View {t.indexNoun}</Button>
@@ -39,31 +38,28 @@ function LandingA() {
             </div>
           </div>
         </div>
-        <div className="tw-hero-vol" style={{ position: 'absolute', left: 64, top: 130, color: 'rgba(255,255,255,0.6)', fontSize: 10.5, letterSpacing: '0.24em', textTransform: 'uppercase', writingMode: 'vertical-rl', transform: 'rotate(180deg)', zIndex: 2 }}>
-          Vol. xii — Spring Index
-        </div>
       </div>
 
       {/* INTRO */}
       <div style={{ padding: 'clamp(56px, 9.7vw, 140px) clamp(20px, 4.4vw, 64px)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'clamp(36px, 6.7vw, 96px)', alignItems: 'start' }}>
         <div>
-          <Eyebrow>§ 01 — On the practice</Eyebrow>
+          <Eyebrow>§ 01 — The practice</Eyebrow>
           <h2 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(32px, 4.4vw, 64px)', lineHeight: 1.05, letterSpacing: '-0.018em', margin: '24px 0 0' }}>
-            A boutique practice, run<br />by <em style={{ fontStyle: 'italic' }}>one person</em>, on purpose.
+            Agent. Investor.<br /><em style={{ fontStyle: 'italic' }}>Renovator.</em>
           </h2>
         </div>
         <div style={{ paddingTop: 16 }}>
           <p style={{ fontSize: 17, lineHeight: 1.65, color: t.fgMuted, margin: 0, fontWeight: 300 }}>
-            Tawny Walker has spent fourteen years placing families, founders, and second-home buyers into the houses that suit them — from low-key bungalows in Ann Arbor to lakefront estates along the eastern lakefronts of Michigan. She works alone, by design, so every client gets the same quiet attention she would give a relative.
+            Tawny Walker is a Michigan real estate professional recognized for an elevated aesthetic and a strategic, design-driven approach to the work — transforming overlooked properties into highly desirable homes from concept to completion.
           </p>
           <p style={{ fontSize: 17, lineHeight: 1.65, color: t.fgMuted, margin: '20px 0 0', fontWeight: 300 }}>
-            The studio represents roughly twenty {t.listingNoun} each year. Most arrive by referral. None are listed twice.
+            Whether representing clients, sourcing investment properties, or overseeing a renovation, Tawny brings refined vision and hands-on expertise to every detail — anchored in Birmingham and active across Metro Detroit.
           </p>
-          <div className="tw-stats-row" style={{ marginTop: 40, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'clamp(20px, 2.5vw, 32px)', paddingTop: 32, borderTop: `1px solid ${t.line}` }}>
-            {STATS.map(s => (
-              <div key={s.l}>
-                <div style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(28px, 3vw, 36px)', lineHeight: 1 }}>{s.n}</div>
-                <div style={{ fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.fgFaint, marginTop: 8 }}>{s.l}</div>
+          <div className="tw-stats-row" style={{ marginTop: 40, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'clamp(20px, 2.5vw, 24px)', paddingTop: 32, borderTop: `1px solid ${t.line}` }}>
+            {PILLARS.map(s => (
+              <div key={s.h}>
+                <div style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(18px, 2vw, 22px)', lineHeight: 1.15 }}>{s.h}</div>
+                <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 13.5, color: t.fgFaint, marginTop: 6 }}>{s.s}</div>
               </div>
             ))}
           </div>
@@ -146,7 +142,7 @@ function LandingA() {
             One <em style={{ fontStyle: 'italic' }}>form,</em><br />four paths in.
           </h2>
           <p style={{ fontSize: 16, lineHeight: 1.6, color: 'rgba(255,255,255,0.7)', maxWidth: 520, marginTop: 32, fontWeight: 300 }}>
-            Whether you are buying, selling, investing, or visiting for a season — the studio's intake is the same short form. Tawny answers personally, within one business day.
+            Whether you are buying, selling, investing, or have a property to renovate — the inquiry begins with the same short form. Tawny answers personally, within one business day.
           </p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -178,7 +174,7 @@ function FeaturedBigA({ listing, num }) {
   return (
     <Link to={`/listings/${listing.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
       <div style={{ position: 'relative' }}>
-        <Photo label={`${num} — ${listing.addr.toUpperCase()}`} tone={listing.tone} height={620} />
+        <Photo label={`${num} — ${listing.addr.toUpperCase()}`} tone={listing.tone} height={620} src={listing.img} />
         <div style={{ position: 'absolute', top: 20, left: 20, padding: '6px 12px', background: 'rgba(251,249,245,0.95)' }}>
           <StatusChip status={listing.status} />
         </div>
@@ -208,7 +204,7 @@ function FeaturedSmallA({ listing }) {
   return (
     <Link to={`/listings/${listing.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
       <div style={{ position: 'relative' }}>
-        <Photo label={listing.addr.toUpperCase()} tone={listing.tone} height={260} />
+        <Photo label={listing.addr.toUpperCase()} tone={listing.tone} height={260} src={listing.img} />
         <div style={{ position: 'absolute', top: 14, left: 14, padding: '5px 10px', background: 'rgba(251,249,245,0.95)' }}>
           <StatusChip status={listing.status} />
         </div>
@@ -233,23 +229,10 @@ function LandingB() {
   const t = useTheme();
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
-      {/* Slim emerald colophon strip */}
-      <div style={{
-        background: t.palette.emeraldDeep, color: 'rgba(255,255,255,0.85)',
-        padding: '12px clamp(20px, 5vw, 72px)',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12,
-        fontFamily: t.eyebrowFont,
-        fontSize: 10, fontWeight: 500, letterSpacing: '0.3em', textTransform: 'uppercase',
-      }}>
-        <span>The Spring Index · Volume xii</span>
-        <span className="tw-colophon-mid">Private Real Estate · Michigan</span>
-        <span>Est. 2012</span>
-      </div>
-
       {/* HERO */}
       <div style={{ position: 'relative', minHeight: 880, background: t.palette.emerald }}>
-        <Photo label="HERO — LAKEFRONT ESTATE, CHARLEVOIX, MI" tone="dusk" height={880} style={{ position: 'absolute', inset: 0 }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(8,42,32,0.65) 0%, rgba(8,42,32,0.15) 35%, rgba(8,42,32,0) 60%, rgba(8,42,32,0.85) 100%)' }} />
+        <Photo label="HERO · INTERIOR — BIRMINGHAM" tone="dusk" height={880} src={PHOTOS.livingMarble} style={{ position: 'absolute', inset: 0 }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(8,42,32,0.85) 0%, rgba(8,42,32,0.55) 35%, rgba(8,42,32,0.45) 60%, rgba(8,42,32,0.92) 100%)' }} />
         <div style={{ position: 'relative', zIndex: 2 }}>
           <TopNav dark={true} />
         </div>
@@ -258,20 +241,19 @@ function LandingB() {
           alignItems: 'center', justifyContent: 'center', padding: 'clamp(96px, 12vw, 120px) clamp(20px, 5vw, 72px) clamp(64px, 8vw, 96px)',
           zIndex: 2, textAlign: 'center', color: '#fff',
         }}>
-          <Eyebrow color={t.accentSoft}>An Editorial Approach to Michigan Real Estate</Eyebrow>
           <h1 style={{
             fontFamily: t.fonts.display, fontWeight: 300,
             fontSize: 'clamp(44px, 9.2vw, 132px)', lineHeight: 0.94, letterSpacing: '-0.024em',
-            margin: '36px 0 0', maxWidth: 1100,
+            margin: 0, maxWidth: 1100,
           }}>
-            Quiet houses, <em style={{ fontStyle: 'italic', fontWeight: 400 }}>loud</em> intentions.
+            Real estate, <em style={{ fontStyle: 'italic', fontWeight: 400 }}>reimagined.</em>
           </h1>
           <p style={{
             fontFamily: t.fonts.display, fontStyle: 'italic', fontWeight: 400,
-            fontSize: 'clamp(16px, 1.7vw, 22px)', lineHeight: 1.5, maxWidth: 640, margin: '32px auto 0',
+            fontSize: 'clamp(16px, 1.7vw, 22px)', lineHeight: 1.5, maxWidth: 660, margin: '32px auto 0',
             color: 'rgba(255,255,255,0.88)',
           }}>
-            Tawny & Co. represents a small portfolio of considered coastal homes — and the equally considered people who live in them.
+            Tawny & Co. is the practice of Tawny Walker — a Michigan agent, investor, and design-driven renovator transforming overlooked properties into homes that leave a lasting impression.
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginTop: 48, flexWrap: 'wrap' }}>
             <Button to={SCROLL_TO_INQUIRY} variant="on-dark-primary">{t.ctaPrimary}</Button>
@@ -285,47 +267,49 @@ function LandingB() {
           fontFamily: t.eyebrowFont, fontSize: 10, fontWeight: 500,
           letterSpacing: '0.28em', textTransform: 'uppercase',
         }}>
-          <span>§ Tawny Walker, Principal · License {STUDIO.license}</span>
-          <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 14, letterSpacing: 'normal', textTransform: 'none' }}>Scroll for the Spring book ↓</span>
-          <span>Birmingham · Charlevoix · Mackinac Island</span>
+          <span>§ Tawny Walker · {STUDIO.brokeredBy}</span>
+          <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 14, letterSpacing: 'normal', textTransform: 'none' }}>Scroll for current work ↓</span>
+          <span>Metro Detroit · Birmingham · Bloomfield Hills</span>
         </div>
       </div>
 
       {/* INTRO — centered, two columns */}
       <div style={{ padding: 'clamp(64px, 11vw, 160px) clamp(20px, 5vw, 72px)' }}>
         <div style={{ textAlign: 'center', marginBottom: 'clamp(40px, 6vw, 80px)' }}>
-          <Eyebrow>§ 01 — On the practice</Eyebrow>
+          <Eyebrow>§ 01 — The practice</Eyebrow>
           <h2 style={{
             fontFamily: t.fonts.display, fontWeight: 400,
             fontSize: 'clamp(34px, 5.2vw, 72px)', lineHeight: 1.05, letterSpacing: '-0.02em',
             color: t.palette.emerald, margin: '24px auto 0', maxWidth: 1020,
           }}>
-            A boutique of <em style={{ fontStyle: 'italic' }}>one,</em><br />by deliberate design.
+            Agent. Investor.<br /><em style={{ fontStyle: 'italic' }}>Renovator.</em>
           </h2>
           <div style={{ display: 'flex', justifyContent: 'center', marginTop: 40 }}>
             <Rule />
           </div>
         </div>
         <div className="tw-listings-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'clamp(32px, 7vw, 96px)', alignItems: 'start', maxWidth: 1180, margin: '0 auto' }}>
-          <div><Photo label="PORTRAIT — TAWNY WALKER · STUDIO" tone="warm" height={620} /></div>
+          <div style={{ position: 'relative', width: '100%', aspectRatio: '7 / 8.5', background: '#fff' }}>
+            <Photo label="PORTRAIT — TAWNY WALKER" tone="warm" height="100%" src={PHOTOS.portraitWhite} fit="contain" bg="#fff" />
+          </div>
           <div style={{ paddingTop: 24 }}>
             <p style={{
               fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 'clamp(20px, 2.2vw, 26px)',
               lineHeight: 1.45, color: t.palette.emerald, margin: 0, fontWeight: 400,
             }}>
-              Tawny Walker has spent fourteen years placing families, founders, and second-home buyers into the houses that suit them.
+              Tawny Walker is a Michigan real estate professional recognized for an elevated aesthetic and a strategic, design-driven approach to the work — transforming overlooked properties into highly desirable homes.
             </p>
             <p style={{ fontSize: 16, lineHeight: 1.75, color: t.fgMuted, margin: '28px 0 0' }}>
-              From low-key bungalows in Ann Arbor to lakefront estates along the eastern lakefronts of Michigan, she works alone — by design — so every client receives the same quiet attention she would give a close relative.
+              Whether representing clients, sourcing investment properties, or overseeing a renovation from concept to completion, Tawny brings refined vision and hands-on expertise to every detail.
             </p>
             <p style={{ fontSize: 16, lineHeight: 1.75, color: t.fgMuted, margin: '20px 0 0' }}>
-              The studio represents roughly twenty {t.listingNoun} each year. Most arrive by referral. None are listed twice.
+              Anchored in Birmingham; active across Metro Detroit. {STUDIO.brokeredBy}.
             </p>
-            <div className="tw-stats-row" style={{ marginTop: 'clamp(36px, 5vw, 56px)', paddingTop: 32, borderTop: `1px solid ${t.line}`, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'clamp(16px, 2vw, 32px)' }}>
-              {STATS.map(s => (
-                <div key={s.l}>
-                  <div style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(28px, 3.2vw, 40px)', color: t.palette.emerald, lineHeight: 1 }}>{s.n}</div>
-                  <div style={{ fontFamily: t.eyebrowFont, fontSize: 9.5, fontWeight: 600, letterSpacing: '0.26em', textTransform: 'uppercase', color: t.fgFaint, marginTop: 10 }}>{s.l}</div>
+            <div className="tw-stats-row" style={{ marginTop: 'clamp(36px, 5vw, 56px)', paddingTop: 32, borderTop: `1px solid ${t.line}`, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'clamp(16px, 2vw, 24px)' }}>
+              {PILLARS.map(s => (
+                <div key={s.h}>
+                  <div style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(18px, 2vw, 22px)', color: t.palette.emerald, lineHeight: 1.15 }}>{s.h}</div>
+                  <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 13.5, color: t.fgFaint, marginTop: 6 }}>{s.s}</div>
                 </div>
               ))}
             </div>
@@ -424,7 +408,7 @@ function LandingB() {
               One <em style={{ fontStyle: 'italic' }}>form,</em><br />four paths in.
             </h2>
             <p style={{ fontSize: 16, lineHeight: 1.7, color: 'rgba(248,245,238,0.78)', maxWidth: 540, marginTop: 32 }}>
-              Whether you are buying, selling, investing, or visiting for a season — the studio's intake is the same short form. Tawny answers personally, within one business day.
+              Whether you are buying, selling, investing, or have a property to renovate — the inquiry begins with the same short form. Tawny answers personally, within one business day.
             </p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
@@ -458,7 +442,7 @@ function FeaturedBigB({ listing, num }) {
   return (
     <Link to={`/listings/${listing.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', background: '#fff', border: `1px solid ${t.line}` }}>
       <div style={{ position: 'relative' }}>
-        <Photo label={`${listing.addr.toUpperCase()}`} tone={listing.tone} height={620} />
+        <Photo label={`${listing.addr.toUpperCase()}`} tone={listing.tone} height={620} src={listing.img} />
         <div style={{ position: 'absolute', top: 20, left: 20, padding: '6px 12px', background: '#fff' }}>
           <StatusChip status={listing.status} />
         </div>
@@ -484,7 +468,7 @@ function FeaturedSmallB({ listing }) {
   return (
     <Link to={`/listings/${listing.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', background: '#fff', border: `1px solid ${t.line}` }}>
       <div style={{ position: 'relative' }}>
-        <Photo label={listing.addr.toUpperCase()} tone={listing.tone} height={250} />
+        <Photo label={listing.addr.toUpperCase()} tone={listing.tone} height={250} src={listing.img} />
         <div style={{ position: 'absolute', top: 14, left: 14, padding: '5px 10px', background: '#fff' }}>
           <StatusChip status={listing.status} />
         </div>

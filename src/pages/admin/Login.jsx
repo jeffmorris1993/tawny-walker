@@ -2,15 +2,16 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTheme } from '../../theme/DirectionContext';
 import Wordmark from '../../components/Wordmark';
-import Photo from '../../components/Photo';
+import Photo, { PHOTOS } from '../../components/Photo';
 import Eyebrow from '../../components/Eyebrow';
 import { STUDIO } from '../../data/listings';
 
-// Studio · Private login. Split layout: left identity panel, right form.
-// Same form schema in both directions — visuals diverge through the theme.
+// Private admin login. Split layout: left identity panel with real photography,
+// right form. Same form schema in both directions — visuals diverge through
+// the theme.
 
-const FOOTER_LICENSE = '© 2026 Tawny & Co. · License #6505398123';
-const FOOTER_NOTE = 'Studio access only. All activity is logged.';
+const FOOTER_LICENSE = `© 2026 Tawny & Co. · ${STUDIO.brokeredBy}`;
+const FOOTER_NOTE = 'Private admin only. All activity is logged.';
 
 function FormField({ label, value, onChange, type = 'text', display, trailing, mono = false, large = false }) {
   const t = useTheme();
@@ -57,7 +58,7 @@ function FormField({ label, value, onChange, type = 'text', display, trailing, m
 function LoginA() {
   const t = useTheme();
   const navigate = useNavigate();
-  const [email] = useState('tawny@tawnyandco.com');
+  const [email] = useState('TAWNYwalker@WeAreDobi.com');
   const [password] = useState('••••••••••');
 
   return (
@@ -69,7 +70,7 @@ function LoginA() {
       <div className="tw-login-side" style={{
         width: '50%', position: 'relative', overflow: 'hidden', minHeight: 700,
       }}>
-        <Photo label="STUDIO · INTERIOR · BIRMINGHAM" tone="dusk" height="100%" />
+        <Photo label="BIRMINGHAM · METRO DETROIT" tone="dusk" height="100%" src={PHOTOS.livingMarble} />
         <div style={{
           position: 'absolute', inset: 0,
           background: 'linear-gradient(180deg, rgba(27,27,26,0) 0%, rgba(27,27,26,0.45) 60%, rgba(27,27,26,0.65) 100%)',
@@ -83,14 +84,14 @@ function LoginA() {
             fontFamily: t.eyebrowFont,
             fontSize: 9.5, letterSpacing: '0.32em', textTransform: 'uppercase',
             color: 'rgba(255,255,255,0.7)',
-          }}>The Studio · Private</div>
+          }}>Private · Admin</div>
         </div>
         <div className="tw-login-quote" style={{ position: 'absolute', left: 56, right: 56, bottom: 56 }}>
           <div style={{
             fontFamily: t.fonts.display, fontStyle: 'italic',
             fontSize: 11, letterSpacing: '0.24em', textTransform: 'uppercase',
             color: 'rgba(255,255,255,0.7)',
-          }}>— A note from the studio</div>
+          }}>— In her own words</div>
           <p style={{
             marginTop: 14,
             fontFamily: t.fonts.display, fontWeight: 400,
@@ -143,7 +144,7 @@ function LoginA() {
             fontSize: 'clamp(17px, 1.6vw, 21px)', color: t.fgMuted,
             margin: '12px 0 0', maxWidth: 460, lineHeight: 1.5,
           }}>
-            Enter the studio to review today's leads, compose listings, and continue the correspondence already in motion.
+            Sign in to review today's leads, compose listings, and continue the correspondence already in motion.
           </p>
         </div>
 
@@ -175,7 +176,7 @@ function LoginA() {
               cursor: 'pointer',
             }}
           >
-            Enter The Studio
+            Sign In
             <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 22, letterSpacing: 0 }}>→</span>
           </button>
         </div>
@@ -200,7 +201,7 @@ function LoginA() {
 function LoginB() {
   const t = useTheme();
   const navigate = useNavigate();
-  const [email] = useState('tawny@tawnyandco.com');
+  const [email] = useState('TAWNYwalker@WeAreDobi.com');
   const [password] = useState('••••••••••');
 
   return (
@@ -235,7 +236,7 @@ function LoginB() {
               fontFamily: t.eyebrowFont,
               fontSize: 9.5, fontWeight: 600, letterSpacing: '0.32em', textTransform: 'uppercase',
               color: t.palette.goldSoft,
-            }}>The Studio · Private</div>
+            }}>Private · Admin</div>
           </div>
           <span style={{
             padding: '7px 14px', border: `1px solid ${t.palette.gold}`,
@@ -271,13 +272,13 @@ function LoginB() {
               fontFamily: t.fonts.display, fontWeight: 400,
               fontSize: 'clamp(22px, 2.4vw, 30px)', color: '#FFFFFF',
               marginTop: 10, lineHeight: 1.2, maxWidth: 340,
-            }}>A quiet room for the studio's quiet work.</div>
+            }}>A quiet room for considered work.</div>
           </div>
         </div>
 
         {/* photo strip */}
         <div className="tw-login-photo" style={{ flex: 1, position: 'relative', minHeight: 160 }}>
-          <Photo label="STUDIO · BIRMINGHAM · OLD WOODWARD" tone="dusk" height="100%" />
+          <Photo label="BIRMINGHAM · METRO DETROIT" tone="dusk" height="100%" src={PHOTOS.livingMarble} />
         </div>
 
         {/* quote */}
@@ -305,7 +306,7 @@ function LoginB() {
         display: 'flex', flexDirection: 'column',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
-          <Eyebrow>Sign in · Studio access</Eyebrow>
+          <Eyebrow>Sign in · Private admin</Eyebrow>
           <span style={{
             fontFamily: t.eyebrowFont,
             fontSize: 10, fontWeight: 500, letterSpacing: '0.22em', textTransform: 'uppercase',
@@ -332,7 +333,7 @@ function LoginB() {
             fontSize: 'clamp(17px, 1.6vw, 21px)', color: t.fgMuted,
             margin: '12px 0 0', maxWidth: 460, lineHeight: 1.5,
           }}>
-            Enter the studio to review today's leads, compose residences, and continue the correspondence already in motion.
+            Sign in to review today's leads, compose residences, and continue the correspondence already in motion.
           </p>
         </div>
 
@@ -364,7 +365,7 @@ function LoginB() {
               cursor: 'pointer',
             }}
           >
-            Enter The Studio
+            Sign In
             <span style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: 22, letterSpacing: 0 }}>→</span>
           </button>
         </div>

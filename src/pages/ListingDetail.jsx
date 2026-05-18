@@ -1,6 +1,6 @@
 import { Link, useParams, Navigate } from 'react-router-dom';
 import { useTheme } from '../theme/DirectionContext';
-import Photo from '../components/Photo';
+import Photo, { PHOTOS } from '../components/Photo';
 import TopNav from '../components/TopNav';
 import SiteFooter from '../components/SiteFooter';
 import Eyebrow from '../components/Eyebrow';
@@ -81,7 +81,7 @@ function ListingDetailA({ L }) {
 
       {/* HERO */}
       <div style={{ padding: '0 clamp(20px, 4.4vw, 64px)' }}>
-        <Photo label={`HERO · ${L.addr.toUpperCase()} · APPROACH`} tone={L.tone} height={'clamp(360px, 50vw, 720px)'} />
+        <Photo label={`HERO · ${L.addr.toUpperCase()} · APPROACH`} tone={L.tone} height={'clamp(360px, 50vw, 720px)'} src={L.img || PHOTOS.livingMarble} />
       </div>
 
       {/* HEAD */}
@@ -291,7 +291,7 @@ function ListingDetailB({ L }) {
 
       {/* HERO */}
       <div style={{ padding: '0 clamp(20px, 5vw, 72px)' }}>
-        <Photo label={`HERO · ${L.addr.toUpperCase()} · APPROACH`} tone={L.tone} height={'clamp(360px, 50vw, 720px)'} />
+        <Photo label={`HERO · ${L.addr.toUpperCase()} · APPROACH`} tone={L.tone} height={'clamp(360px, 50vw, 720px)'} src={L.img || PHOTOS.livingMarble} />
       </div>
 
       {/* HEAD */}
@@ -541,6 +541,17 @@ function AttributeList({ attrs }) {
   );
 }
 
+const GALLERY_PHOTOS = [
+  PHOTOS.kitchenMarbleIsl, // 02 · Great room
+  PHOTOS.kitchenWhite,     // 03 · Kitchen
+  PHOTOS.livingMarble,     // 04 · Primary bath
+  PHOTOS.kitchenModernWood,// 05 · Dining
+  PHOTOS.deck,             // 06 · Shoreline
+  PHOTOS.kitchenWhite,     // 07 · Guest wing
+  PHOTOS.kitchenMarbleIsl, // 08 · Library
+  PHOTOS.deck,             // 09 · Lake from terrace
+];
+
 function Gallery({ tones }) {
   const labels = ['02 · GREAT ROOM', '03 · KITCHEN', '04 · PRIMARY BATH', '05 · DINING', '06 · SHORELINE', '07 · GUEST WING', '08 · LIBRARY', '09 · LAKE FROM TERRACE'];
   const t = useTheme();
@@ -571,20 +582,20 @@ function Gallery({ tones }) {
       </div>
 
       <div className="tw-gallery-row tw-gallery-1" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 16 }}>
-        <Photo label={labels[0]} tone={tones[0]} height={'clamp(280px, 36vw, 520px)'} />
+        <Photo label={labels[0]} tone={tones[0]} height={'clamp(280px, 36vw, 520px)'} src={GALLERY_PHOTOS[0]} />
         <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', gap: 16 }}>
-          <Photo label={labels[1]} tone={tones[1]} height={'clamp(130px, 17.5vw, 252px)'} />
-          <Photo label={labels[2]} tone={tones[2]} height={'clamp(130px, 17.5vw, 252px)'} />
+          <Photo label={labels[1]} tone={tones[1]} height={'clamp(130px, 17.5vw, 252px)'} src={GALLERY_PHOTOS[1]} />
+          <Photo label={labels[2]} tone={tones[2]} height={'clamp(130px, 17.5vw, 252px)'} src={GALLERY_PHOTOS[2]} />
         </div>
       </div>
       <div className="tw-gallery-row tw-gallery-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 16 }}>
-        <Photo label={labels[3]} tone={tones[3]} height={'clamp(180px, 22vw, 320px)'} />
-        <Photo label={labels[4]} tone={tones[4]} height={'clamp(180px, 22vw, 320px)'} />
-        <Photo label={labels[5]} tone={tones[5]} height={'clamp(180px, 22vw, 320px)'} />
+        <Photo label={labels[3]} tone={tones[3]} height={'clamp(180px, 22vw, 320px)'} src={GALLERY_PHOTOS[3]} />
+        <Photo label={labels[4]} tone={tones[4]} height={'clamp(180px, 22vw, 320px)'} src={GALLERY_PHOTOS[4]} />
+        <Photo label={labels[5]} tone={tones[5]} height={'clamp(180px, 22vw, 320px)'} src={GALLERY_PHOTOS[5]} />
       </div>
       <div className="tw-gallery-row tw-gallery-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: 16, marginTop: 16 }}>
-        <Photo label={labels[6]} tone={tones[6]} height={'clamp(220px, 29vw, 420px)'} />
-        <Photo label={labels[7]} tone={tones[7]} height={'clamp(220px, 29vw, 420px)'} />
+        <Photo label={labels[6]} tone={tones[6]} height={'clamp(220px, 29vw, 420px)'} src={GALLERY_PHOTOS[6]} />
+        <Photo label={labels[7]} tone={tones[7]} height={'clamp(220px, 29vw, 420px)'} src={GALLERY_PHOTOS[7]} />
       </div>
     </div>
   );
@@ -721,7 +732,7 @@ function RelatedRail({ related }) {
       }}>
         {related.map((l, i) => (
           <Link key={l.id} to={`/listings/${l.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-            <Photo label={l.addr.toUpperCase()} tone={l.tone} height={'clamp(240px, 28vw, 340px)'} />
+            <Photo label={l.addr.toUpperCase()} tone={l.tone} height={'clamp(240px, 28vw, 340px)'} src={l.img} />
             <div style={{ marginTop: 18 }}>
               <Eyebrow color={t.accent}>№ {String(i + 1).padStart(2, '0')}</Eyebrow>
               <div style={{
