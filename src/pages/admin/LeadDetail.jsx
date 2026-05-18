@@ -2,25 +2,26 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../theme/DirectionContext';
 import Eyebrow from '../../components/Eyebrow';
-import StatusChip from '../../components/StatusChip';
 import AdminShell from '../../components/AdminShell';
+import StatusChanger from '../../components/admin/StatusChanger';
+import StudioLog from '../../components/admin/StudioLog';
+import AttachedListings from '../../components/admin/AttachedListings';
 import { LEAD_DETAIL } from '../../data/leads';
 
-// Note: `:id` deep-link is supported by the route but the demo only renders
-// LEAD_DETAIL (Marisol Vega). In production a fetch would resolve `id` to a
-// detail object of the same shape.
+// Demo only renders LEAD_DETAIL (Marisol Vega). In production `:id` would
+// resolve to a detail of the same shape.
 
 export default function LeadDetail() {
   const t = useTheme();
   const isB = t.key === 'B';
   const d = LEAD_DETAIL;
+
   const [note, setNote] = useState(d.studioNote);
+  const [status, setStatus] = useState(d.status);
+  const [attached, setAttached] = useState(d.attached);
 
   const headlineColor = isB ? t.palette.emerald : t.fgPage;
-  const primaryBg = isB ? t.palette.emerald : t.palette.ink;
-  const primaryFg = isB ? '#fff' : t.palette.bone;
-  const secondaryBorder = isB ? t.palette.emerald : t.palette.ink;
-  const secondaryFg = isB ? t.palette.emerald : t.fgPage;
+  const currentLabel = (t.statusLabels[status] || status).toLowerCase();
 
   return (
     <AdminShell>
@@ -64,24 +65,24 @@ export default function LeadDetail() {
             <span>Referred by — {d.referredBy}</span>
           </div>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-end' }}>
-          <StatusChip status={d.status} size="lg" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'flex-end' }}>
+          <div style={{
+            fontFamily: t.eyebrowFont,
+            fontSize: isB ? 9.5 : 9.5,
+            fontWeight: isB ? 600 : 400,
+            letterSpacing: '0.28em', textTransform: 'uppercase',
+            color: t.fgFaint,
+          }}>Currently — <span style={{ color: headlineColor }}>{currentLabel}</span></div>
+          <StatusChanger value={status} onChange={setStatus} />
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            <span style={{
-              padding: '12px 18px', border: `1px solid ${secondaryBorder}`,
-              color: secondaryFg,
+            <button style={{
+              padding: '10px 16px', border: `1px solid ${t.line}`,
+              background: 'transparent', color: t.fgMuted,
               fontFamily: t.eyebrowFont,
-              fontSize: isB ? 10.5 : 10.5, fontWeight: isB ? 600 : 400,
-              letterSpacing: isB ? '0.26em' : '0.24em',
-              textTransform: 'uppercase', cursor: 'pointer',
-            }}>Mark Contacted</span>
-            <span style={{
-              padding: '12px 18px', background: primaryBg, color: primaryFg,
-              fontFamily: t.eyebrowFont,
-              fontSize: isB ? 10.5 : 10.5, fontWeight: isB ? 600 : 400,
-              letterSpacing: isB ? '0.26em' : '0.24em',
-              textTransform: 'uppercase', cursor: 'pointer',
-            }}>Reply →</span>
+              fontSize: isB ? 10 : 10.5,
+              fontWeight: isB ? 600 : 400,
+              letterSpacing: '0.24em', textTransform: 'uppercase', cursor: 'pointer',
+            }}>Archive</button>
           </div>
         </div>
       </div>
@@ -152,49 +153,13 @@ export default function LeadDetail() {
           </div>
 
           <div style={{ marginTop: 32 }}>
-            <Eyebrow>Activity</Eyebrow>
-            <div style={{ marginTop: 18 }}>
-              {d.activity.map((a, i) => (
-                <div key={i} style={{ display: 'flex', gap: 14, padding: '12px 0', borderBottom: `1px solid ${t.lineSoft}` }}>
-                  <span style={{
-                    width: 7, height: 7, borderRadius: '50%',
-                    background: a.highlight ? t.accent : t.fgFaint,
-                    marginTop: 6, flexShrink: 0,
-                  }} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, color: isB ? t.palette.emerald : t.fgPage }}>{a.t}</div>
-                    <div style={{
-                      fontSize: 10.5, color: t.fgFaint,
-                      letterSpacing: '0.06em', marginTop: 2,
-                    }}>{a.when}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <StudioLog items={d.studioLog} />
           </div>
 
-          <div style={{ marginTop: 32, padding: 24, border: `1px solid ${t.line}` }}>
-            <Eyebrow>Suggested listings to surface</Eyebrow>
-            <div style={{ marginTop: 16 }}>
-              {d.suggested.map(s => (
-                <div key={s.t} style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
-                  padding: '12px 0', borderBottom: `1px solid ${t.lineSoft}`,
-                }}>
-                  <div>
-                    <div style={{
-                      fontFamily: t.fonts.display, fontSize: 17,
-                      color: isB ? t.palette.emerald : t.fgPage,
-                    }}>{s.t}</div>
-                    <div style={{ fontSize: 10.5, color: t.fgFaint, letterSpacing: '0.06em' }}>
-                      {s.sub} · {t.statusLabels[s.subStatus] || s.subStatus}
-                    </div>
-                  </div>
-                  <span style={{ fontFamily: t.fonts.display, fontSize: 16, color: t.fgMuted }}>{s.price}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <AttachedListings
+            attached={attached}
+            onRemove={id => setAttached(list => list.filter(a => a.id !== id))}
+          />
         </aside>
       </div>
 

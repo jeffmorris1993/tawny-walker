@@ -42,36 +42,11 @@ function FormInput({ label, value, onChange, placeholder, dropdown }) {
   );
 }
 
-function Toggle({ label, on, onToggle }) {
-  const t = useTheme();
-  const isB = t.key === 'B';
-  return (
-    <div onClick={onToggle} style={{
-      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      padding: '10px 0', borderBottom: `1px solid ${t.lineSoft}`, cursor: 'pointer',
-    }}>
-      <span style={{ fontSize: 12.5, color: isB ? t.palette.emerald : t.fgPage }}>{label}</span>
-      <span style={{
-        width: 30, height: 16,
-        background: on ? (isB ? t.palette.emerald : t.palette.ink) : t.line,
-        borderRadius: 8, position: 'relative', flexShrink: 0, transition: 'background 0.15s',
-      }}>
-        <span style={{
-          position: 'absolute', top: 2, left: on ? 16 : 2,
-          width: 12, height: 12, background: '#fff', borderRadius: '50%',
-          transition: 'left 0.15s',
-        }} />
-      </span>
-    </div>
-  );
-}
-
 export default function AddListing() {
   const t = useTheme();
   const isB = t.key === 'B';
   const navigate = useNavigate();
   const [form, setForm] = useState({ ...DRAFT_LISTING });
-  const [dist, setDist] = useState({ index: true, buyers: true, cobroke: false, offmarket: false });
 
   const set = (k) => (v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -268,15 +243,6 @@ export default function AddListing() {
             </div>
           </div>
 
-          <div style={{ marginTop: 28, padding: 18, border: `1px solid ${t.line}` }}>
-            <Eyebrow>Distribution</Eyebrow>
-            <div style={{ marginTop: 14 }}>
-              <Toggle label="Studio Index (public)"          on={dist.index}     onToggle={() => setDist(d => ({ ...d, index: !d.index }))} />
-              <Toggle label="Send to active buyer list (38)" on={dist.buyers}    onToggle={() => setDist(d => ({ ...d, buyers: !d.buyers }))} />
-              <Toggle label="Co-broke network"               on={dist.cobroke}   onToggle={() => setDist(d => ({ ...d, cobroke: !d.cobroke }))} />
-              <Toggle label="Off-market only"                on={dist.offmarket} onToggle={() => setDist(d => ({ ...d, offmarket: !d.offmarket }))} />
-            </div>
-          </div>
         </aside>
       </div>
 

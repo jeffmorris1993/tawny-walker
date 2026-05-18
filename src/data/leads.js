@@ -47,14 +47,17 @@ export const LEAD_DETAIL = {
   mandateNotes: '"Replacement property must close by Sep 14. Open to portfolios of 2–3 SFRs if combined basis fits. Will not consider new construction."',
   studioNote: 'Worth a 30-min call this week. Mention the Whitney penthouse comp — she does not see the basis on it yet. Bring Brookmark Holdings into the same conversation if 1031 timing aligns.',
   studioNoteSavedAt: 'May 16, 10:08 AM',
-  activity: [
-    { t: 'Intake received',         when: 'Today · 9:42 AM',  highlight: true },
-    { t: 'Email opened from studio', when: 'Today · 9:46 AM' },
-    { t: 'Note added by TW',         when: 'Today · 10:08 AM' },
+  // Studio log — only events that happened *inside* the studio (no external
+  // signals like "email opened"). One italic entry per principal action.
+  studioLog: [
+    { t: 'Intake received',           when: 'Today · 9:42 AM',  highlight: true },
+    { t: 'Studio note edited — TW',   when: 'Today · 10:08 AM' },
   ],
-  suggested: [
-    { t: 'Penthouse Three',  sub: 'The Whitney', subStatus: 'Pending', price: '$12.4M' },
-    { t: 'Lakeside Reach',   sub: '7240 Beach Drive', subStatus: 'Active', price: '$6.8M' },
+  // Attached listings — a private record of what TW has shared with this lead.
+  // Each is a real listing reference (so the thumbnail tone resolves through
+  // theme.photoPalettes).
+  attached: [
+    { id: 'lakeside-reach', name: 'Lakeside Reach', tone: 'cool', sharedAt: 'May 13' },
   ],
 };
 
@@ -75,13 +78,17 @@ export const DRAFT_LISTING = {
 };
 
 // Sidebar nav config — labels are direction-aware via theme.adminNav.
-export const ADMIN_NAV_KEYS = ['Leads', 'Listings', 'Sold Archive', 'Settings'];
+// Pared back to just the two screens that ship: Leads inbox + Listings/Residences.
+export const ADMIN_NAV_KEYS = ['Leads', 'Listings'];
 
 export const ADMIN_NAV_COUNTS = {
   Leads: '12',
   Listings: '9',
-  'Sold Archive': '184',
 };
+
+// The four statuses a lead can move through; rendered as a segmented control
+// on the LeadDetail page.
+export const LEAD_STATUS_SEQUENCE = ['New', 'Contacted', 'Qualified', 'Cold'];
 
 // Status filter rows for ListingsManager. Labels resolve via theme.statusLabels.
 export const LISTING_FILTERS = ['All', 'Active', 'Pending', 'Sold', 'Draft'];

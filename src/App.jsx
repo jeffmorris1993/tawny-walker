@@ -10,6 +10,7 @@ import LeadsInbox from './pages/admin/LeadsInbox';
 import LeadDetail from './pages/admin/LeadDetail';
 import ListingsManager from './pages/admin/ListingsManager';
 import AddListing from './pages/admin/AddListing';
+import Login from './pages/admin/Login';
 
 // The A/B toggle now appears on admin too, since the studio chrome re-skins
 // per direction. Hide only if we ever route to something explicitly chromeless.
@@ -53,6 +54,7 @@ export default function App() {
           <Route path="/listings" element={<Listings />} />
           <Route path="/inquiry" element={<Inquiry />} />
           <Route path="/about" element={<About />} />
+          <Route path="/admin/login" element={<Login />} />
           <Route path="/admin" element={<LeadsInbox />} />
           <Route path="/admin/lead/:id" element={<LeadDetail />} />
           <Route path="/admin/listings" element={<ListingsManager />} />
