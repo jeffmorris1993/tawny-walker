@@ -8,7 +8,8 @@ import Eyebrow from '../components/Eyebrow';
 import StatusChip from '../components/StatusChip';
 import Button from '../components/Button';
 import Rule from '../components/Rule';
-import { LISTINGS, STUDIO } from '../data/listings';
+import { STUDIO } from '../data/listings';
+import { useListings } from '../lib/queries';
 
 // Each listing card links into its detail page.
 const linkStyle = { textDecoration: 'none', color: 'inherit', display: 'block' };
@@ -17,24 +18,25 @@ const linkStyle = { textDecoration: 'none', color: 'inherit', display: 'block' }
 // 3 across, 2 stacked + big). The skin per listing card differs.
 
 function useFiltered() {
+  const { data: LISTINGS, loading } = useListings();
   const [filter, setFilter] = useState('All');
   const filtered = useMemo(
     () => filter === 'All' ? LISTINGS : LISTINGS.filter(l => l.status === filter),
-    [filter],
+    [filter, LISTINGS],
   );
   const counts = useMemo(() => ({
     All: LISTINGS.length,
     Active: LISTINGS.filter(l => l.status === 'Active').length,
     Pending: LISTINGS.filter(l => l.status === 'Pending').length,
     Sold: LISTINGS.filter(l => l.status === 'Sold').length,
-  }), []);
-  return { filter, setFilter, filtered, counts };
+  }), [LISTINGS]);
+  return { filter, setFilter, filtered, counts, all: LISTINGS, loading };
 }
 
 // ─── DIRECTION A ────────────────────────────────────────────────────────────
 function ListingsA() {
   const t = useTheme();
-  const { filter, setFilter, filtered, counts } = useFiltered();
+  const { filter, setFilter, filtered, counts, all: LISTINGS } = useFiltered();
 
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
@@ -63,12 +65,12 @@ function ListingsA() {
         )}
       </div>
 
-      <div style={{ padding: '96px clamp(24px, 4.4vw, 64px)', borderTop: `1px solid ${t.line}`, background: t.bgPanel, textAlign: 'center' }}>
+      <div id="archive" style={{ padding: '96px clamp(24px, 4.4vw, 64px)', borderTop: `1px solid ${t.line}`, background: t.bgPanel, textAlign: 'center' }}>
         <Eyebrow>The Sold Archive</Eyebrow>
         <h2 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(40px, 4.4vw, 64px)', margin: '20px 0 28px', letterSpacing: '-0.018em' }}>
           {STUDIO.totalSold} <em style={{ fontStyle: 'italic' }}>previous</em> placements.
         </h2>
-        <Button variant="secondary">View the Sold Archive</Button>
+        <Button variant="secondary" onClick={() => { setFilter('Sold'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>View the Sold Archive</Button>
       </div>
 
       <SiteFooter />
@@ -100,27 +102,38 @@ function FilterBarA({ filter, setFilter, counts }) {
 }
 
 function FullEditorialA({ listings }) {
+  if (listings.length === 0) return null;
+  if (listings.length < 7) {
+    // Compact fallback: simple 3-up grid until we have a full set.
+    return (
+      <div className="tw-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 40 }}>
+        {listings.map((l, i) => <ListingCardStdA key={l.id} listing={l} num={String(i + 1).padStart(2, '0')} />)}
+      </div>
+    );
+  }
   return (
     <>
       <div className="tw-big-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 40, marginBottom: 96 }}>
         <ListingCardBigA listing={listings[0]} num="01" />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
-          <ListingCardStdA listing={listings[1]} num="02" />
-          <ListingCardStdA listing={listings[2]} num="03" />
+          {listings[1] && <ListingCardStdA listing={listings[1]} num="02" />}
+          {listings[2] && <ListingCardStdA listing={listings[2]} num="03" />}
         </div>
       </div>
       <div className="tw-three-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 40, marginBottom: 96 }}>
-        <ListingCardStdA listing={listings[3]} num="04" />
-        <ListingCardStdA listing={listings[4]} num="05" />
-        <ListingCardStdA listing={listings[5]} num="06" />
+        {listings[3] && <ListingCardStdA listing={listings[3]} num="04" />}
+        {listings[4] && <ListingCardStdA listing={listings[4]} num="05" />}
+        {listings[5] && <ListingCardStdA listing={listings[5]} num="06" />}
       </div>
-      <div className="tw-big-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.4fr)', gap: 40 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
-          <ListingCardStdA listing={listings[7]} num="08" />
-          <ListingCardStdA listing={listings[8]} num="09" />
+      {listings[6] && (
+        <div className="tw-big-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.4fr)', gap: 40 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+            {listings[7] && <ListingCardStdA listing={listings[7]} num="08" />}
+            {listings[8] && <ListingCardStdA listing={listings[8]} num="09" />}
+          </div>
+          <ListingCardBigA listing={listings[6]} num="07" archive />
         </div>
-        <ListingCardBigA listing={listings[6]} num="07" archive />
-      </div>
+      )}
     </>
   );
 }
@@ -179,7 +192,7 @@ function ListingCardStdA({ listing, num }) {
 // ─── DIRECTION B ────────────────────────────────────────────────────────────
 function ListingsB() {
   const t = useTheme();
-  const { filter, setFilter, filtered, counts } = useFiltered();
+  const { filter, setFilter, filtered, counts, all: LISTINGS } = useFiltered();
 
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
@@ -216,12 +229,12 @@ function ListingsB() {
         )}
       </div>
 
-      <div style={{ padding: '96px clamp(24px, 5vw, 72px)', borderTop: `1px solid ${t.line}`, background: t.bgPanel, textAlign: 'center' }}>
+      <div id="archive" style={{ padding: '96px clamp(24px, 5vw, 72px)', borderTop: `1px solid ${t.line}`, background: t.bgPanel, textAlign: 'center' }}>
         <Eyebrow>The Sold Archive</Eyebrow>
         <h2 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(40px, 4.7vw, 64px)', margin: '20px 0 32px', letterSpacing: '-0.02em', color: t.palette.emerald, lineHeight: 1.05 }}>
           {STUDIO.totalSold} <em style={{ fontStyle: 'italic' }}>previous</em> placements.
         </h2>
-        <Button variant="secondary">View the Sold Archive</Button>
+        <Button variant="secondary" onClick={() => { setFilter('Sold'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>View the Sold Archive</Button>
       </div>
 
       <SiteFooter />
@@ -259,27 +272,37 @@ function FilterBarB({ filter, setFilter, counts }) {
 }
 
 function FullEditorialB({ listings }) {
+  if (listings.length === 0) return null;
+  if (listings.length < 7) {
+    return (
+      <div className="tw-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 32, marginTop: 56 }}>
+        {listings.map((l, i) => <ListingCardStdB key={l.id} listing={l} num={String(i + 1).padStart(2, '0')} />)}
+      </div>
+    );
+  }
   return (
     <>
       <div className="tw-big-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 40, marginBottom: 72, marginTop: 56 }}>
         <ListingCardBigB listing={listings[0]} num="01" />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
-          <ListingCardStdB listing={listings[1]} num="02" />
-          <ListingCardStdB listing={listings[2]} num="03" />
+          {listings[1] && <ListingCardStdB listing={listings[1]} num="02" />}
+          {listings[2] && <ListingCardStdB listing={listings[2]} num="03" />}
         </div>
       </div>
       <div className="tw-three-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32, marginBottom: 72 }}>
-        <ListingCardStdB listing={listings[3]} num="04" />
-        <ListingCardStdB listing={listings[4]} num="05" />
-        <ListingCardStdB listing={listings[5]} num="06" />
+        {listings[3] && <ListingCardStdB listing={listings[3]} num="04" />}
+        {listings[4] && <ListingCardStdB listing={listings[4]} num="05" />}
+        {listings[5] && <ListingCardStdB listing={listings[5]} num="06" />}
       </div>
-      <div className="tw-big-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.4fr)', gap: 40 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
-          <ListingCardStdB listing={listings[7]} num="08" />
-          <ListingCardStdB listing={listings[8]} num="09" />
+      {listings[6] && (
+        <div className="tw-big-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.4fr)', gap: 40 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+            {listings[7] && <ListingCardStdB listing={listings[7]} num="08" />}
+            {listings[8] && <ListingCardStdB listing={listings[8]} num="09" />}
+          </div>
+          <ListingCardBigB listing={listings[6]} num="07" archive />
         </div>
-        <ListingCardBigB listing={listings[6]} num="07" archive />
-      </div>
+      )}
     </>
   );
 }

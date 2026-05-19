@@ -1,7 +1,8 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../theme/DirectionContext';
 import Wordmark from './Wordmark';
-import { ADMIN_NAV_KEYS, ADMIN_NAV_COUNTS } from '../data/leads';
+import { ADMIN_NAV_KEYS } from '../data/leads';
+import { signOut, useLeads, useListings } from '../lib/queries';
 
 const NAV_PATHS = {
   Leads: '/admin',
@@ -15,8 +16,21 @@ export default function AdminShell({ children }) {
   const isB = t.key === 'B';
   const a = t.admin;
   const { pathname } = useLocation();
+  const navigate = useNavigate();
 
   const activeKey = pathname.startsWith('/admin/listings') ? 'Listings' : 'Leads';
+
+  const { data: leads } = useLeads();
+  const { data: listings } = useListings();
+  const navCounts = {
+    Leads: leads.length || null,
+    Listings: listings.length || null,
+  };
+
+  async function handleSignOut() {
+    await signOut();
+    navigate('/admin/login', { replace: true });
+  }
 
   return (
     <div className="tw-admin-root" style={{
@@ -48,7 +62,7 @@ export default function AdminShell({ children }) {
           {ADMIN_NAV_KEYS.map(key => {
             const isActive = key === activeKey;
             const label = a.navLabels[key] || key;
-            const count = ADMIN_NAV_COUNTS[key];
+            const count = navCounts[key];
             const path = NAV_PATHS[key] || '#';
             const showDot = key === 'Leads';
             return (
@@ -85,8 +99,22 @@ export default function AdminShell({ children }) {
               fontFamily: t.fonts.display, fontStyle: 'italic',
               fontSize: 15, fontWeight: isB ? 500 : 400,
             }}>TW</div>
-            <div style={{ minWidth: 0 }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: 12, color: a.sidebarFg }}>Tawny Walker</div>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                style={{
+                  marginTop: 2,
+                  background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                  fontFamily: t.eyebrowFont,
+                  fontSize: isB ? 9 : 9.5,
+                  fontWeight: isB ? 600 : 400,
+                  letterSpacing: isB ? '0.26em' : '0.2em',
+                  textTransform: 'uppercase',
+                  color: a.sidebarSubLabel,
+                }}
+              >Sign out</button>
             </div>
           </div>
         </div>

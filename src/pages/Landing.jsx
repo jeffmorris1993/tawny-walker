@@ -7,7 +7,8 @@ import Eyebrow from '../components/Eyebrow';
 import StatusChip from '../components/StatusChip';
 import Button from '../components/Button';
 import Rule from '../components/Rule';
-import { LISTINGS, PILLARS, STUDIO } from '../data/listings';
+import { PILLARS, STUDIO } from '../data/listings';
+import { useListings } from '../lib/queries';
 import { InquiryWidget } from './Inquiry';
 
 const SCROLL_TO_INQUIRY = '/#inquiry';
@@ -15,13 +16,14 @@ const SCROLL_TO_INQUIRY = '/#inquiry';
 // ─── DIRECTION A — Warm bone/bronze editorial ───────────────────────────────
 function LandingA() {
   const t = useTheme();
+  const { data: LISTINGS } = useListings();
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
       {/* HERO */}
       <div style={{ position: 'relative', minHeight: 820 }}>
         <Photo label="HERO · INTERIOR — BIRMINGHAM" tone="warm" height={820} src={PHOTOS.livingMarble} style={{ position: 'absolute', inset: 0 }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 35%, rgba(0,0,0,0.25) 60%, rgba(0,0,0,0.75) 100%)' }} />
-        <div style={{ position: 'relative', zIndex: 2 }}>
+        <div style={{ position: 'relative', zIndex: 3 }}>
           <TopNav dark={true} />
         </div>
         <div className="tw-hero-content" style={{ position: 'absolute', left: 'clamp(20px, 4.4vw, 64px)', bottom: 'clamp(40px, 6vw, 100px)', right: 'clamp(20px, 4.4vw, 64px)', color: '#fff', zIndex: 2 }}>
@@ -104,10 +106,10 @@ function LandingA() {
           </Link>
         </div>
         <div className="tw-listings-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 'clamp(24px, 3vw, 40px)' }}>
-          <FeaturedBigA listing={LISTINGS[0]} num="01" />
+          {LISTINGS[0] && <FeaturedBigA listing={LISTINGS[0]} num="01" />}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(24px, 3vw, 40px)' }}>
-            <FeaturedSmallA listing={LISTINGS[1]} />
-            <FeaturedSmallA listing={LISTINGS[2]} />
+            {LISTINGS[1] && <FeaturedSmallA listing={LISTINGS[1]} />}
+            {LISTINGS[2] && <FeaturedSmallA listing={LISTINGS[2]} />}
           </div>
         </div>
       </div>
@@ -210,13 +212,14 @@ function FeaturedSmallA({ listing }) {
 // ─── DIRECTION B — Emerald couture ──────────────────────────────────────────
 function LandingB() {
   const t = useTheme();
+  const { data: LISTINGS } = useListings();
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
       {/* HERO */}
       <div style={{ position: 'relative', minHeight: 880, background: t.palette.emerald }}>
         <Photo label="HERO · INTERIOR — BIRMINGHAM" tone="dusk" height={880} src={PHOTOS.livingMarble} style={{ position: 'absolute', inset: 0 }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(8,42,32,0.95) 0%, rgba(8,42,32,0.88) 35%, rgba(8,42,32,0.85) 60%, rgba(8,42,32,0.97) 100%)' }} />
-        <div style={{ position: 'relative', zIndex: 2 }}>
+        <div style={{ position: 'relative', zIndex: 3 }}>
           <TopNav dark={true} />
         </div>
         <div className="tw-hero-content" style={{
@@ -345,10 +348,10 @@ function LandingB() {
           </div>
         </div>
         <div className="tw-listings-grid" style={{ maxWidth: 1296, margin: '0 auto', display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 'clamp(24px, 3vw, 48px)' }}>
-          <FeaturedBigB listing={LISTINGS[0]} num="01" />
+          {LISTINGS[0] && <FeaturedBigB listing={LISTINGS[0]} num="01" />}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(24px, 3vw, 40px)' }}>
-            <FeaturedSmallB listing={LISTINGS[1]} />
-            <FeaturedSmallB listing={LISTINGS[2]} />
+            {LISTINGS[1] && <FeaturedSmallB listing={LISTINGS[1]} />}
+            {LISTINGS[2] && <FeaturedSmallB listing={LISTINGS[2]} />}
           </div>
         </div>
         <div style={{ textAlign: 'center', marginTop: 'clamp(40px, 5vw, 64px)' }}>

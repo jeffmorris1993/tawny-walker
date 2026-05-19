@@ -28,6 +28,7 @@ export default function TopNav({ active, dark = false }) {
         padding: isB ? '28px 72px' : '24px 64px',
         borderBottom: `1px solid ${line}`,
         background: bg,
+        position: 'relative', zIndex: 10,
       }}>
         <Link to="/" style={{ textDecoration: 'none' }}>
           <Wordmark size={isB ? 24 : 22} light={dark} sub={false} />
@@ -50,14 +51,15 @@ export default function TopNav({ active, dark = false }) {
           ))}
         </nav>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <span style={{
+          <a href={`tel:${STUDIO.phone.replace(/[^\d+]/g, '')}`} style={{
             fontFamily: t.eyebrowFont,
             fontSize: isB ? 11 : 11.5,
             fontWeight: isB ? 500 : 400,
             letterSpacing: isB ? '0.18em' : '0.2em',
             textTransform: 'uppercase',
             color: muted,
-          }}>{STUDIO.phone}</span>
+            textDecoration: 'none',
+          }}>{STUDIO.phone}</a>
           <Link to="/#inquiry" style={{ textDecoration: 'none' }}>
             <span style={{
               padding: isB ? '11px 22px' : '10px 18px',

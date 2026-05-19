@@ -5,19 +5,31 @@ import Photo from '../../components/Photo';
 import Eyebrow from '../../components/Eyebrow';
 import StatusChip from '../../components/StatusChip';
 import AdminShell from '../../components/AdminShell';
-import { LISTINGS } from '../../data/listings';
-import { LISTING_FILTERS, LISTING_FILTER_COUNTS, DRAFT_LISTING } from '../../data/leads';
+import { LISTING_FILTERS, DRAFT_LISTING } from '../../data/leads';
+import { useListings } from '../../lib/queries';
 
 export default function ListingsManager() {
   const t = useTheme();
   const isB = t.key === 'B';
   const [filter, setFilter] = useState('All');
+  const { data: LISTINGS } = useListings();
+
+  const counts = useMemo(() => {
+    const out = { All: LISTINGS.length, Draft: 0 };
+    for (const status of ['Active', 'Pending', 'Sold', 'Draft']) {
+      out[status] = LISTINGS.filter(l => l.status === status).length;
+    }
+    return out;
+  }, [LISTINGS]);
 
   const filtered = useMemo(() => {
-    if (filter === 'All' || filter === 'Draft') return LISTINGS.slice(0, 6);
+    if (filter === 'All') return LISTINGS;
+    if (filter === 'Draft') return LISTINGS.filter(l => l.status === 'Draft');
     return LISTINGS.filter(l => l.status === filter);
-  }, [filter]);
+  }, [filter, LISTINGS]);
 
+  const activeYTD = counts.Active || 0;
+  const closedYTD = counts.Sold || 0;
   const headlineColor = isB ? t.palette.emerald : t.fgPage;
   const primaryBg = isB ? t.palette.emerald : t.palette.ink;
   const primaryFg = isB ? '#fff' : t.palette.bone;
@@ -29,7 +41,7 @@ export default function ListingsManager() {
         paddingBottom: 32, borderBottom: `1px solid ${t.line}`, flexWrap: 'wrap', gap: 16,
       }}>
         <div>
-          <Eyebrow>The Index · 9 active · 2 {isB ? 'closed' : 'sold'} YTD</Eyebrow>
+          <Eyebrow>The Index · {activeYTD} active · {closedYTD} {isB ? 'closed' : 'sold'} YTD</Eyebrow>
           <h1 style={{
             fontFamily: t.fonts.display, fontWeight: 400,
             fontSize: 'clamp(36px, 3.9vw, 56px)', margin: '14px 0 0',
@@ -56,7 +68,7 @@ export default function ListingsManager() {
           {LISTING_FILTERS.map(key => {
             const active = filter === key;
             const label = t.statusLabels[key] || key;
-            const count = LISTING_FILTER_COUNTS[key];
+            const count = counts[key] ?? 0;
             return (
               <span key={key} onClick={() => setFilter(key)} style={{
                 fontFamily: t.eyebrowFont,
