@@ -1,6 +1,66 @@
 import { Link } from 'react-router-dom';
-import { useTheme } from '../theme/DirectionContext';
+import { useTheme, useDirection } from '../theme/DirectionContext';
 import Photo, { PHOTOS } from '../components/Photo';
+
+const HERO_VIDEO_SRC = '/videos/hero.mp4';
+
+const HERO_VIDEO_BG_COLORS = {
+  emerald: '#0B3D2E',
+  cream: '#F6F2EA',
+};
+
+function HeroVideoSection() {
+  const t = useTheme();
+  const isB = t.key === 'B';
+  const { heroVideoBg } = useDirection();
+  const frameColor = HERO_VIDEO_BG_COLORS[heroVideoBg] || HERO_VIDEO_BG_COLORS.emerald;
+  const isCream = heroVideoBg === 'cream';
+  return (
+    <div style={{ background: frameColor }}>
+      <TopNav dark={!isCream} />
+      <div style={{ padding: 'clamp(20px, 3vw, 36px) clamp(20px, 4.4vw, 64px) clamp(28px, 4vw, 56px)' }}>
+        <div style={{
+          position: 'relative', width: '100%',
+          aspectRatio: '16 / 9',
+          maxHeight: 'calc(100vh - 200px)',
+          minHeight: 360,
+          overflow: 'hidden',
+          background: '#1B1B1A',
+        }}>
+          <video
+            src={HERO_VIDEO_SRC}
+            autoPlay loop muted playsInline preload="auto"
+            aria-label="Hero — Tawny Walker"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'scale(1.18)', transformOrigin: 'center' }}
+          />
+          <div className="tw-hero-video-overlay" style={{
+            position: 'absolute',
+            left: 'clamp(20px, 4vw, 56px)',
+            right: 'clamp(20px, 4vw, 56px)',
+            bottom: 'clamp(20px, 4vw, 56px)',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
+            gap: 'clamp(20px, 3vw, 40px)', flexWrap: 'wrap',
+            pointerEvents: 'none',
+          }}>
+            <h1 style={{
+              fontFamily: t.fonts.display, fontWeight: 300,
+              fontSize: 'clamp(36px, 6.5vw, 104px)', lineHeight: 0.95,
+              letterSpacing: '-0.022em', margin: 0, color: '#fff',
+              maxWidth: 720, flex: '1 1 320px',
+              textShadow: '0 2px 18px rgba(0,0,0,0.4)',
+            }}>
+              Real estate, <em style={{ fontStyle: 'italic', fontWeight: isB ? 400 : 300 }}>reimagined.</em>
+            </h1>
+            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', flex: '0 0 auto', pointerEvents: 'auto' }}>
+              <Button to="/listings" variant="on-dark-outline">View {t.indexNoun}</Button>
+              <Button to={SCROLL_TO_INQUIRY} variant="on-dark-primary">{t.ctaPrimary}</Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 import TopNav from '../components/TopNav';
 import SiteFooter from '../components/SiteFooter';
 import Eyebrow from '../components/Eyebrow';
@@ -16,31 +76,34 @@ const SCROLL_TO_INQUIRY = '/#inquiry';
 // ─── DIRECTION A — Warm bone/bronze editorial ───────────────────────────────
 function LandingA() {
   const t = useTheme();
+  const { heroMedia } = useDirection();
   const { data: LISTINGS } = useListings();
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
       {/* HERO */}
-      <div style={{ position: 'relative', minHeight: 820 }}>
-        <Photo label="HERO · INTERIOR — BIRMINGHAM" tone="warm" height={820} src={PHOTOS.livingMarble} style={{ position: 'absolute', inset: 0 }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 35%, rgba(0,0,0,0.25) 60%, rgba(0,0,0,0.75) 100%)' }} />
-        <div style={{ position: 'relative', zIndex: 3 }}>
-          <TopNav dark={true} />
-        </div>
-        <div className="tw-hero-content" style={{ position: 'absolute', left: 'clamp(20px, 4.4vw, 64px)', bottom: 'clamp(40px, 6vw, 100px)', right: 'clamp(20px, 4.4vw, 64px)', color: '#fff', zIndex: 2 }}>
-          <h1 style={{ fontFamily: t.fonts.display, fontWeight: 300, fontSize: 'clamp(48px, 9.2vw, 132px)', lineHeight: 0.92, letterSpacing: '-0.025em', margin: 0, maxWidth: 1100 }}>
-            Real estate,<br /><em style={{ fontStyle: 'italic', fontWeight: 300 }}>reimagined.</em>
-          </h1>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 'clamp(28px, 4vw, 56px)', flexWrap: 'wrap', gap: 24 }}>
-            <p style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontWeight: 300, fontSize: 'clamp(16px, 1.7vw, 22px)', lineHeight: 1.5, maxWidth: 560, color: 'rgba(255,255,255,0.88)', margin: 0 }}>
-              Tawny Walker is a Michigan agent, investor, and design-driven renovator, transforming overlooked properties into homes that leave a lasting impression.
-            </p>
-            <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-              <Button to="/listings" variant="on-dark-outline">View {t.indexNoun}</Button>
-              <Button to={SCROLL_TO_INQUIRY} variant="on-dark-primary">{t.ctaPrimary}</Button>
+      {heroMedia === 'video' ? <HeroVideoSection /> : (
+        <div style={{ position: 'relative', minHeight: 820 }}>
+          <Photo label="HERO · INTERIOR — BIRMINGHAM" tone="warm" height={820} src={PHOTOS.livingMarble} style={{ position: 'absolute', inset: 0 }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 35%, rgba(0,0,0,0.25) 60%, rgba(0,0,0,0.75) 100%)' }} />
+          <div style={{ position: 'relative', zIndex: 3 }}>
+            <TopNav dark={true} />
+          </div>
+          <div className="tw-hero-content" style={{ position: 'absolute', left: 'clamp(20px, 4.4vw, 64px)', bottom: 'clamp(40px, 6vw, 100px)', right: 'clamp(20px, 4.4vw, 64px)', color: '#fff', zIndex: 2 }}>
+            <h1 style={{ fontFamily: t.fonts.display, fontWeight: 300, fontSize: 'clamp(48px, 9.2vw, 132px)', lineHeight: 0.92, letterSpacing: '-0.025em', margin: 0, maxWidth: 1100 }}>
+              Real estate,<br /><em style={{ fontStyle: 'italic', fontWeight: 300 }}>reimagined.</em>
+            </h1>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 'clamp(28px, 4vw, 56px)', flexWrap: 'wrap', gap: 24 }}>
+              <p style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontWeight: 300, fontSize: 'clamp(16px, 1.7vw, 22px)', lineHeight: 1.5, maxWidth: 560, color: 'rgba(255,255,255,0.88)', margin: 0 }}>
+                Tawny Walker is a Michigan agent, investor, and design-driven renovator, transforming overlooked properties into homes that leave a lasting impression.
+              </p>
+              <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+                <Button to="/listings" variant="on-dark-outline">View {t.indexNoun}</Button>
+                <Button to={SCROLL_TO_INQUIRY} variant="on-dark-primary">{t.ctaPrimary}</Button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* INTRO */}
       <div style={{ padding: 'clamp(56px, 9.7vw, 140px) clamp(20px, 4.4vw, 64px)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'clamp(36px, 6.7vw, 96px)', alignItems: 'start' }}>
@@ -212,52 +275,55 @@ function FeaturedSmallA({ listing }) {
 // ─── DIRECTION B — Emerald couture ──────────────────────────────────────────
 function LandingB() {
   const t = useTheme();
+  const { heroMedia } = useDirection();
   const { data: LISTINGS } = useListings();
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
       {/* HERO */}
-      <div style={{ position: 'relative', minHeight: 880, background: t.palette.emerald }}>
-        <Photo label="HERO · INTERIOR — BIRMINGHAM" tone="dusk" height={880} src={PHOTOS.livingMarble} style={{ position: 'absolute', inset: 0 }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(8,42,32,0.95) 0%, rgba(8,42,32,0.88) 35%, rgba(8,42,32,0.85) 60%, rgba(8,42,32,0.97) 100%)' }} />
-        <div style={{ position: 'relative', zIndex: 3 }}>
-          <TopNav dark={true} />
-        </div>
-        <div className="tw-hero-content" style={{
-          position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', padding: 'clamp(96px, 12vw, 120px) clamp(20px, 5vw, 72px) clamp(64px, 8vw, 96px)',
-          zIndex: 2, textAlign: 'center', color: '#fff',
-        }}>
-          <h1 style={{
-            fontFamily: t.fonts.display, fontWeight: 300,
-            fontSize: 'clamp(44px, 9.2vw, 132px)', lineHeight: 0.94, letterSpacing: '-0.024em',
-            margin: 0, maxWidth: 1100,
+      {heroMedia === 'video' ? <HeroVideoSection /> : (
+        <div style={{ position: 'relative', minHeight: 880, background: t.palette.emerald }}>
+          <Photo label="HERO · INTERIOR — BIRMINGHAM" tone="dusk" height={880} src={PHOTOS.livingMarble} style={{ position: 'absolute', inset: 0 }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(8,42,32,0.95) 0%, rgba(8,42,32,0.88) 35%, rgba(8,42,32,0.85) 60%, rgba(8,42,32,0.97) 100%)' }} />
+          <div style={{ position: 'relative', zIndex: 3 }}>
+            <TopNav dark={true} />
+          </div>
+          <div className="tw-hero-content" style={{
+            position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', padding: 'clamp(96px, 12vw, 120px) clamp(20px, 5vw, 72px) clamp(64px, 8vw, 96px)',
+            zIndex: 2, textAlign: 'center', color: '#fff',
           }}>
-            Real estate, <em style={{ fontStyle: 'italic', fontWeight: 400 }}>reimagined.</em>
-          </h1>
-          <p style={{
-            fontFamily: t.fonts.display, fontStyle: 'italic', fontWeight: 400,
-            fontSize: 'clamp(16px, 1.7vw, 22px)', lineHeight: 1.5, maxWidth: 660, margin: '32px auto 0',
-            color: 'rgba(255,255,255,0.88)',
+            <h1 style={{
+              fontFamily: t.fonts.display, fontWeight: 300,
+              fontSize: 'clamp(44px, 9.2vw, 132px)', lineHeight: 0.94, letterSpacing: '-0.024em',
+              margin: 0, maxWidth: 1100,
+            }}>
+              Real estate, <em style={{ fontStyle: 'italic', fontWeight: 400 }}>reimagined.</em>
+            </h1>
+            <p style={{
+              fontFamily: t.fonts.display, fontStyle: 'italic', fontWeight: 400,
+              fontSize: 'clamp(16px, 1.7vw, 22px)', lineHeight: 1.5, maxWidth: 660, margin: '32px auto 0',
+              color: 'rgba(255,255,255,0.88)',
+            }}>
+              Tawny & Co. is the practice of Tawny Walker, a Michigan agent, investor, and design-driven renovator transforming overlooked properties into homes that leave a lasting impression.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginTop: 48, flexWrap: 'wrap' }}>
+              <Button to={SCROLL_TO_INQUIRY} variant="on-dark-primary">{t.ctaPrimary}</Button>
+              <Button to="/listings" variant="on-dark-outline">View The {t.indexNoun}</Button>
+            </div>
+          </div>
+          <div className="tw-hero-colophon" style={{
+            position: 'absolute', left: 'clamp(20px, 5vw, 72px)', right: 'clamp(20px, 5vw, 72px)', bottom: 36, zIndex: 2,
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14,
+            color: 'rgba(255,255,255,0.7)',
+            fontFamily: t.eyebrowFont, fontSize: 10, fontWeight: 500,
+            letterSpacing: '0.28em', textTransform: 'uppercase',
           }}>
-            Tawny & Co. is the practice of Tawny Walker, a Michigan agent, investor, and design-driven renovator transforming overlooked properties into homes that leave a lasting impression.
-          </p>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginTop: 48, flexWrap: 'wrap' }}>
-            <Button to={SCROLL_TO_INQUIRY} variant="on-dark-primary">{t.ctaPrimary}</Button>
-            <Button to="/listings" variant="on-dark-outline">View The {t.indexNoun}</Button>
+            <span>Tawny Walker · {STUDIO.brokeredBy}</span>
+            <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 14, letterSpacing: 'normal', textTransform: 'none' }}>Scroll for current work ↓</span>
+            <span>Metro Detroit · Birmingham · Bloomfield Hills</span>
           </div>
         </div>
-        <div className="tw-hero-colophon" style={{
-          position: 'absolute', left: 'clamp(20px, 5vw, 72px)', right: 'clamp(20px, 5vw, 72px)', bottom: 36, zIndex: 2,
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14,
-          color: 'rgba(255,255,255,0.7)',
-          fontFamily: t.eyebrowFont, fontSize: 10, fontWeight: 500,
-          letterSpacing: '0.28em', textTransform: 'uppercase',
-        }}>
-          <span>Tawny Walker · {STUDIO.brokeredBy}</span>
-          <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 14, letterSpacing: 'normal', textTransform: 'none' }}>Scroll for current work ↓</span>
-          <span>Metro Detroit · Birmingham · Bloomfield Hills</span>
-        </div>
-      </div>
+      )}
 
       {/* INTRO — centered, two columns */}
       <div style={{ padding: 'clamp(64px, 11vw, 160px) clamp(20px, 5vw, 72px) 0' }}>

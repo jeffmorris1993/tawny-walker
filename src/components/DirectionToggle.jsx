@@ -1,11 +1,21 @@
 import { useDirection } from '../theme/DirectionContext';
 import { THEMES, DIRECTION_KEYS } from '../theme/themes';
 
-// Floating bottom-right A | B switch. Always rendered in Direction A's neutral
+const HERO_MEDIA_OPTIONS = [
+  { key: 'image', label: 'Image' },
+  { key: 'video', label: 'Video' },
+];
+
+const HERO_VIDEO_BG_OPTIONS = [
+  { key: 'emerald', label: 'Green' },
+  { key: 'cream', label: 'Cream' },
+];
+
+// Floating bottom-right control panel. Always rendered in Direction A's neutral
 // chrome so it reads the same on both directions and never depends on the page
 // background being light or dark.
 export default function DirectionToggle() {
-  const { direction, setDirection, theme } = useDirection();
+  const { direction, setDirection, heroMedia, setHeroMedia, heroVideoBg, setHeroVideoBg } = useDirection();
 
   return (
     <div className="tw-direction-toggle" style={{
@@ -50,8 +60,76 @@ export default function DirectionToggle() {
           </button>
         );
       })}
+      <div className="tw-toggle-label" style={{
+        padding: '10px 14px',
+        fontSize: 9, letterSpacing: '0.26em', textTransform: 'uppercase',
+        color: '#9A968D',
+        borderLeft: '1px solid #E3DDD0',
+        borderRight: '1px solid #E3DDD0',
+        display: 'flex', alignItems: 'center',
+      }}>Hero</div>
+      {HERO_MEDIA_OPTIONS.map(({ key, label }) => {
+        const active = heroMedia === key;
+        return (
+          <button
+            key={key}
+            onClick={() => setHeroMedia(key)}
+            aria-pressed={active}
+            title={`Hero ${label}`}
+            style={{
+              padding: '10px 16px',
+              border: 0,
+              background: active ? '#1B1B1A' : 'transparent',
+              color: active ? '#FBF9F5' : '#1B1B1A',
+              fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+              fontSize: 11, letterSpacing: '0.26em', textTransform: 'uppercase',
+              cursor: active ? 'default' : 'pointer',
+              display: 'flex', alignItems: 'center',
+              fontWeight: 600,
+            }}
+          >
+            {label}
+          </button>
+        );
+      })}
+      {heroMedia === 'video' && (
+        <>
+          <div className="tw-toggle-label" style={{
+            padding: '10px 14px',
+            fontSize: 9, letterSpacing: '0.26em', textTransform: 'uppercase',
+            color: '#9A968D',
+            borderLeft: '1px solid #E3DDD0',
+            borderRight: '1px solid #E3DDD0',
+            display: 'flex', alignItems: 'center',
+          }}>Frame</div>
+          {HERO_VIDEO_BG_OPTIONS.map(({ key, label }) => {
+            const active = heroVideoBg === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setHeroVideoBg(key)}
+                aria-pressed={active}
+                title={`Frame ${label}`}
+                style={{
+                  padding: '10px 16px',
+                  border: 0,
+                  background: active ? '#1B1B1A' : 'transparent',
+                  color: active ? '#FBF9F5' : '#1B1B1A',
+                  fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+                  fontSize: 11, letterSpacing: '0.26em', textTransform: 'uppercase',
+                  cursor: active ? 'default' : 'pointer',
+                  display: 'flex', alignItems: 'center',
+                  fontWeight: 600,
+                }}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </>
+      )}
       <style>{`
-        @media (max-width: 480px) {
+        @media (max-width: 600px) {
           .tw-direction-toggle { right: 12px; bottom: 12px; }
           .tw-toggle-label    { display: none !important; }
           .tw-toggle-sub      { display: none !important; }
