@@ -20,9 +20,9 @@ export const LISTINGS = [
 // Three qualitative pillars of the practice — used on the landing intro and
 // on the About credibility band.
 export const PILLARS = [
-  { h: 'Multi-million dollar',     s: 'annual sales volume' },
-  { h: 'Investment & renovation',  s: 'hands-on, both sides' },
-  { h: 'An extensive network',     s: 'on- and off-market' },
+  { h: 'Multi-Million Dollar',     s: 'Annual Sales Volume' },
+  { h: 'Investment & Renovation',  s: 'Hands-On, Both Sides' },
+  { h: 'An Extensive Network',     s: 'On- And Off-Market' },
 ];
 
 export const STUDIO = {

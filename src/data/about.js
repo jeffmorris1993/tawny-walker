@@ -9,9 +9,9 @@ export const ABOUT_PARAGRAPHS = [
 
 // Qualitative credibility band (no dollar figures).
 export const CREDIBILITY = [
-  { h: 'Multi-Million Dollar',    s: 'Annual sales volume' },
-  { h: 'Investment & Renovation', s: 'A hands-on background, on both sides of the table' },
-  { h: 'An Extensive Network',    s: 'Of agents, investors, and off-market opportunities' },
+  { h: 'Multi-Million Dollar',    s: 'Annual Sales Volume' },
+  { h: 'Investment & Renovation', s: 'A Hands-On Background, On Both Sides Of The Table' },
+  { h: 'An Extensive Network',    s: 'Of Agents, Investors, And Off-Market Opportunities' },
 ];
 
 // Three practiced disciplines.

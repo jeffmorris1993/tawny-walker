@@ -15,6 +15,15 @@ function HeroVideoSection() {
   const { heroVideoBg } = useDirection();
   const frameColor = HERO_VIDEO_BG_COLORS[heroVideoBg] || HERO_VIDEO_BG_COLORS.emerald;
   const isCream = heroVideoBg === 'cream';
+
+  // Below-fold (mobile) layout sits on the frame bg — colors adapt accordingly.
+  const belowfoldHeadlineColor = isCream ? t.fgPage : '#fff';
+  const belowfoldOutline = isCream ? 'secondary' : 'on-dark-outline';
+  const belowfoldPrimary = isCream ? 'primary' : 'on-dark-primary';
+
+  const headlineFs = 'clamp(40px, 6.5vw, 104px)';
+  const headlineEmWeight = isB ? 400 : 300;
+
   return (
     <div style={{ background: frameColor }}>
       <TopNav dark={!isCream} />
@@ -23,7 +32,7 @@ function HeroVideoSection() {
           position: 'relative', width: '100%',
           aspectRatio: '16 / 9',
           maxHeight: 'calc(100vh - 200px)',
-          minHeight: 360,
+          minHeight: 280,
           overflow: 'hidden',
           background: '#1B1B1A',
         }}>
@@ -44,12 +53,12 @@ function HeroVideoSection() {
           }}>
             <h1 style={{
               fontFamily: t.fonts.display, fontWeight: 300,
-              fontSize: 'clamp(36px, 6.5vw, 104px)', lineHeight: 0.95,
+              fontSize: headlineFs, lineHeight: 0.95,
               letterSpacing: '-0.022em', margin: 0, color: '#fff',
               maxWidth: 720, flex: '1 1 320px',
               textShadow: '0 2px 18px rgba(0,0,0,0.4)',
             }}>
-              Real estate, <em style={{ fontStyle: 'italic', fontWeight: isB ? 400 : 300 }}>reimagined.</em>
+              Real estate, <em style={{ fontStyle: 'italic', fontWeight: headlineEmWeight }}>reimagined.</em>
             </h1>
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', flex: '0 0 auto', pointerEvents: 'auto' }}>
               <Button to="/listings" variant="on-dark-outline">View {t.indexNoun}</Button>
@@ -58,6 +67,29 @@ function HeroVideoSection() {
           </div>
         </div>
       </div>
+      <div className="tw-hero-video-belowfold" style={{
+        display: 'none',
+        padding: '0 clamp(20px, 4.4vw, 64px) clamp(40px, 7vw, 80px)',
+        flexDirection: 'column', gap: 'clamp(20px, 4vw, 32px)',
+      }}>
+        <h1 style={{
+          fontFamily: t.fonts.display, fontWeight: 300,
+          fontSize: 'clamp(40px, 11vw, 72px)', lineHeight: 0.98,
+          letterSpacing: '-0.022em', margin: 0, color: belowfoldHeadlineColor,
+        }}>
+          Real estate, <em style={{ fontStyle: 'italic', fontWeight: headlineEmWeight }}>reimagined.</em>
+        </h1>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <Button to="/listings" variant={belowfoldOutline}>View {t.indexNoun}</Button>
+          <Button to={SCROLL_TO_INQUIRY} variant={belowfoldPrimary}>{t.ctaPrimary}</Button>
+        </div>
+      </div>
+      <style>{`
+        @media (max-width: 768px) {
+          .tw-hero-video-overlay   { display: none !important; }
+          .tw-hero-video-belowfold { display: flex !important; }
+        }
+      `}</style>
     </div>
   );
 }
@@ -94,7 +126,7 @@ function LandingA() {
             </h1>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 'clamp(28px, 4vw, 56px)', flexWrap: 'wrap', gap: 24 }}>
               <p style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontWeight: 300, fontSize: 'clamp(16px, 1.7vw, 22px)', lineHeight: 1.5, maxWidth: 560, color: 'rgba(255,255,255,0.88)', margin: 0 }}>
-                Tawny Walker is a Michigan agent, investor, and design-driven renovator, transforming overlooked properties into homes that leave a lasting impression.
+                Design-driven real estate and renovation, done with intention.
               </p>
               <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
                 <Button to="/listings" variant="on-dark-outline">View {t.indexNoun}</Button>
@@ -304,7 +336,7 @@ function LandingB() {
               fontSize: 'clamp(16px, 1.7vw, 22px)', lineHeight: 1.5, maxWidth: 660, margin: '32px auto 0',
               color: 'rgba(255,255,255,0.88)',
             }}>
-              Tawny & Co. is the practice of Tawny Walker, a Michigan agent, investor, and design-driven renovator transforming overlooked properties into homes that leave a lasting impression.
+              Design-driven real estate and renovation, done with intention.
             </p>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginTop: 48, flexWrap: 'wrap' }}>
               <Button to={SCROLL_TO_INQUIRY} variant="on-dark-primary">{t.ctaPrimary}</Button>

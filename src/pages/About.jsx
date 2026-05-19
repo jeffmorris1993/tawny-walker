@@ -83,7 +83,7 @@ function AboutA() {
         <div className="tw-about-credibility" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'clamp(24px, 4vw, 48px)' }}>
           {CREDIBILITY.map((s, i) => (
             <div key={i}>
-              <div style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(26px, 3vw, 38px)', letterSpacing: '-0.012em', color: t.fgPage, lineHeight: 1.1 }}>
+              <div className="tw-credibility-h" style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(22px, 2.4vw, 30px)', letterSpacing: '-0.012em', color: t.fgPage, lineHeight: 1.1, whiteSpace: 'nowrap' }}>
                 {s.h}
               </div>
               <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 17, color: t.fgMuted, marginTop: 12, lineHeight: 1.4 }}>
@@ -134,14 +134,14 @@ function AboutA() {
             <Eyebrow color={t.accent}>Anchored in</Eyebrow>
             <div className="tw-about-anchors" style={{ marginTop: 18, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
               {ANCHORS.map((c, i) => (
-                <div key={c} style={{
+                <div key={c} className={`tw-anchor-cell tw-anchor-cell-${i}`} style={{
                   paddingTop: 18, paddingBottom: 32,
                   borderTop: `1px solid ${t.line}`,
                   borderRight: i === 0 ? `1px solid ${t.line}` : 'none',
                   paddingLeft: i === 1 ? 36 : 0,
                   paddingRight: i === 0 ? 36 : 0,
                 }}>
-                  <div style={{ fontFamily: t.fonts.display, fontWeight: 300, fontSize: 'clamp(36px, 4vw, 56px)', letterSpacing: '-0.018em', lineHeight: 1 }}>
+                  <div style={{ fontFamily: t.fonts.display, fontWeight: 300, fontSize: 'clamp(28px, 4vw, 56px)', letterSpacing: '-0.018em', lineHeight: 1.05 }}>
                     {c}
                   </div>
                 </div>
@@ -152,12 +152,12 @@ function AboutA() {
               <Eyebrow color={t.accent}>Also representing</Eyebrow>
               <div className="tw-about-also" style={{ marginTop: 18, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 {ALSO_REPRESENTING.map((c, i) => (
-                  <div key={c} style={{
+                  <div key={c} className="tw-also-cell" style={{
                     padding: '20px 0',
                     borderTop: `1px solid ${t.line}`,
                     borderBottom: i >= ALSO_REPRESENTING.length - 3 ? `1px solid ${t.line}` : 'none',
                     paddingLeft: i % 3 === 0 ? 0 : 24,
-                    fontFamily: t.fonts.display, fontSize: 'clamp(18px, 2vw, 24px)', color: t.fgPage, lineHeight: 1.3,
+                    fontFamily: t.fonts.display, fontSize: 'clamp(17px, 2vw, 24px)', color: t.fgPage, lineHeight: 1.3,
                   }}>{c}</div>
                 ))}
               </div>
@@ -220,9 +220,19 @@ function AboutA() {
           .tw-about-sticky       { position: static !important; }
           .tw-about-disciplines  { grid-template-columns: 1fr !important; gap: 1px; }
         }
+        @media (max-width: 720px) {
+          .tw-credibility-h      { white-space: normal !important; }
+        }
+        @media (max-width: 600px) {
+          .tw-about-anchors      { grid-template-columns: 1fr !important; }
+          .tw-anchor-cell        { padding-left: 0 !important; padding-right: 0 !important; border-right: none !important; }
+          .tw-anchor-cell-1      { border-top: none !important; padding-top: 0 !important; }
+        }
         @media (max-width: 540px) {
           .tw-about-credibility  { grid-template-columns: 1fr !important; }
           .tw-about-also         { grid-template-columns: 1fr 1fr !important; }
+          .tw-also-cell:nth-child(2n+1) { padding-left: 0 !important; }
+          .tw-also-cell:nth-child(2n)   { padding-left: 24px !important; }
         }
       `}</style>
     </div>
@@ -295,7 +305,7 @@ function AboutB() {
         <div className="tw-about-credibility" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'clamp(24px, 4vw, 48px)', maxWidth: 1296, margin: '0 auto' }}>
           {CREDIBILITY.map((s, i) => (
             <div key={i}>
-              <div style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(26px, 3vw, 38px)', letterSpacing: '-0.012em', lineHeight: 1.15 }}>{s.h}</div>
+              <div className="tw-credibility-h" style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(22px, 2.4vw, 30px)', letterSpacing: '-0.012em', lineHeight: 1.15, whiteSpace: 'nowrap' }}>{s.h}</div>
               <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 17, color: 'rgba(255,255,255,0.78)', marginTop: 12, lineHeight: 1.4 }}>{s.s}</div>
             </div>
           ))}
@@ -342,14 +352,14 @@ function AboutB() {
             <Eyebrow>Anchored in</Eyebrow>
             <div className="tw-about-anchors" style={{ marginTop: 18, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
               {ANCHORS.map((c, i) => (
-                <div key={c} style={{
+                <div key={c} className={`tw-anchor-cell tw-anchor-cell-${i}`} style={{
                   paddingTop: 18, paddingBottom: 32,
                   borderTop: `1px solid ${t.line}`,
                   borderRight: i === 0 ? `1px solid ${t.line}` : 'none',
                   paddingLeft: i === 1 ? 36 : 0,
                   paddingRight: i === 0 ? 36 : 0,
                 }}>
-                  <div style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(36px, 4vw, 56px)', letterSpacing: '-0.018em', lineHeight: 1, color: emerald }}>{c}</div>
+                  <div style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(28px, 4vw, 56px)', letterSpacing: '-0.018em', lineHeight: 1.05, color: emerald }}>{c}</div>
                 </div>
               ))}
             </div>
@@ -357,12 +367,12 @@ function AboutB() {
               <Eyebrow>Also representing</Eyebrow>
               <div className="tw-about-also" style={{ marginTop: 18, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 {ALSO_REPRESENTING.map((c, i) => (
-                  <div key={c} style={{
+                  <div key={c} className="tw-also-cell" style={{
                     padding: '20px 0',
                     borderTop: `1px solid ${t.line}`,
                     borderBottom: i >= ALSO_REPRESENTING.length - 3 ? `1px solid ${t.line}` : 'none',
                     paddingLeft: i % 3 === 0 ? 0 : 24,
-                    fontFamily: t.fonts.display, fontSize: 'clamp(18px, 2vw, 24px)', color: emerald, lineHeight: 1.3,
+                    fontFamily: t.fonts.display, fontSize: 'clamp(17px, 2vw, 24px)', color: emerald, lineHeight: 1.3,
                   }}>{c}</div>
                 ))}
               </div>
@@ -420,9 +430,19 @@ function AboutB() {
           .tw-about-sticky       { position: static !important; }
           .tw-about-disciplines  { grid-template-columns: 1fr !important; gap: 16px !important; }
         }
+        @media (max-width: 720px) {
+          .tw-credibility-h      { white-space: normal !important; }
+        }
+        @media (max-width: 600px) {
+          .tw-about-anchors      { grid-template-columns: 1fr !important; }
+          .tw-anchor-cell        { padding-left: 0 !important; padding-right: 0 !important; border-right: none !important; }
+          .tw-anchor-cell-1      { border-top: none !important; padding-top: 0 !important; }
+        }
         @media (max-width: 540px) {
           .tw-about-credibility  { grid-template-columns: 1fr !important; }
           .tw-about-also         { grid-template-columns: 1fr 1fr !important; }
+          .tw-also-cell:nth-child(2n+1) { padding-left: 0 !important; }
+          .tw-also-cell:nth-child(2n)   { padding-left: 24px !important; }
         }
       `}</style>
     </div>
