@@ -57,12 +57,12 @@ export default function LeadDetail() {
             fontFamily: t.fonts.display, fontStyle: 'italic',
             fontSize: 20, color: t.fgMuted, marginTop: 6,
           }}>{d.entity} · {d.city}</div>
-          <div style={{ marginTop: 18, display: 'flex', gap: 18, fontSize: 12, color: t.fgMuted, flexWrap: 'wrap' }}>
-            <span>{d.email}</span>
+          <div style={{ marginTop: 18, display: 'flex', gap: 18, fontSize: 14, color: t.fgPage, flexWrap: 'wrap', alignItems: 'center' }}>
+            <a href={`mailto:${d.email}`} style={{ fontWeight: 600, color: headlineColor, textDecoration: 'none' }}>{d.email}</a>
             <span style={{ color: t.fgFaint }}>·</span>
-            <span>{d.phone}</span>
+            <a href={`tel:${d.phone}`} style={{ fontWeight: 600, color: headlineColor, textDecoration: 'none' }}>{d.phone}</a>
             <span style={{ color: t.fgFaint }}>·</span>
-            <span>Referred by — {d.referredBy}</span>
+            <span style={{ fontSize: 12, color: t.fgMuted }}>Referred by · {d.referredBy}</span>
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'flex-end' }}>
@@ -72,7 +72,7 @@ export default function LeadDetail() {
             fontWeight: isB ? 600 : 400,
             letterSpacing: '0.28em', textTransform: 'uppercase',
             color: t.fgFaint,
-          }}>Currently — <span style={{ color: headlineColor }}>{currentLabel}</span></div>
+          }}>Currently · <span style={{ color: headlineColor }}>{currentLabel}</span></div>
           <StatusChanger value={status} onChange={setStatus} />
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             <button style={{

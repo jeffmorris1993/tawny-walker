@@ -81,7 +81,7 @@ function ListingDetailA({ L }) {
 
       {/* HERO */}
       <div style={{ padding: '0 clamp(20px, 4.4vw, 64px)' }}>
-        <Photo label={`HERO · ${L.addr.toUpperCase()} · APPROACH`} tone={L.tone} height={'clamp(360px, 50vw, 720px)'} src={L.img || PHOTOS.livingMarble} />
+        <Photo label="" tone={L.tone} height={'clamp(360px, 50vw, 720px)'} src={L.img || PHOTOS.livingMarble} />
       </div>
 
       {/* HEAD */}
@@ -144,7 +144,7 @@ function ListingDetailA({ L }) {
           display: 'grid', gridTemplateColumns: '1fr 1.6fr', gap: 'clamp(32px, 8vw, 96px)',
         }}>
           <div>
-            <Eyebrow color={t.accent}>— From the studio</Eyebrow>
+            <Eyebrow color={t.accent}>From the studio</Eyebrow>
             <p style={{
               marginTop: 28, fontFamily: t.fonts.display, fontStyle: 'italic', fontWeight: 400,
               fontSize: 'clamp(24px, 3vw, 36px)', lineHeight: 1.25, color: t.fgPage,
@@ -155,7 +155,7 @@ function ListingDetailA({ L }) {
               <span style={{
                 fontFamily: t.eyebrowFont, fontSize: 10.5,
                 letterSpacing: '0.28em', textTransform: 'uppercase', color: t.fgMuted,
-              }}>Tawny Walker · Principal</span>
+              }}>Tawny Walker</span>
             </div>
           </div>
           <div>
@@ -185,12 +185,12 @@ function ListingDetailA({ L }) {
           display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 'clamp(32px, 8vw, 96px)',
         }}>
           <div>
-            <Eyebrow color={t.accent}>— The detail</Eyebrow>
+            <Eyebrow color={t.accent}>The detail</Eyebrow>
             <p style={{
               marginTop: 24, fontFamily: t.fonts.display, fontStyle: 'italic',
               fontSize: 'clamp(18px, 1.8vw, 21px)', color: t.fgMuted, lineHeight: 1.55,
             }}>
-              The facts of the house — what the studio has verified, and what was confirmed by inspection.
+              The facts of the house, what the studio has verified, and what was confirmed by inspection.
             </p>
           </div>
           <AttributeList attrs={L.attributes} />
@@ -211,7 +211,7 @@ function ListingDetailA({ L }) {
             <span style={{
               fontFamily: t.eyebrowFont, fontSize: 11,
               letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(251,249,245,0.6)',
-            }}>— Continue</span>
+            }}>Continue</span>
             <h2 style={{
               fontFamily: t.fonts.display, fontWeight: 300,
               fontSize: 'clamp(36px, 4.5vw, 56px)', margin: '18px 0 0',
@@ -224,7 +224,7 @@ function ListingDetailA({ L }) {
               fontSize: 'clamp(17px, 1.7vw, 20px)', color: 'rgba(251,249,245,0.7)',
               maxWidth: 520, lineHeight: 1.5,
             }}>
-              The studio shows {L.addr} by appointment only — typically on weekday mornings, with a courtesy car from the nearest airport if useful.
+              The studio shows {L.addr} by appointment only. Typically on weekday mornings, with a courtesy car from the nearest airport if useful.
             </p>
           </div>
           <div>
@@ -244,7 +244,7 @@ function ListingDetailA({ L }) {
               fontFamily: t.eyebrowFont, fontSize: 10.5,
               letterSpacing: '0.22em', textTransform: 'uppercase',
               color: 'rgba(251,249,245,0.55)', textAlign: 'center',
-            }}>Or call the studio — {STUDIO.phone}</div>
+            }}>Or call the studio · {STUDIO.phone}</div>
           </div>
         </div>
       </div>
@@ -266,7 +266,7 @@ function ListingDetailB({ L }) {
 
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
-      <TopNav active="Residences" />
+      <TopNav active="Listings" />
 
       {/* breadcrumb */}
       <div style={{
@@ -291,7 +291,7 @@ function ListingDetailB({ L }) {
 
       {/* HERO */}
       <div style={{ padding: '0 clamp(20px, 5vw, 72px)' }}>
-        <Photo label={`HERO · ${L.addr.toUpperCase()} · APPROACH`} tone={L.tone} height={'clamp(360px, 50vw, 720px)'} src={L.img || PHOTOS.livingMarble} />
+        <Photo label="" tone={L.tone} height={'clamp(360px, 50vw, 720px)'} src={L.img || PHOTOS.livingMarble} />
       </div>
 
       {/* HEAD */}
@@ -354,7 +354,7 @@ function ListingDetailB({ L }) {
             <div style={{
               fontFamily: t.eyebrowFont, fontSize: 10, fontWeight: 600,
               letterSpacing: '0.34em', textTransform: 'uppercase', color: t.palette.gold,
-            }}>— From the studio</div>
+            }}>From the studio</div>
             <p style={{
               marginTop: 28, fontFamily: t.fonts.display, fontStyle: 'italic', fontWeight: 400,
               fontSize: 'clamp(24px, 3vw, 36px)', lineHeight: 1.25, color: '#FFFFFF',
@@ -365,7 +365,7 @@ function ListingDetailB({ L }) {
               <span style={{
                 fontFamily: t.eyebrowFont, fontSize: 10, fontWeight: 600,
                 letterSpacing: '0.32em', textTransform: 'uppercase', color: t.palette.goldSoft,
-              }}>Tawny Walker · Principal</span>
+              }}>Tawny Walker</span>
             </div>
           </div>
           <div>
@@ -396,12 +396,12 @@ function ListingDetailB({ L }) {
           display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 'clamp(32px, 8vw, 96px)',
         }}>
           <div>
-            <Eyebrow>— The detail</Eyebrow>
+            <Eyebrow>The detail</Eyebrow>
             <p style={{
               marginTop: 24, fontFamily: t.fonts.display, fontStyle: 'italic',
               fontSize: 'clamp(18px, 1.8vw, 21px)', color: t.fgMuted, lineHeight: 1.55,
             }}>
-              The facts of the residence — what the studio has verified, and what was confirmed by inspection.
+              The facts of the residence, what the studio has verified, and what was confirmed by inspection.
             </p>
           </div>
           <AttributeList attrs={L.attributes} />
@@ -427,7 +427,7 @@ function ListingDetailB({ L }) {
             <span style={{
               fontFamily: t.eyebrowFont, fontSize: 10, fontWeight: 600,
               letterSpacing: '0.32em', textTransform: 'uppercase', color: t.palette.gold,
-            }}>— Continue</span>
+            }}>Continue</span>
             <h2 style={{
               fontFamily: t.fonts.display, fontWeight: 400,
               fontSize: 'clamp(36px, 4.5vw, 56px)', margin: '18px 0 0',
@@ -440,7 +440,7 @@ function ListingDetailB({ L }) {
               fontSize: 'clamp(17px, 1.7vw, 20px)', color: 'rgba(255,255,255,0.78)',
               maxWidth: 520, lineHeight: 1.5,
             }}>
-              The studio shows {L.addr} by appointment only — typically on weekday mornings, with a courtesy car from the nearest airport if useful.
+              The studio shows {L.addr} by appointment only. Typically on weekday mornings, with a courtesy car from the nearest airport if useful.
             </p>
           </div>
           <div style={{ position: 'relative' }}>
@@ -460,7 +460,7 @@ function ListingDetailB({ L }) {
               fontFamily: t.eyebrowFont, fontSize: 10, fontWeight: 500,
               letterSpacing: '0.24em', textTransform: 'uppercase',
               color: t.palette.goldSoft, textAlign: 'center',
-            }}>Or call the studio — {STUDIO.phone}</div>
+            }}>Or call the studio · {STUDIO.phone}</div>
           </div>
         </div>
       </div>
@@ -614,7 +614,7 @@ function Location({ L }) {
         display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'clamp(32px, 5vw, 56px)', alignItems: 'center',
       }}>
         <div>
-          <Eyebrow color={t.accent}>— On the bay</Eyebrow>
+          <Eyebrow color={t.accent}>On the bay</Eyebrow>
           <h2 style={{
             fontFamily: t.fonts.display, fontWeight: 400,
             fontSize: 'clamp(36px, 4.5vw, 56px)', margin: '14px 0 0',

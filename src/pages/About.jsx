@@ -37,7 +37,7 @@ function AboutA() {
             fontFamily: t.fonts.display, fontStyle: 'italic', fontWeight: 300,
             fontSize: 'clamp(18px, 2vw, 24px)', lineHeight: 1.5, color: t.fgMuted, margin: 0, maxWidth: 540,
           }}>
-            A Michigan real estate professional with an elevated aesthetic and a strategic, design-driven approach — known for transforming overlooked properties into highly desirable homes.
+            A Michigan real estate professional with an elevated aesthetic and a strategic, design-driven approach, known for transforming overlooked properties into highly desirable homes.
           </p>
           <div style={{ marginTop: 32, display: 'flex', gap: 'clamp(16px, 2vw, 24px)', alignItems: 'center', flexWrap: 'wrap' }}>
             <span style={{ fontSize: 10.5, letterSpacing: '0.24em', textTransform: 'uppercase', color: t.fgFaint }}>{STUDIO.brokeredBy}</span>
@@ -63,7 +63,7 @@ function AboutA() {
         display: 'grid', gridTemplateColumns: '0.8fr 1.4fr', gap: 'clamp(36px, 6vw, 80px)', alignItems: 'start',
       }}>
         <div className="tw-about-sticky">
-          <Eyebrow>§ 01 — In her own words</Eyebrow>
+          <Eyebrow>In her own words</Eyebrow>
           <h2 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(32px, 4.2vw, 52px)', letterSpacing: '-0.018em', margin: '20px 0 0', lineHeight: 1.05 }}>
             Real estate, with a <em style={{ fontStyle: 'italic' }}>designer's</em> eye.
           </h2>
@@ -75,12 +75,6 @@ function AboutA() {
           {ABOUT_PARAGRAPHS.slice(1).map((p, i) => (
             <p key={i} style={{ fontSize: 17, lineHeight: 1.7, color: t.fgMuted, marginTop: i === 0 ? 28 : 18, fontWeight: 300 }}>{p}</p>
           ))}
-
-          <div style={{ marginTop: 40, paddingTop: 28, borderTop: `1px solid ${t.line}`, display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 36, color: t.accent, lineHeight: 1, transform: 'rotate(-4deg)' }}>Tawny W.</span>
-            <span style={{ height: 1, flex: 1, minWidth: 12, background: t.line }} />
-            <span style={{ fontSize: 10.5, letterSpacing: '0.24em', textTransform: 'uppercase', color: t.fgFaint }}>Tawny Walker</span>
-          </div>
         </div>
       </div>
 
@@ -104,7 +98,7 @@ function AboutA() {
       <div style={{ padding: 'clamp(64px, 9vw, 120px) clamp(20px, 4.4vw, 64px)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 'clamp(28px, 4vw, 56px)', flexWrap: 'wrap', gap: 24 }}>
           <div>
-            <Eyebrow>§ 02 — How Tawny works</Eyebrow>
+            <Eyebrow>How Tawny works</Eyebrow>
             <h2 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(32px, 4.2vw, 56px)', letterSpacing: '-0.018em', margin: '20px 0 0', lineHeight: 1.05 }}>
               Three <em style={{ fontStyle: 'italic' }}>practiced</em> disciplines.
             </h2>
@@ -116,8 +110,7 @@ function AboutA() {
         <div className="tw-about-disciplines" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1, background: t.line, border: `1px solid ${t.line}` }}>
           {DISCIPLINES.map((p, i) => (
             <div key={i} style={{ background: t.bgPage, padding: 'clamp(28px, 3vw, 40px) clamp(20px, 2.5vw, 32px)', display: 'flex', flexDirection: 'column', minHeight: 320 }}>
-              <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 22, color: t.accent, lineHeight: 1 }}>{p.n}</span>
-              <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(28px, 3vw, 36px)', letterSpacing: '-0.012em', margin: '14px 0 0', lineHeight: 1.05 }}>{p.t}</h3>
+              <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(28px, 3vw, 36px)', letterSpacing: '-0.012em', margin: 0, lineHeight: 1.05 }}>{p.t}</h3>
               <p style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 18, lineHeight: 1.4, color: t.fgPage, margin: '18px 0 0', fontWeight: 400 }}>{p.lead}</p>
               <p style={{ fontSize: 14, lineHeight: 1.65, color: t.fgMuted, marginTop: 16, marginBottom: 0, fontWeight: 300 }}>{p.body}</p>
             </div>
@@ -129,7 +122,7 @@ function AboutA() {
       <div style={{ background: t.bgPanel, padding: 'clamp(64px, 9vw, 120px) clamp(20px, 4.4vw, 64px)', borderTop: `1px solid ${t.line}` }}>
         <div className="tw-about-practice" style={{ display: 'grid', gridTemplateColumns: '0.8fr 1.4fr', gap: 'clamp(36px, 6vw, 80px)', alignItems: 'start' }}>
           <div>
-            <Eyebrow>§ 03 — Where Tawny works</Eyebrow>
+            <Eyebrow>Where Tawny works</Eyebrow>
             <h2 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(32px, 4.2vw, 52px)', letterSpacing: '-0.018em', margin: '20px 0 0', lineHeight: 1.05 }}>
               Metro <em style={{ fontStyle: 'italic' }}>Detroit.</em>
             </h2>
@@ -138,7 +131,7 @@ function AboutA() {
             </p>
           </div>
           <div>
-            <Eyebrow color={t.accent}>— Anchored in</Eyebrow>
+            <Eyebrow color={t.accent}>Anchored in</Eyebrow>
             <div className="tw-about-anchors" style={{ marginTop: 18, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
               {ANCHORS.map((c, i) => (
                 <div key={c} style={{
@@ -156,7 +149,7 @@ function AboutA() {
             </div>
 
             <div style={{ marginTop: 48 }}>
-              <Eyebrow color={t.accent}>— Also representing</Eyebrow>
+              <Eyebrow color={t.accent}>Also representing</Eyebrow>
               <div className="tw-about-also" style={{ marginTop: 18, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 {ALSO_REPRESENTING.map((c, i) => (
                   <div key={c} style={{
@@ -169,7 +162,7 @@ function AboutA() {
                 ))}
               </div>
               <p style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 16, color: t.fgMuted, marginTop: 18, lineHeight: 1.5 }}>
-                — and surrounding areas, on request.
+                And surrounding areas, on request.
               </p>
             </div>
           </div>
@@ -178,8 +171,7 @@ function AboutA() {
 
       {/* PULL QUOTE */}
       <div style={{ padding: 'clamp(72px, 11vw, 140px) clamp(20px, 4.4vw, 64px)', textAlign: 'center' }}>
-        <Eyebrow>§ 04</Eyebrow>
-        <div style={{ fontFamily: t.fonts.display, fontSize: 64, color: t.accent, lineHeight: 0.5, marginTop: 32 }}>“</div>
+        <div style={{ fontFamily: t.fonts.display, fontSize: 64, color: t.accent, lineHeight: 0.5 }}>“</div>
         <blockquote style={{
           margin: '24px auto 0', maxWidth: 1000,
           fontFamily: t.fonts.display, fontWeight: 300, fontStyle: 'italic',
@@ -203,12 +195,12 @@ function AboutA() {
         gap: 'clamp(32px, 6.7vw, 96px)', alignItems: 'center',
       }}>
         <div>
-          <Eyebrow color="rgba(255,255,255,0.6)">§ 05 — A conversation</Eyebrow>
+          <Eyebrow color="rgba(255,255,255,0.6)">A conversation</Eyebrow>
           <h2 style={{ fontFamily: t.fonts.display, fontWeight: 300, fontSize: 'clamp(40px, 5.8vw, 84px)', letterSpacing: '-0.022em', margin: '20px 0 0', lineHeight: 0.95 }}>
             One <em style={{ fontStyle: 'italic' }}>form,</em><br />four paths in.
           </h2>
           <p style={{ fontSize: 16, lineHeight: 1.6, color: 'rgba(255,255,255,0.7)', maxWidth: 520, marginTop: 32, fontWeight: 300 }}>
-            Whether you are buying, selling, investing, or have a property to renovate — the inquiry begins with the same short form. Tawny answers personally, within one business day.
+            Whether you are buying, selling, investing, or have a property to renovate, the inquiry begins with the same short form. Tawny answers personally, within one business day.
           </p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -259,7 +251,7 @@ function AboutB() {
           fontFamily: t.fonts.display, fontStyle: 'italic', fontWeight: 400,
           fontSize: 'clamp(17px, 1.8vw, 22px)', lineHeight: 1.5, color: t.fgMuted, margin: '32px auto 0', maxWidth: 720,
         }}>
-          A Michigan real estate professional with an elevated aesthetic and a strategic, design-driven approach — known for transforming overlooked properties into highly desirable homes.
+          A Michigan real estate professional with an elevated aesthetic and a strategic, design-driven approach, known for transforming overlooked properties into highly desirable homes.
         </p>
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32 }}><Rule /></div>
         <div style={{ marginTop: 24, display: 'flex', gap: 'clamp(16px, 2vw, 24px)', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -283,7 +275,7 @@ function AboutB() {
         display: 'grid', gridTemplateColumns: '0.8fr 1.4fr', gap: 'clamp(36px, 6vw, 80px)', alignItems: 'start',
       }}>
         <div className="tw-about-sticky">
-          <Eyebrow>§ 01 — In her own words</Eyebrow>
+          <Eyebrow>In her own words</Eyebrow>
           <h2 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(32px, 4.2vw, 52px)', letterSpacing: '-0.018em', color: emerald, margin: '20px 0 0', lineHeight: 1.05 }}>
             Real estate, with a <em style={{ fontStyle: 'italic' }}>designer's</em> eye.
           </h2>
@@ -295,11 +287,6 @@ function AboutB() {
           {ABOUT_PARAGRAPHS.slice(1).map((p, i) => (
             <p key={i} style={{ fontSize: 16, lineHeight: 1.75, color: t.fgMuted, marginTop: i === 0 ? 28 : 18 }}>{p}</p>
           ))}
-          <div style={{ marginTop: 40, paddingTop: 28, borderTop: `1px solid ${t.line}`, display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
-            <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 38, color: t.accent, lineHeight: 1, transform: 'rotate(-4deg)' }}>Tawny W.</span>
-            <span style={{ height: 1, flex: 1, minWidth: 12, background: t.line }} />
-            <span style={{ fontFamily: t.eyebrowFont, fontSize: 10, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', color: t.fgFaint }}>Tawny Walker</span>
-          </div>
         </div>
       </div>
 
@@ -319,7 +306,7 @@ function AboutB() {
       <div style={{ padding: 'clamp(64px, 9vw, 120px) clamp(20px, 5vw, 72px)', background: '#fff' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', maxWidth: 1296, margin: '0 auto', marginBottom: 'clamp(32px, 4vw, 56px)', flexWrap: 'wrap', gap: 24 }}>
           <div>
-            <Eyebrow>§ 02 — How Tawny works</Eyebrow>
+            <Eyebrow>How Tawny works</Eyebrow>
             <h2 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(32px, 4.2vw, 56px)', letterSpacing: '-0.018em', color: emerald, margin: '20px 0 0', lineHeight: 1.05 }}>
               Three <em style={{ fontStyle: 'italic' }}>practiced</em> disciplines.
             </h2>
@@ -331,8 +318,7 @@ function AboutB() {
         <div className="tw-about-disciplines" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24, maxWidth: 1296, margin: '0 auto' }}>
           {DISCIPLINES.map((p, i) => (
             <div key={i} style={{ background: t.bgPanel, border: `1px solid ${t.line}`, padding: 'clamp(28px, 3vw, 40px) clamp(24px, 2.7vw, 36px)', minHeight: 340 }}>
-              <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 22, color: t.accent, lineHeight: 1 }}>{p.n}</span>
-              <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(28px, 3vw, 36px)', letterSpacing: '-0.012em', color: emerald, margin: '14px 0 0', lineHeight: 1.05 }}>{p.t}</h3>
+              <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(28px, 3vw, 36px)', letterSpacing: '-0.012em', color: emerald, margin: 0, lineHeight: 1.05 }}>{p.t}</h3>
               <p style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 18, lineHeight: 1.4, color: emerald, margin: '18px 0 0' }}>{p.lead}</p>
               <p style={{ fontSize: 14, lineHeight: 1.7, color: t.fgMuted, marginTop: 16, marginBottom: 0 }}>{p.body}</p>
             </div>
@@ -344,7 +330,7 @@ function AboutB() {
       <div style={{ background: t.bgPanel, padding: 'clamp(64px, 9vw, 120px) clamp(20px, 5vw, 72px)' }}>
         <div className="tw-about-practice" style={{ display: 'grid', gridTemplateColumns: '0.8fr 1.4fr', gap: 'clamp(36px, 6vw, 80px)', alignItems: 'start', maxWidth: 1296, margin: '0 auto' }}>
           <div>
-            <Eyebrow>§ 03 — Where Tawny works</Eyebrow>
+            <Eyebrow>Where Tawny works</Eyebrow>
             <h2 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(32px, 4.2vw, 52px)', letterSpacing: '-0.018em', color: emerald, margin: '20px 0 0', lineHeight: 1.05 }}>
               Metro <em style={{ fontStyle: 'italic' }}>Detroit.</em>
             </h2>
@@ -353,7 +339,7 @@ function AboutB() {
             </p>
           </div>
           <div>
-            <Eyebrow>— Anchored in</Eyebrow>
+            <Eyebrow>Anchored in</Eyebrow>
             <div className="tw-about-anchors" style={{ marginTop: 18, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0 }}>
               {ANCHORS.map((c, i) => (
                 <div key={c} style={{
@@ -368,7 +354,7 @@ function AboutB() {
               ))}
             </div>
             <div style={{ marginTop: 48 }}>
-              <Eyebrow>— Also representing</Eyebrow>
+              <Eyebrow>Also representing</Eyebrow>
               <div className="tw-about-also" style={{ marginTop: 18, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 {ALSO_REPRESENTING.map((c, i) => (
                   <div key={c} style={{
@@ -381,7 +367,7 @@ function AboutB() {
                 ))}
               </div>
               <p style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 16, color: t.fgMuted, marginTop: 18, lineHeight: 1.5 }}>
-                — and surrounding areas, on request.
+                And surrounding areas, on request.
               </p>
             </div>
           </div>
@@ -390,8 +376,7 @@ function AboutB() {
 
       {/* PULL QUOTE */}
       <div style={{ padding: 'clamp(72px, 11vw, 140px) clamp(20px, 5vw, 72px)', textAlign: 'center', background: '#fff' }}>
-        <Eyebrow>§ 04</Eyebrow>
-        <div style={{ fontFamily: t.fonts.display, fontSize: 64, color: t.accent, lineHeight: 0.5, marginTop: 32 }}>“</div>
+        <div style={{ fontFamily: t.fonts.display, fontSize: 64, color: t.accent, lineHeight: 0.5 }}>“</div>
         <blockquote style={{
           margin: '24px auto 0', maxWidth: 1000,
           fontFamily: t.fonts.display, fontWeight: 300, fontStyle: 'italic',
@@ -411,12 +396,12 @@ function AboutB() {
       <div style={{ background: emerald, color: '#fff', padding: 'clamp(56px, 10vw, 140px) clamp(20px, 5vw, 72px)' }}>
         <div style={{ maxWidth: 1296, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'clamp(32px, 7vw, 96px)', alignItems: 'center' }}>
           <div>
-            <Eyebrow color={t.accentSoft}>§ 05 — A conversation</Eyebrow>
+            <Eyebrow color={t.accentSoft}>A conversation</Eyebrow>
             <h2 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(40px, 5.8vw, 84px)', lineHeight: 0.98, letterSpacing: '-0.022em', margin: '20px 0 0' }}>
               One <em style={{ fontStyle: 'italic' }}>form,</em><br />four paths in.
             </h2>
             <p style={{ fontSize: 16, lineHeight: 1.7, color: 'rgba(255,255,255,0.75)', maxWidth: 540, marginTop: 32 }}>
-              Whether you are buying, selling, investing, or have a property to renovate — the inquiry begins with the same short form. Tawny answers personally, within one business day.
+              Whether you are buying, selling, investing, or have a property to renovate, the inquiry begins with the same short form. Tawny answers personally, within one business day.
             </p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>

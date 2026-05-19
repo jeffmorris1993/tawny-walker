@@ -76,7 +76,7 @@ export default function ListingsManager() {
           color: t.fgFaint,
           letterSpacing: isB ? '0.24em' : '0.18em',
           textTransform: 'uppercase',
-        }}>Sort — By Date Listed ↓</span>
+        }}>Sort · By Date Listed ↓</span>
       </div>
 
       <div style={{ overflowX: 'auto' }}>

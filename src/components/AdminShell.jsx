@@ -87,14 +87,6 @@ export default function AdminShell({ children }) {
             }}>TW</div>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontSize: 12, color: a.sidebarFg }}>Tawny Walker</div>
-              <div style={{
-                fontFamily: t.eyebrowFont,
-                fontSize: isB ? 9 : 9.5,
-                fontWeight: isB ? 600 : 400,
-                letterSpacing: isB ? '0.26em' : '0.2em',
-                textTransform: 'uppercase',
-                color: a.sidebarSubLabel,
-              }}>Principal</div>
             </div>
           </div>
         </div>

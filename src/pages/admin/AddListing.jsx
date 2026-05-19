@@ -120,7 +120,7 @@ export default function AddListing() {
         {/* Form */}
         <div>
           {/* Photography */}
-          <Eyebrow color={t.accent}>— Photography</Eyebrow>
+          <Eyebrow color={t.accent}>Photography</Eyebrow>
           <div style={{ marginTop: 18 }}>
             <div style={{ position: 'relative' }}>
               <Photo label="HERO PHOTOGRAPHY · DRAG TO REPLACE" tone={form.tone} height={280} />
@@ -151,7 +151,7 @@ export default function AddListing() {
 
           {/* Property details */}
           <div style={{ marginTop: 40 }}>
-            <Eyebrow color={t.accent}>— Property details</Eyebrow>
+            <Eyebrow color={t.accent}>Property details</Eyebrow>
             <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
               <FormInput label="Listing name (editorial)" value={form.name} onChange={set('name')} />
               <div className="tw-add-pair-2-1" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
@@ -173,7 +173,7 @@ export default function AddListing() {
 
           {/* Description */}
           <div style={{ marginTop: 40 }}>
-            <Eyebrow color={t.accent}>— Short description</Eyebrow>
+            <Eyebrow color={t.accent}>Short description</Eyebrow>
             <textarea
               value={form.description}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}

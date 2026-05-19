@@ -30,7 +30,7 @@ function LandingA() {
           </h1>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 'clamp(28px, 4vw, 56px)', flexWrap: 'wrap', gap: 24 }}>
             <p style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontWeight: 300, fontSize: 'clamp(16px, 1.7vw, 22px)', lineHeight: 1.5, maxWidth: 560, color: 'rgba(255,255,255,0.88)', margin: 0 }}>
-              Tawny Walker is a Michigan agent, investor, and design-driven renovator — transforming overlooked properties into homes that leave a lasting impression.
+              Tawny Walker is a Michigan agent, investor, and design-driven renovator, transforming overlooked properties into homes that leave a lasting impression.
             </p>
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
               <Button to="/listings" variant="on-dark-outline">View {t.indexNoun}</Button>
@@ -43,17 +43,17 @@ function LandingA() {
       {/* INTRO */}
       <div style={{ padding: 'clamp(56px, 9.7vw, 140px) clamp(20px, 4.4vw, 64px)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'clamp(36px, 6.7vw, 96px)', alignItems: 'start' }}>
         <div>
-          <Eyebrow>§ 01 — The practice</Eyebrow>
+          <Eyebrow>The practice</Eyebrow>
           <h2 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(32px, 4.4vw, 64px)', lineHeight: 1.05, letterSpacing: '-0.018em', margin: '24px 0 0' }}>
             Agent. Investor.<br /><em style={{ fontStyle: 'italic' }}>Renovator.</em>
           </h2>
         </div>
         <div style={{ paddingTop: 16 }}>
           <p style={{ fontSize: 17, lineHeight: 1.65, color: t.fgMuted, margin: 0, fontWeight: 300 }}>
-            Tawny Walker is a Michigan real estate professional recognized for an elevated aesthetic and a strategic, design-driven approach to the work — transforming overlooked properties into highly desirable homes from concept to completion.
+            Tawny Walker is a Michigan real estate professional recognized for an elevated aesthetic and a strategic, design-driven approach to the work, transforming overlooked properties into highly desirable homes from concept to completion.
           </p>
           <p style={{ fontSize: 17, lineHeight: 1.65, color: t.fgMuted, margin: '20px 0 0', fontWeight: 300 }}>
-            Whether representing clients, sourcing investment properties, or overseeing a renovation, Tawny brings refined vision and hands-on expertise to every detail — anchored in Birmingham and active across Metro Detroit.
+            Whether representing clients, sourcing investment properties, or overseeing a renovation, Tawny brings refined vision and hands-on expertise to every detail, anchored in Birmingham and active across Metro Detroit.
           </p>
           <div className="tw-stats-row" style={{ marginTop: 40, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'clamp(20px, 2.5vw, 24px)', paddingTop: 32, borderTop: `1px solid ${t.line}` }}>
             {PILLARS.map(s => (
@@ -70,13 +70,13 @@ function LandingA() {
       <div id="inquiry" style={{ padding: '0 clamp(20px, 4.4vw, 64px) clamp(56px, 9.7vw, 140px)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 'clamp(28px, 4vw, 56px)', flexWrap: 'wrap', gap: 24 }}>
           <div>
-            <Eyebrow>§ 02 — One door, four conversations</Eyebrow>
+            <Eyebrow>One door, four conversations</Eyebrow>
             <h2 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(28px, 3.9vw, 56px)', letterSpacing: '-0.018em', margin: '20px 0 0', lineHeight: 1.05 }}>
               Tell me how I <em style={{ fontStyle: 'italic' }}>can help.</em>
             </h2>
           </div>
           <p style={{ maxWidth: 420, fontSize: 14.5, lineHeight: 1.6, color: t.fgMuted, margin: 0 }}>
-            No phone tree, no funnels. One short form that tailors itself to who you are — buyer, seller, investor, or agent. Tawny responds personally within one business day.
+            No phone tree, no funnels. One short form that tailors itself to who you are: buyer, seller, investor, or agent. Tawny responds personally within one business day.
           </p>
         </div>
 
@@ -92,7 +92,7 @@ function LandingA() {
       <div style={{ padding: 'clamp(56px, 8.3vw, 120px) clamp(20px, 4.4vw, 64px) clamp(56px, 9.7vw, 140px)', background: t.bgPanel }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 'clamp(28px, 4vw, 56px)', flexWrap: 'wrap', gap: 20 }}>
           <div>
-            <Eyebrow>§ 03 — The Index</Eyebrow>
+            <Eyebrow>The Index</Eyebrow>
             <h2 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(28px, 3.9vw, 56px)', letterSpacing: '-0.018em', margin: '20px 0 0', lineHeight: 1.05 }}>
               A selection of <em style={{ fontStyle: 'italic' }}>current</em> work.
             </h2>
@@ -120,12 +120,12 @@ function LandingA() {
         gap: 'clamp(32px, 6.7vw, 96px)', alignItems: 'center',
       }}>
         <div>
-          <Eyebrow color="rgba(255,255,255,0.6)">§ 05 — A conversation</Eyebrow>
+          <Eyebrow color="rgba(255,255,255,0.6)">A conversation</Eyebrow>
           <h2 style={{ fontFamily: t.fonts.display, fontWeight: 300, fontSize: 'clamp(40px, 5.8vw, 84px)', letterSpacing: '-0.022em', margin: '20px 0 0', lineHeight: 0.95 }}>
             One <em style={{ fontStyle: 'italic' }}>form,</em><br />four paths in.
           </h2>
           <p style={{ fontSize: 16, lineHeight: 1.6, color: 'rgba(255,255,255,0.7)', maxWidth: 520, marginTop: 32, fontWeight: 300 }}>
-            Whether you are buying, selling, investing, or have a property to renovate — the inquiry begins with the same short form. Tawny answers personally, within one business day.
+            Whether you are buying, selling, investing, or have a property to renovate, the inquiry begins with the same short form. Tawny answers personally, within one business day.
           </p>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -236,7 +236,7 @@ function LandingB() {
             fontSize: 'clamp(16px, 1.7vw, 22px)', lineHeight: 1.5, maxWidth: 660, margin: '32px auto 0',
             color: 'rgba(255,255,255,0.88)',
           }}>
-            Tawny & Co. is the practice of Tawny Walker — a Michigan agent, investor, and design-driven renovator transforming overlooked properties into homes that leave a lasting impression.
+            Tawny & Co. is the practice of Tawny Walker, a Michigan agent, investor, and design-driven renovator transforming overlooked properties into homes that leave a lasting impression.
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginTop: 48, flexWrap: 'wrap' }}>
             <Button to={SCROLL_TO_INQUIRY} variant="on-dark-primary">{t.ctaPrimary}</Button>
@@ -250,7 +250,7 @@ function LandingB() {
           fontFamily: t.eyebrowFont, fontSize: 10, fontWeight: 500,
           letterSpacing: '0.28em', textTransform: 'uppercase',
         }}>
-          <span>§ Tawny Walker · {STUDIO.brokeredBy}</span>
+          <span>Tawny Walker · {STUDIO.brokeredBy}</span>
           <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 14, letterSpacing: 'normal', textTransform: 'none' }}>Scroll for current work ↓</span>
           <span>Metro Detroit · Birmingham · Bloomfield Hills</span>
         </div>
@@ -259,7 +259,7 @@ function LandingB() {
       {/* INTRO — centered, two columns */}
       <div style={{ padding: 'clamp(64px, 11vw, 160px) clamp(20px, 5vw, 72px) 0' }}>
         <div style={{ textAlign: 'center', marginBottom: 'clamp(40px, 6vw, 80px)' }}>
-          <Eyebrow>§ 01 — The practice</Eyebrow>
+          <Eyebrow>The practice</Eyebrow>
           <h2 style={{
             fontFamily: t.fonts.display, fontWeight: 400,
             fontSize: 'clamp(34px, 5.2vw, 72px)', lineHeight: 1.05, letterSpacing: '-0.02em',
@@ -280,7 +280,7 @@ function LandingB() {
               fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 'clamp(20px, 2.2vw, 26px)',
               lineHeight: 1.45, color: t.palette.emerald, margin: 0, fontWeight: 400,
             }}>
-              Tawny Walker is a Michigan real estate professional recognized for an elevated aesthetic and a strategic, design-driven approach to the work — transforming overlooked properties into highly desirable homes.
+              Tawny Walker is a Michigan real estate professional recognized for an elevated aesthetic and a strategic, design-driven approach to the work, transforming overlooked properties into highly desirable homes.
             </p>
             <p style={{ fontSize: 16, lineHeight: 1.75, color: t.fgMuted, margin: '28px 0 0' }}>
               Whether representing clients, sourcing investment properties, or overseeing a renovation from concept to completion, Tawny brings refined vision and hands-on expertise to every detail.
@@ -303,7 +303,7 @@ function LandingB() {
       {/* EMBEDDED INQUIRY — emerald centerpiece */}
       <div id="inquiry" style={{ background: t.palette.emerald, color: '#fff', padding: 'clamp(56px, 10vw, 140px) clamp(20px, 5vw, 72px)' }}>
         <div style={{ textAlign: 'center', marginBottom: 'clamp(40px, 6vw, 64px)' }}>
-          <Eyebrow color={t.accentSoft}>§ 02 — One door, four conversations</Eyebrow>
+          <Eyebrow color={t.accentSoft}>One door, four conversations</Eyebrow>
           <h2 style={{
             fontFamily: t.fonts.display, fontWeight: 400,
             fontSize: 'clamp(34px, 5.5vw, 76px)', lineHeight: 1, letterSpacing: '-0.02em',
@@ -316,7 +316,7 @@ function LandingB() {
             fontSize: 'clamp(16px, 1.5vw, 20px)', lineHeight: 1.5, color: 'rgba(255,255,255,0.78)',
             maxWidth: 620, margin: '28px auto 0',
           }}>
-            One short form — buyer, seller, investor, or visiting agent. The intake tailors itself to the kind of conversation you want to have.
+            One short form: buyer, seller, investor, or visiting agent. The intake tailors itself to the kind of conversation you want to have.
           </p>
         </div>
 
@@ -332,7 +332,7 @@ function LandingB() {
       {/* FEATURED */}
       <div style={{ background: t.bgPanel, padding: 'clamp(56px, 10vw, 140px) clamp(20px, 5vw, 72px)' }}>
         <div style={{ textAlign: 'center', marginBottom: 'clamp(40px, 6vw, 64px)' }}>
-          <Eyebrow>§ 03 — The {t.indexNoun}</Eyebrow>
+          <Eyebrow>The {t.indexNoun}</Eyebrow>
           <h2 style={{
             fontFamily: t.fonts.display, fontWeight: 400,
             fontSize: 'clamp(34px, 4.7vw, 64px)', lineHeight: 1, letterSpacing: '-0.02em',
@@ -360,12 +360,12 @@ function LandingB() {
       <div style={{ background: t.palette.emerald, color: '#fff', padding: 'clamp(56px, 10vw, 140px) clamp(20px, 5vw, 72px)' }}>
         <div style={{ maxWidth: 1296, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'clamp(32px, 7vw, 96px)', alignItems: 'center' }}>
           <div>
-            <Eyebrow color={t.accentSoft}>§ 05 — A conversation</Eyebrow>
+            <Eyebrow color={t.accentSoft}>A conversation</Eyebrow>
             <h2 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(40px, 5.8vw, 84px)', lineHeight: 0.98, letterSpacing: '-0.022em', margin: '20px 0 0' }}>
               One <em style={{ fontStyle: 'italic' }}>form,</em><br />four paths in.
             </h2>
             <p style={{ fontSize: 16, lineHeight: 1.7, color: 'rgba(248,245,238,0.78)', maxWidth: 540, marginTop: 32 }}>
-              Whether you are buying, selling, investing, or have a property to renovate — the inquiry begins with the same short form. Tawny answers personally, within one business day.
+              Whether you are buying, selling, investing, or have a property to renovate, the inquiry begins with the same short form. Tawny answers personally, within one business day.
             </p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>

@@ -130,7 +130,7 @@ function RoleSection({ s }) {
     return (
       <div style={{ marginBottom: 28 }}>
         <div style={{ marginBottom: 16, paddingBottom: 10, borderBottom: `1px solid ${t.line}` }}>
-          <Eyebrow color={t.accent}>— {s.title}</Eyebrow>
+          <Eyebrow color={t.accent}>{s.title}</Eyebrow>
         </div>
         <div className="tw-form-pair" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
           {s.cols.map((c, i) => <InputField key={i} {...c} />)}
@@ -382,7 +382,7 @@ function InitialHint({ onPick }) {
         })}
       </div>
       <p style={{ marginTop: 28, fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 17, color: t.fgFaint, lineHeight: 1.55, maxWidth: 540 }}>
-        Choose a path above — by tile or by dropdown. The form below tailors itself to what you select.
+        Choose a path above, by tile or by dropdown. The form below tailors itself to what you select.
       </p>
     </div>
   );
@@ -406,7 +406,7 @@ export function InquiryWidget({ syncUrl = false, showHeading = true }) {
     <div id="inquiry">
       {showHeading && (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 48, flexWrap: 'wrap', gap: 12 }}>
-          <Eyebrow>§ Intake · One form, four paths</Eyebrow>
+          <Eyebrow>Intake · One form, four paths</Eyebrow>
           <div style={{
             fontFamily: t.eyebrowFont, fontSize: 10.5,
             fontWeight: skin.isB ? 600 : 400,
@@ -431,7 +431,7 @@ export function InquiryWidget({ syncUrl = false, showHeading = true }) {
           gap: 24, flexWrap: 'wrap',
         }}>
           <p style={{ fontSize: 12, color: t.fgFaint, maxWidth: 380, margin: 0, lineHeight: 1.55 }}>
-            Submitting shares your details with Tawny only — never with a third party, never with a marketing list.
+            Submitting shares your details with Tawny only. Never with a third party, never with a marketing list.
           </p>
           <button style={{
             padding: '20px 36px', background: skin.submitBg, color: skin.submitFg, border: 'none',
@@ -493,7 +493,7 @@ export default function Inquiry() {
             fontSize: skin.isB ? 19 : 16.5,
             lineHeight: 1.6, color: skin.leftMuted, marginTop: 28, maxWidth: 460,
           }}>
-            One short form, four kinds of conversation. Choose what you are — buyer, seller, investor, or agent — and the intake tailors itself. Tawny reads each note personally and replies within one business day.
+            One short form, four kinds of conversation. Choose what you are: buyer, seller, investor, or agent. The intake tailors itself. Tawny reads each note personally and replies within one business day.
           </p>
 
           <div style={{ marginTop: 48, marginBottom: 36 }}>
@@ -506,7 +506,7 @@ export default function Inquiry() {
               fontFamily: t.fonts.display, fontStyle: 'italic',
               fontSize: 22, lineHeight: 1.5, color: skin.leftFg, marginTop: 14, fontWeight: 400,
             }}>
-              {inq.selected ? inq.selected.note : '"Every good conversation in real estate begins with a single, honest sentence: I am a ___ . The rest follows." — TW'}
+              {inq.selected ? inq.selected.note : '"Every good conversation in real estate begins with a single, honest sentence: I am a ___ . The rest follows." TW'}
             </p>
           </div>
 

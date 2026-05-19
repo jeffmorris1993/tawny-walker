@@ -91,7 +91,7 @@ function LoginA() {
             fontFamily: t.fonts.display, fontStyle: 'italic',
             fontSize: 11, letterSpacing: '0.24em', textTransform: 'uppercase',
             color: 'rgba(255,255,255,0.7)',
-          }}>— In her own words</div>
+          }}>In her own words</div>
           <p style={{
             marginTop: 14,
             fontFamily: t.fonts.display, fontWeight: 400,
@@ -107,7 +107,7 @@ function LoginA() {
               fontFamily: t.eyebrowFont,
               fontSize: 10.5, letterSpacing: '0.28em', textTransform: 'uppercase',
               color: 'rgba(255,255,255,0.7)',
-            }}>Tawny Walker · Principal</span>
+            }}>Tawny Walker</span>
           </div>
         </div>
       </div>
@@ -151,7 +151,7 @@ function LoginA() {
 
         <div style={{ marginTop: 56, maxWidth: 460 }}>
           <FormField
-            label="— Email address"
+            label="Email address"
             display={email}
             trailing={
               <span style={{
@@ -162,7 +162,7 @@ function LoginA() {
             }
           />
           <div style={{ marginTop: 36 }}>
-            <FormField label="— Password" display={password} mono large />
+            <FormField label="Password" display={password} mono large />
           </div>
 
           <button
@@ -268,7 +268,7 @@ function LoginB() {
               fontFamily: t.eyebrowFont,
               fontSize: 10, fontWeight: 600, letterSpacing: '0.32em', textTransform: 'uppercase',
               color: t.palette.gold,
-            }}>— The Studio</div>
+            }}>The Studio</div>
             <div style={{
               fontFamily: t.fonts.display, fontWeight: 400,
               fontSize: 'clamp(22px, 2.4vw, 30px)', color: '#FFFFFF',
@@ -300,7 +300,7 @@ function LoginB() {
             fontFamily: t.eyebrowFont,
             fontSize: 10, fontWeight: 600, letterSpacing: '0.32em', textTransform: 'uppercase',
             color: t.palette.goldSoft,
-          }}>— Tawny Walker, Principal</div>
+          }}>Tawny Walker</div>
         </div>
       </div>
 

@@ -41,7 +41,7 @@ export default function LeadsInbox() {
             fontSize: isB ? 10.5 : 11, fontWeight: isB ? 600 : 400,
             letterSpacing: isB ? '0.28em' : '0.22em',
             textTransform: 'uppercase', color: t.fgFaint,
-          }}>This week —</span>
+          }}>This week</span>
           <span style={{
             fontFamily: t.fonts.display, fontSize: 28,
             color: isB ? t.palette.emerald : t.fgPage,

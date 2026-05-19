@@ -15,7 +15,7 @@ export const ROLES = {
     tone: 'warm',
     title: 'Find a home worth living in.',
     fieldsEstimate: '~7 fields',
-    note: '"I treat every buyer like they only get one shot at this. Many of them only do." — TW',
+    note: '"I treat every buyer like they only get one shot at this. Many of them only do." TW',
     sections: [
       { title: 'About you', cols: [
         { label: 'Name', placeholder: 'First and last' },
@@ -41,7 +41,7 @@ export const ROLES = {
     tone: 'bone',
     title: 'List with intention, not urgency.',
     fieldsEstimate: '~7 fields',
-    note: '"The best sales happen quietly. The second-best happen patiently." — TW',
+    note: '"The best sales happen quietly. The second-best happen patiently." TW',
     sections: [
       { title: 'About you', cols: [
         { label: 'Name', placeholder: 'First and last' },
@@ -60,7 +60,7 @@ export const ROLES = {
         { label: 'Condition', value: 'Restored 2023', dropdown: true },
         { label: 'Time frame to sell', value: '3–6 months', dropdown: true },
       ]},
-      { type: 'note', label: 'Anything she should know?', value: 'We are open to an off-market introduction first. Photography matters to us — Patrick Lee shot the house last spring.' },
+      { type: 'note', label: 'Anything she should know?', value: 'We are open to an off-market introduction first. Photography matters to us. Patrick Lee shot the house last spring.' },
     ],
   },
   investor: {
@@ -70,7 +70,7 @@ export const ROLES = {
     tone: 'dusk',
     title: 'Build a portfolio, quietly.',
     fieldsEstimate: '~10 fields',
-    note: '"I find buildings the rest of the market has misread, and I introduce them to people who recognize them." — TW',
+    note: '"I find buildings the rest of the market has misread, and I introduce them to people who recognize them." TW',
     sections: [
       { title: 'Principal & vehicle', cols: [
         { label: 'Name', placeholder: 'First and last' },
@@ -100,7 +100,7 @@ export const ROLES = {
     tone: 'sage',
     title: 'Stay in the loop on upcoming listings and exclusive off-market opportunities.',
     fieldsEstimate: '~6 fields',
-    note: '"Please add your info to stay in the loop with upcoming listings and exclusive off-market opportunities." — TW',
+    note: '"Please add your info to stay in the loop with upcoming listings and exclusive off-market opportunities." TW',
     sections: [
       { title: 'About you', cols: [
         { label: 'Name', placeholder: 'First and last' },
@@ -111,7 +111,7 @@ export const ROLES = {
         { label: 'Brokerage / org', value: 'Coastal & Magnolia, NYC' },
       ]},
       { type: 'pair', cols: [
-        { label: 'Stay length (if renter)', value: 'Nov 2026 — Apr 2027', dropdown: true },
+        { label: 'Stay length (if renter)', value: 'Nov 2026 to Apr 2027', dropdown: true },
         { label: 'Beds preferred', value: '3 BD' },
       ]},
       { type: 'chips', label: 'Neighborhoods', value: ['Birmingham', 'Bloomfield Hills'], options: ['Royal Oak', 'Ferndale', 'Novi', 'Northville'] },
@@ -125,7 +125,7 @@ export const ROLE_KEYS = ['buyer', 'seller', 'investor', 'agent'];
 
 export const AUDIENCE_CARDS = [
   { key: 'buyer',    n: 'I.',   t: 'Buyers',           sub: 'Find a home worth living in.',                                                       body: 'For families and households searching for a primary residence across Birmingham, Bloomfield Hills, and the surrounding Metro Detroit communities.', tone: 'warm' },
-  { key: 'seller',   n: 'II.',  t: 'Sellers',          sub: 'List with intention, not urgency.',                                                  body: 'For owners ready to part with a property and curious what a design-driven sale looks like — photography, story, and a short list of qualified buyers.', tone: 'bone' },
+  { key: 'seller',   n: 'II.',  t: 'Sellers',          sub: 'List with intention, not urgency.',                                                  body: 'For owners ready to part with a property and curious what a design-driven sale looks like: photography, story, and a short list of qualified buyers.', tone: 'bone' },
   { key: 'investor', n: 'III.', t: 'Investors',        sub: 'Build a portfolio, quietly.',                                                        body: 'For flippers, cash-flow buyers, and developers assembling residential or commercial holdings across Metro Detroit.', tone: 'dusk' },
   { key: 'agent',    n: 'IV.',  t: 'Agents & Renters', sub: 'Stay in the loop on upcoming listings and off-market opportunities.',                body: 'For referring agents, co-brokes, and anyone who wants early access to upcoming listings and exclusive off-market opportunities.', tone: 'sage' },
 ];

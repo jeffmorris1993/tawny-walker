@@ -35,7 +35,7 @@ export default function AttachedListings({ attached = [], onRemove, onAttach }) 
         fontFamily: t.fonts.display, fontStyle: 'italic',
         fontSize: 14, color: t.fgFaint, marginTop: 6, lineHeight: 1.5,
       }}>
-        {t.admin.attachedNounPlural[0].toUpperCase() + t.admin.attachedNounPlural.slice(1)} you have personally tied to this lead — a private record of what you've shared.
+        {t.admin.attachedNounPlural[0].toUpperCase() + t.admin.attachedNounPlural.slice(1)} you have personally tied to this lead. A private record of what you've shared.
       </div>
 
       <div style={{ marginTop: 14 }}>

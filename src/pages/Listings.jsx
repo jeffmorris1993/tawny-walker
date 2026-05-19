@@ -43,13 +43,12 @@ function ListingsA() {
       <div style={{ padding: 'clamp(48px, 6.1vw, 88px) clamp(24px, 4.4vw, 64px) clamp(32px, 3.9vw, 56px)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 24 }}>
           <div>
-            <Eyebrow>The Index</Eyebrow>
-            <h1 style={{ fontFamily: t.fonts.display, fontWeight: 300, fontSize: 'clamp(52px, 6.7vw, 96px)', letterSpacing: '-0.022em', margin: '24px 0 0', lineHeight: 0.95 }}>
+            <h1 style={{ fontFamily: t.fonts.display, fontWeight: 300, fontSize: 'clamp(52px, 6.7vw, 96px)', letterSpacing: '-0.022em', margin: 0, lineHeight: 0.95 }}>
               Current <em style={{ fontStyle: 'italic' }}>{t.listingNoun}</em>.
             </h1>
           </div>
           <p style={{ maxWidth: 380, textAlign: 'right', fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 19, color: t.fgMuted, lineHeight: 1.45, margin: 0 }}>
-            {LISTINGS.length} properties currently represented by the studio — a fraction of the Michigan luxury market, chosen with intent.
+            {LISTINGS.length} properties currently represented by the studio, a fraction of the Michigan luxury market, chosen with intent.
           </p>
         </div>
 
@@ -93,7 +92,7 @@ function FilterBarA({ filter, setFilter, counts }) {
         ))}
       </div>
       <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
-        <span style={{ fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.fgFaint }}>Sort —</span>
+        <span style={{ fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.fgFaint }}>Sort</span>
         <span style={{ fontSize: 11.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.palette.ink, borderBottom: `1px solid ${t.palette.ink}`, paddingBottom: 4 }}>By Price ↓</span>
       </div>
     </div>
@@ -139,8 +138,8 @@ function ListingCardBigA({ listing, num, archive }) {
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 28, gap: 24, flexWrap: 'wrap' }}>
         <div>
-          <div style={{ fontSize: 11, letterSpacing: '0.24em', textTransform: 'uppercase', color: t.accent }}>№ {num}{archive ? ' · Archive' : ''}</div>
-          <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 48, letterSpacing: '-0.018em', margin: '10px 0 0' }}>{listing.addr}</h3>
+          {archive && <div style={{ fontSize: 11, letterSpacing: '0.24em', textTransform: 'uppercase', color: t.accent }}>Archive</div>}
+          <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 48, letterSpacing: '-0.018em', margin: archive ? '10px 0 0' : 0 }}>{listing.addr}</h3>
           <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 20, color: t.fgMuted, marginTop: 4 }}>{listing.street}, {listing.loc}</div>
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -164,8 +163,7 @@ function ListingCardStdA({ listing, num }) {
       </div>
       <div style={{ marginTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
         <div>
-          <div style={{ fontSize: 10, letterSpacing: '0.24em', textTransform: 'uppercase', color: t.accent }}>№ {num}</div>
-          <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 26, letterSpacing: '-0.012em', margin: '6px 0 0' }}>{listing.addr}</h3>
+          <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 26, letterSpacing: '-0.012em', margin: 0 }}>{listing.addr}</h3>
           <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 16, color: t.fgMuted, marginTop: 2 }}>{listing.street}</div>
           <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 14, color: t.fgFaint }}>{listing.loc}</div>
         </div>
@@ -185,14 +183,13 @@ function ListingsB() {
 
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
-      <TopNav active="Residences" />
+      <TopNav active="Listings" />
 
       <div style={{ padding: 'clamp(56px, 7vw, 96px) clamp(24px, 5vw, 72px) clamp(32px, 4vw, 56px)', textAlign: 'center' }}>
-        <Eyebrow>The Index</Eyebrow>
         <h1 style={{
           fontFamily: t.fonts.display, fontWeight: 300,
           fontSize: 'clamp(52px, 7vw, 96px)', letterSpacing: '-0.024em',
-          margin: '24px 0 0', lineHeight: 0.95, color: t.palette.emerald,
+          margin: 0, lineHeight: 0.95, color: t.palette.emerald,
         }}>
           Current <em style={{ fontStyle: 'italic' }}>{t.listingNoun}.</em>
         </h1>
@@ -200,7 +197,7 @@ function ListingsB() {
           fontFamily: t.fonts.display, fontStyle: 'italic',
           fontSize: 20, color: t.fgMuted, maxWidth: 640, margin: '24px auto 0', lineHeight: 1.5,
         }}>
-          {LISTINGS.length} properties currently represented by the studio — a small fraction of the Michigan market, chosen with intent.
+          {LISTINGS.length} properties currently represented by the studio, a small fraction of the Michigan market, chosen with intent.
         </p>
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32 }}>
           <Rule />
@@ -254,7 +251,7 @@ function FilterBarB({ filter, setFilter, counts }) {
         ))}
       </div>
       <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
-        <span style={{ fontFamily: t.eyebrowFont, fontSize: 10.5, fontWeight: 500, letterSpacing: '0.28em', textTransform: 'uppercase', color: t.fgFaint }}>Sort —</span>
+        <span style={{ fontFamily: t.eyebrowFont, fontSize: 10.5, fontWeight: 500, letterSpacing: '0.28em', textTransform: 'uppercase', color: t.fgFaint }}>Sort</span>
         <span style={{ fontFamily: t.eyebrowFont, fontSize: 11, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', color: t.palette.emerald, borderBottom: `1px solid ${t.palette.emerald}`, paddingBottom: 4 }}>By Price ↓</span>
       </div>
     </div>
@@ -299,10 +296,12 @@ function ListingCardBigB({ listing, num, archive }) {
         <div style={{ position: 'absolute', bottom: 20, right: 20, fontFamily: t.eyebrowFont, fontSize: 9.5, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)' }}>{listing.tag}</div>
       </div>
       <div style={{ padding: '32px 40px 36px' }}>
-        <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 15, color: t.accent }}>
-          № {num}{archive ? ' · Archive' : ''}
-        </div>
-        <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(32px, 3.4vw, 48px)', letterSpacing: '-0.02em', color: t.palette.emerald, margin: '10px 0 0', lineHeight: 1 }}>{listing.addr}</h3>
+        {archive && (
+          <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 15, color: t.accent }}>
+            Archive
+          </div>
+        )}
+        <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(32px, 3.4vw, 48px)', letterSpacing: '-0.02em', color: t.palette.emerald, margin: archive ? '10px 0 0' : 0, lineHeight: 1 }}>{listing.addr}</h3>
         <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 19, color: t.fgMuted, marginTop: 6 }}>{listing.street}, {listing.loc}</div>
         <div style={{ marginTop: 24, paddingTop: 20, borderTop: `1px solid ${t.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
           <span style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 36, color: t.palette.emerald }}>{listing.price}</span>
@@ -324,8 +323,7 @@ function ListingCardStdB({ listing, num }) {
         </div>
       </div>
       <div style={{ padding: '20px 24px 24px' }}>
-        <div style={{ fontFamily: t.eyebrowFont, fontSize: 9.5, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', color: t.accent }}>№ {num}</div>
-        <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 26, letterSpacing: '-0.012em', color: t.palette.emerald, margin: '6px 0 0', lineHeight: 1.05 }}>{listing.addr}</h3>
+        <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 26, letterSpacing: '-0.012em', color: t.palette.emerald, margin: 0, lineHeight: 1.05 }}>{listing.addr}</h3>
         <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 15, color: t.fgMuted, marginTop: 4 }}>{listing.street}</div>
         <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 13.5, color: t.fgFaint }}>{listing.loc}</div>
         <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${t.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>

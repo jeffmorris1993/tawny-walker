@@ -45,13 +45,13 @@ export const LEAD_DETAIL = {
     { q: 'Off-market?',           a: 'Preferred' },
   ],
   mandateNotes: '"Replacement property must close by Sep 14. Open to portfolios of 2–3 SFRs if combined basis fits. Will not consider new construction."',
-  studioNote: 'Worth a 30-min call this week. Mention the Whitney penthouse comp — she does not see the basis on it yet. Bring Brookmark Holdings into the same conversation if 1031 timing aligns.',
+  studioNote: 'Worth a 30-min call this week. Mention the Whitney penthouse comp, she does not see the basis on it yet. Bring Brookmark Holdings into the same conversation if 1031 timing aligns.',
   studioNoteSavedAt: 'May 16, 10:08 AM',
   // Studio log — only events that happened *inside* the studio (no external
   // signals like "email opened"). One italic entry per principal action.
   studioLog: [
     { t: 'Intake received',           when: 'Today · 9:42 AM',  highlight: true },
-    { t: 'Studio note edited — TW',   when: 'Today · 10:08 AM' },
+    { t: 'Studio note edited · TW',   when: 'Today · 10:08 AM' },
   ],
   // Attached listings — a private record of what TW has shared with this lead.
   // Each is a real listing reference (so the thumbnail tone resolves through
@@ -73,7 +73,7 @@ export const DRAFT_LISTING = {
   lot: '—',
   price: '$7,400,000',
   status: 'Active',
-  description: 'A four-story lakefront residence by Studio Renata — three living levels above a private moorage, with western-facing terraces and a small rooftop pool that overlooks Lake St. Clair.',
+  description: 'A four-story lakefront residence by Studio Renata, three living levels above a private moorage, with western-facing terraces and a small rooftop pool that overlooks Lake St. Clair.',
   tone: 'dusk',
 };
 
