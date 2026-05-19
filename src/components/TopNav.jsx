@@ -28,6 +28,7 @@ export default function TopNav({ active, dark = false }) {
         padding: isB ? '28px 72px' : '24px 64px',
         borderBottom: `1px solid ${line}`,
         background: bg,
+        position: 'relative', zIndex: 10,
       }}>
         <Link to="/" style={{ textDecoration: 'none' }}>
           <Wordmark size={isB ? 24 : 22} light={dark} sub={false} />

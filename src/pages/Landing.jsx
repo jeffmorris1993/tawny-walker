@@ -23,7 +23,7 @@ function LandingA() {
       <div style={{ position: 'relative', minHeight: 820 }}>
         <Photo label="HERO · INTERIOR — BIRMINGHAM" tone="warm" height={820} src={PHOTOS.livingMarble} style={{ position: 'absolute', inset: 0 }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.35) 35%, rgba(0,0,0,0.25) 60%, rgba(0,0,0,0.75) 100%)' }} />
-        <div style={{ position: 'relative', zIndex: 2 }}>
+        <div style={{ position: 'relative', zIndex: 3 }}>
           <TopNav dark={true} />
         </div>
         <div className="tw-hero-content" style={{ position: 'absolute', left: 'clamp(20px, 4.4vw, 64px)', bottom: 'clamp(40px, 6vw, 100px)', right: 'clamp(20px, 4.4vw, 64px)', color: '#fff', zIndex: 2 }}>
@@ -219,7 +219,7 @@ function LandingB() {
       <div style={{ position: 'relative', minHeight: 880, background: t.palette.emerald }}>
         <Photo label="HERO · INTERIOR — BIRMINGHAM" tone="dusk" height={880} src={PHOTOS.livingMarble} style={{ position: 'absolute', inset: 0 }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(8,42,32,0.95) 0%, rgba(8,42,32,0.88) 35%, rgba(8,42,32,0.85) 60%, rgba(8,42,32,0.97) 100%)' }} />
-        <div style={{ position: 'relative', zIndex: 2 }}>
+        <div style={{ position: 'relative', zIndex: 3 }}>
           <TopNav dark={true} />
         </div>
         <div className="tw-hero-content" style={{

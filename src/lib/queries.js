@@ -357,22 +357,97 @@ export async function detachListing(leadId, listingId) {
     .eq('listing_id', listingId);
 }
 
-// ─── Inquiries / forms ──────────────────────────────────────────────────────
+// ─── Form submission ────────────────────────────────────────────────────────
+// Each public-form submission inserts straight into `leads`. The intake JSON
+// on the lead captures the full Q/A breakdown; mandate_notes captures the
+// free-text fields. No separate audit table.
 export async function submitInquiry({ role, name, contact, payload, message }) {
-  // role: 'buyer' | 'seller' | 'investor' | 'agent'
+  const leadInsert = inquiryToLead({ role, name, contact, payload, message });
+
   if (!isSupabaseConfigured) {
-    // Mock mode: log and pretend it worked. Surface a console line so devs can
-    // see the data flowing.
-    console.info('[tw] inquiry (mock):', { role, name, contact, payload, message });
+    console.info('[tw] inquiry (mock):', leadInsert);
     await new Promise(r => setTimeout(r, 400));
     return { data: { id: `mock-${Date.now()}` }, error: null };
   }
+
   const { data, error } = await supabase
-    .from('inquiries')
-    .insert({ role, name, contact, payload, message })
+    .from('leads')
+    .insert(leadInsert)
     .select()
     .single();
+  if (error) console.error('[tw] lead insert failed', error);
   return { data, error };
+}
+
+const ROLE_CAP = { buyer: 'Buyer', seller: 'Seller', investor: 'Investor', agent: 'Agent' };
+const ROLE_TONE = { buyer: 'warm', seller: 'bone', investor: 'dusk', agent: 'sage' };
+
+// Pull common fields out of a form payload to populate a `leads` row.
+function inquiryToLead({ role, name, contact, payload, message }) {
+  const [firstName, ...rest] = String(name || '').trim().split(/\s+/);
+  const lastName = rest.join(' ') || null;
+
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact || '');
+  const email = isEmail ? contact : null;
+  const phone = isEmail ? null : contact || null;
+
+  const fields = (payload && payload.fields) || {};
+  const chips = (payload && payload.chips) || {};
+  const budgets = (payload && payload.budgets) || {};
+  const notes = (payload && payload.notes) || {};
+
+  const entity = fields['Entity'] || fields['Brokerage / org'] || null;
+  // The form doesn't ask for "city" explicitly, but a few labels carry one:
+  const city = fields['City, State'] || fields['City'] || null;
+
+  // One-line inbox summary: pull a handful of the most informative fields.
+  const summaryParts = [];
+  for (const key of ['Household', 'Property type', 'Investor type', 'I am a…', 'Hold horizon', 'Time frame to buy', 'Time frame to sell']) {
+    if (fields[key]) summaryParts.push(fields[key]);
+  }
+  for (const list of Object.values(chips)) {
+    if (Array.isArray(list) && list.length) {
+      summaryParts.push(list.slice(0, 3).join(' · '));
+      break;
+    }
+  }
+  for (const b of Object.values(budgets)) {
+    if (b && b.display) { summaryParts.push(b.display); break; }
+  }
+  const summary = summaryParts.length ? summaryParts.join(' · ') : (message ? message.slice(0, 160) : null);
+
+  // The intake list rendered on the lead detail page.
+  const intake = [];
+  for (const [q, a] of Object.entries(fields)) {
+    if (!a) continue;
+    if (q === 'Name' || q === 'Best contact') continue;
+    intake.push({ q, a });
+  }
+  for (const [q, arr] of Object.entries(chips)) {
+    if (Array.isArray(arr) && arr.length) intake.push({ q, a: arr.join(' · ') });
+  }
+  for (const [q, b] of Object.entries(budgets)) {
+    if (b && b.display) intake.push({ q, a: b.display });
+  }
+  const mandateNotes = Object.values(notes).filter(Boolean).join('\n\n') || null;
+
+  return {
+    first_name: firstName || 'Unknown',
+    last_name: lastName,
+    email,
+    phone,
+    role: ROLE_CAP[role] || 'Buyer',
+    entity,
+    city,
+    referred_by: null,
+    status: 'New',
+    tone: ROLE_TONE[role] || 'warm',
+    stars: 0,
+    summary,
+    mandate_notes: mandateNotes,
+    studio_note: null,
+    intake,
+  };
 }
 
 // ─── Auth ──────────────────────────────────────────────────────────────────

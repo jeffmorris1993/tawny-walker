@@ -10,7 +10,6 @@ create extension if not exists pgcrypto;
 
 -- Listings: the public Index.
 drop table if exists public.attached_listings cascade;
-drop table if exists public.inquiries cascade;
 drop table if exists public.leads cascade;
 drop table if exists public.listings cascade;
 
@@ -50,8 +49,8 @@ create index listings_sort_order_idx on public.listings(sort_order);
 create table public.leads (
   id uuid primary key default gen_random_uuid(),
   first_name text not null,
-  last_name text not null,
-  email text not null,
+  last_name text,
+  email text,
   phone text,
   role text not null check (role in ('Buyer', 'Seller', 'Investor', 'Agent')),
   entity text,
@@ -72,22 +71,6 @@ create table public.leads (
 create index leads_status_idx on public.leads(status);
 create index leads_role_idx on public.leads(role);
 create index leads_created_at_idx on public.leads(created_at desc);
-
--- Inquiries: raw submissions before they become qualified leads. Every form
--- POST writes here; admin promotes the interesting ones into `leads`.
-create table public.inquiries (
-  id uuid primary key default gen_random_uuid(),
-  role text not null check (role in ('buyer', 'seller', 'investor', 'agent')),
-  name text not null,
-  contact text not null,
-  payload jsonb not null,                    -- everything else the form collected
-  message text,
-  lead_id uuid references public.leads(id) on delete set null,
-  created_at timestamptz default now()
-);
-
-create index inquiries_role_idx on public.inquiries(role);
-create index inquiries_created_at_idx on public.inquiries(created_at desc);
 
 -- Attached listings: studio's private record of listings shared with a lead.
 create table public.attached_listings (
@@ -120,7 +103,6 @@ create trigger trg_leads_updated_at before update on public.leads
 -- ─── Row Level Security ────────────────────────────────────────────────────
 alter table public.listings enable row level security;
 alter table public.leads enable row level security;
-alter table public.inquiries enable row level security;
 alter table public.attached_listings enable row level security;
 
 -- Anyone can read listings (public Index).
@@ -128,24 +110,23 @@ drop policy if exists "listings_public_read" on public.listings;
 create policy "listings_public_read" on public.listings
   for select using (true);
 
--- Anyone can submit an inquiry — but cannot read others'.
-drop policy if exists "inquiries_public_insert" on public.inquiries;
-create policy "inquiries_public_insert" on public.inquiries
+-- Anyone can submit a lead via the public form. They can't read or update
+-- existing leads.
+drop policy if exists "leads_public_insert" on public.leads;
+create policy "leads_public_insert" on public.leads
   for insert with check (true);
 
--- Authenticated (admin) users have full access to everything.
+-- Admin (anon + authenticated) full access. Demo login uses env credentials
+-- and runs as anon; switch this to `authenticated` once real Supabase Auth
+-- is in place.
 drop policy if exists "listings_admin_all" on public.listings;
 create policy "listings_admin_all" on public.listings
-  for all to authenticated using (true) with check (true);
+  for all to anon, authenticated using (true) with check (true);
 
 drop policy if exists "leads_admin_all" on public.leads;
 create policy "leads_admin_all" on public.leads
-  for all to authenticated using (true) with check (true);
-
-drop policy if exists "inquiries_admin_all" on public.inquiries;
-create policy "inquiries_admin_all" on public.inquiries
-  for all to authenticated using (true) with check (true);
+  for all to anon, authenticated using (true) with check (true);
 
 drop policy if exists "attached_admin_all" on public.attached_listings;
 create policy "attached_admin_all" on public.attached_listings
-  for all to authenticated using (true) with check (true);
+  for all to anon, authenticated using (true) with check (true);

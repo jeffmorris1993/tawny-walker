@@ -27,11 +27,15 @@ function PublicChrome() {
   return <DirectionToggle />;
 }
 
-// Scroll to the hash target after route changes (React Router doesn't by default).
-// Polls briefly because the target section may render after the route mounts
-// (e.g. embedded InquiryWidget hydrates after Landing's first paint).
+// Scroll to the hash target after every navigation event (React Router doesn't
+// by default). Polls briefly because the target may render after the route
+// mounts (e.g. embedded InquiryWidget hydrates after Landing's first paint).
+//
+// Keys on `location.key` (not just hash/pathname) so clicking the same hash
+// link twice still triggers a scroll.
 function HashScroller() {
-  const { hash, pathname } = useLocation();
+  const location = useLocation();
+  const { hash, pathname, key } = location;
   useEffect(() => {
     if (!hash) {
       window.scrollTo({ top: 0, behavior: 'instant' });
@@ -48,7 +52,7 @@ function HashScroller() {
       }
     };
     requestAnimationFrame(tick);
-  }, [hash, pathname]);
+  }, [hash, pathname, key]);
   return null;
 }
 

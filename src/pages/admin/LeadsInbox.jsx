@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../theme/DirectionContext';
-import Photo from '../../components/Photo';
 import Eyebrow from '../../components/Eyebrow';
 import StatusChip from '../../components/StatusChip';
 import AdminShell from '../../components/AdminShell';
@@ -15,6 +14,31 @@ const FILTER_TABS = [
   { l: 'Agents / Renters', key: 'Agent' },
 ];
 
+const SORT_TABS = [
+  { l: 'By Date',   key: 'date' },
+  { l: 'By Status', key: 'status' },
+  { l: 'By Type',   key: 'type' },
+];
+
+const STATUS_RANK = { New: 0, Contacted: 1, Qualified: 2, Cold: 3 };
+
+function sortLeads(list, key) {
+  const out = [...list];
+  if (key === 'status') {
+    out.sort((a, b) => (STATUS_RANK[a.status] ?? 99) - (STATUS_RANK[b.status] ?? 99));
+  } else if (key === 'type') {
+    out.sort((a, b) => (a.type || '').localeCompare(b.type || ''));
+  } else {
+    // date: newest first
+    out.sort((a, b) => {
+      const aT = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bT = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bT - aT;
+    });
+  }
+  return out;
+}
+
 // Both directions share the same data + filtering logic. Visual surface is
 // driven entirely by the theme primitives plus a few inline color reads.
 
@@ -23,10 +47,11 @@ export default function LeadsInbox() {
   const isB = t.key === 'B';
   const { data: LEADS, loading } = useLeads();
   const [filter, setFilter] = useState('All');
-  const filtered = useMemo(
-    () => filter === 'All' ? LEADS : LEADS.filter(l => l.type === filter),
-    [filter, LEADS],
-  );
+  const [sort, setSort] = useState('date');
+  const filtered = useMemo(() => {
+    const base = filter === 'All' ? LEADS : LEADS.filter(l => l.type === filter);
+    return sortLeads(base, sort);
+  }, [filter, sort, LEADS]);
   const counts = useMemo(() => {
     const out = { All: LEADS.length };
     for (const tab of FILTER_TABS) {
@@ -100,17 +125,23 @@ export default function LeadsInbox() {
           })}
         </div>
         <div style={{ display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap' }}>
-          {['By Status', 'By Type', 'By Date'].map((s, i) => (
-            <span key={s} style={{
-              fontFamily: t.eyebrowFont,
-              fontSize: 11, fontWeight: isB ? (i === 0 ? 600 : 500) : 400,
-              letterSpacing: isB ? '0.26em' : '0.22em',
-              textTransform: 'uppercase',
-              color: i === 0 ? (isB ? t.palette.emerald : t.fgPage) : t.fgFaint,
-              borderBottom: i === 0 ? `1px solid ${isB ? t.palette.emerald : t.fgPage}` : '1px solid transparent',
-              paddingBottom: 4,
-            }}>{s}</span>
-          ))}
+          {SORT_TABS.map(s => {
+            const active = sort === s.key;
+            return (
+              <span
+                key={s.key}
+                onClick={() => setSort(s.key)}
+                style={{
+                  fontFamily: t.eyebrowFont,
+                  fontSize: 11, fontWeight: isB ? 600 : 400,
+                  letterSpacing: isB ? '0.26em' : '0.22em',
+                  textTransform: 'uppercase',
+                  color: active ? (isB ? t.palette.emerald : t.fgPage) : t.fgFaint,
+                  borderBottom: active ? `1px solid ${isB ? t.palette.emerald : t.fgPage}` : '1px solid transparent',
+                  paddingBottom: 4, cursor: 'pointer',
+                }}>{s.l}</span>
+            );
+          })}
         </div>
       </div>
 
@@ -153,15 +184,10 @@ export default function LeadsInbox() {
                     ))}
                   </span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ width: 36, height: 36, flexShrink: 0 }}>
-                    <Photo label="" tone={lead.tone} height="100%" />
-                  </div>
-                  <span style={{
-                    fontFamily: t.fonts.display, fontSize: 17,
-                    color: isB ? t.palette.emerald : t.fgPage,
-                  }}>{lead.name}</span>
-                </div>
+                <span style={{
+                  fontFamily: t.fonts.display, fontSize: 17,
+                  color: isB ? t.palette.emerald : t.fgPage,
+                }}>{lead.name}</span>
                 <span style={{
                   fontFamily: t.eyebrowFont,
                   fontSize: 10.5, fontWeight: isB ? 600 : 400,
