@@ -17,10 +17,17 @@ export default function SiteFooter() {
   const ruleColor = isB ? 'rgba(248,245,238,0.14)' : t.line;
 
   const columns = [
-    { h: 'Office', items: [...STUDIO.address, STUDIO.phone, STUDIO.email].map(label => ({ label })) },
+    {
+      h: 'Office',
+      items: [
+        ...STUDIO.address.map(line => ({ label: line })),
+        { label: STUDIO.phone, href: `tel:${STUDIO.phone.replace(/[^\d+]/g, '')}` },
+        { label: STUDIO.email, href: `mailto:${STUDIO.email}` },
+      ],
+    },
     { h: 'Explore', items: [
       { label: 'Active Listings', to: '/listings' },
-      { label: 'Sold Archive', to: '/listings' },
+      { label: 'Sold Archive', to: '/listings#archive' },
     ] },
     { h: isB ? 'Follow' : 'Connect', items: [
       { label: 'Instagram', href: INSTAGRAM_URL },
@@ -64,8 +71,11 @@ export default function SiteFooter() {
                 color: fg, marginBottom: 8, lineHeight: 1.5,
               };
               if (item.href) {
+                const isExternal = /^https?:/i.test(item.href);
                 return (
-                  <a key={item.label} href={item.href} target="_blank" rel="noopener noreferrer"
+                  <a key={item.label} href={item.href}
+                    target={isExternal ? '_blank' : undefined}
+                    rel={isExternal ? 'noopener noreferrer' : undefined}
                     style={{ ...itemStyle, display: 'block', textDecoration: 'none' }}>
                     {item.label}
                   </a>

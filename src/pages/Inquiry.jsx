@@ -1,19 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTheme } from '../theme/DirectionContext';
 import { ROLES, ROLE_KEYS } from '../data/inquiryRoles';
+import { submitInquiry } from '../lib/queries';
+import { required, isEmailOrPhone, firstError } from '../lib/validation';
 import Photo from '../components/Photo';
 import TopNav from '../components/TopNav';
 import SiteFooter from '../components/SiteFooter';
 import Eyebrow from '../components/Eyebrow';
 
-// The unified inquiry is identical across directions in behavior — one dropdown
-// reveals one of four role-specific forms. The same state machine, role data,
-// and section schema power both A and B; only the visual primitives differ.
-//
-// `<InquiryWidget>` is the standalone interactive form (right-side dropdown +
-// role form). It's embedded on the Landing page and used inside the full
-// Inquiry page below.
+// The unified inquiry: one dropdown reveals one of four role-specific forms.
+// Same schema, same state machine across directions A and B.
 //
 // state: 'initial' | 'open' | 'buyer' | 'seller' | 'investor' | 'agent'
 
@@ -79,52 +76,454 @@ function useInquirySkin() {
     sliderEnd: isB ? t.palette.emerald : t.palette.ink,
     sliderMid: t.accent,
     valueColor: isB ? t.palette.emerald : t.fgPage,
+    error: '#B5341F',
     t,
   };
 }
 
+// ─── Form state helpers ─────────────────────────────────────────────────────
+// Identify the two universal contact fields by label.
+const NAME_LABELS = new Set(['Name']);
+const CONTACT_LABELS = new Set(['Best contact']);
+
+function buildInitial(role) {
+  // Every field starts empty; the schema's placeholder strings provide hints.
+  const fields = {};
+  const chips = {};
+  const notes = {};
+  const budget = {};
+  for (const s of role.sections) {
+    if (s.cols) {
+      for (const c of s.cols) fields[c.label] = '';
+    }
+    if (s.type === 'chips') chips[s.label] = [];
+    if (s.type === 'note') notes[s.label] = '';
+    if (s.type === 'budget') {
+      // Seed with the middle 50% of the range; the user drags from there.
+      budget[s.label] = { low: 0.2, high: 0.8 };
+    }
+  }
+  return { fields, chips, notes, budget };
+}
+
+// ─── Money parsing / formatting for the budget slider ───────────────────────
+// Accepts shapes like '$50K', '$1.42M', '$8K/mo'. Returns { value, suffix }.
+function parseMoney(s) {
+  const str = String(s).trim();
+  const suffixMatch = str.match(/\/[a-z]+$/i);
+  const suffix = suffixMatch ? suffixMatch[0] : '';
+  const body = (suffix ? str.slice(0, -suffix.length) : str)
+    .replace(/[$,\s]/g, '')
+    .trim();
+  let multiplier = 1;
+  let numeric = body;
+  if (/M$/i.test(body)) { multiplier = 1_000_000; numeric = body.slice(0, -1); }
+  else if (/K$/i.test(body)) { multiplier = 1_000; numeric = body.slice(0, -1); }
+  const value = parseFloat(numeric) * multiplier;
+  return { value: isFinite(value) ? value : 0, suffix };
+}
+
+function formatMoney(value, suffix = '') {
+  if (!isFinite(value)) return '—';
+  let display;
+  if (value >= 1_000_000) {
+    const m = value / 1_000_000;
+    display = `$${m >= 10 ? Math.round(m) : m.toFixed(2).replace(/\.?0+$/, '')}M`;
+  } else if (value >= 1_000) {
+    display = `$${Math.round(value / 1_000)}K`;
+  } else {
+    display = `$${Math.round(value)}`;
+  }
+  return suffix ? display + suffix : display;
+}
+
+function validate(role, form) {
+  const errors = {};
+  for (const s of role.sections) {
+    if (!s.cols) continue;
+    for (const c of s.cols) {
+      if (NAME_LABELS.has(c.label)) {
+        const err = required(form.fields[c.label], 'Name');
+        if (err) errors[c.label] = err;
+      } else if (CONTACT_LABELS.has(c.label)) {
+        const err = firstError(
+          required(form.fields[c.label], 'Best contact'),
+          isEmailOrPhone(form.fields[c.label]),
+        );
+        if (err) errors[c.label] = err;
+      }
+    }
+  }
+  return errors;
+}
+
 // ─── Form pieces ────────────────────────────────────────────────────────────
-function FormLabel({ children }) {
-  const t = useTheme();
-  const isB = t.key === 'B';
+function FormLabel({ children, error }) {
+  const skin = useInquirySkin();
+  const t = skin.t;
   return (
     <div style={{
       fontFamily: t.eyebrowFont,
-      fontSize: 10, fontWeight: isB ? 600 : 400,
-      letterSpacing: isB ? '0.28em' : '0.22em',
+      fontSize: 10, fontWeight: skin.isB ? 600 : 400,
+      letterSpacing: skin.isB ? '0.28em' : '0.22em',
       textTransform: 'uppercase',
-      color: t.fgFaint,
+      color: error ? skin.error : t.fgFaint,
     }}>{children}</div>
   );
 }
 
-function InputField({ label, value, placeholder, dropdown }) {
+function InputField({ label, value, onChange, placeholder, dropdown, options, error, required: req }) {
   const skin = useInquirySkin();
   const t = skin.t;
+  const isSelect = Array.isArray(options) && options.length > 0;
   return (
     <div>
+      <FormLabel error={error}>
+        {label}{req ? ' *' : ''}
+      </FormLabel>
+      {isSelect ? (
+        <EditorialSelect
+          value={value}
+          onChange={onChange}
+          options={options}
+          placeholder={placeholder || 'Select…'}
+          error={error}
+        />
+      ) : (
+        <TextField
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          dropdown={dropdown}
+          error={error}
+        />
+      )}
+      {error && (
+        <div style={{ marginTop: 6, fontSize: 11, color: skin.error, fontFamily: t.fonts.body }}>
+          {error}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TextField({ value, onChange, placeholder, dropdown, error }) {
+  const skin = useInquirySkin();
+  const t = skin.t;
+  const filled = value && String(value).length > 0;
+  return (
+    <div style={{
+      marginTop: 10, paddingBottom: 10,
+      borderBottom: `1px solid ${error ? skin.error : t.fgMuted}`,
+      display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
+    }}>
+      <input
+        type="text"
+        value={value || ''}
+        onChange={e => onChange && onChange(e.target.value)}
+        placeholder={placeholder || ''}
+        style={{
+          flex: 1, minWidth: 0,
+          background: 'transparent', border: 'none', outline: 'none', padding: 0,
+          fontFamily: filled ? t.fonts.display : t.fonts.body,
+          fontStyle: filled ? 'italic' : 'normal',
+          fontSize: filled ? 19 : 14,
+          color: filled ? skin.valueColor : t.fgFaint,
+        }}
+      />
+      {dropdown && (
+        <span style={{ color: skin.accentLine, fontSize: 13, flexShrink: 0 }}>▾</span>
+      )}
+    </div>
+  );
+}
+
+// Custom editorial dropdown: a styled control over a styled menu, both using
+// the active theme's fonts and palette. Closes on outside click or Escape.
+function EditorialSelect({ value, onChange, options, placeholder, error }) {
+  const skin = useInquirySkin();
+  const t = skin.t;
+  const filled = value && String(value).length > 0;
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDocClick(e) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    }
+    function onKey(e) { if (e.key === 'Escape') setOpen(false); }
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  function pick(opt) {
+    onChange && onChange(opt);
+    setOpen(false);
+  }
+
+  return (
+    <div ref={wrapRef} style={{ position: 'relative' }}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%', marginTop: 10, paddingBottom: 10, padding: 0,
+          background: 'transparent', border: 'none', outline: 'none',
+          borderBottom: `1px solid ${error ? skin.error : t.fgMuted}`,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
+          cursor: 'pointer', textAlign: 'left',
+          fontFamily: filled ? t.fonts.display : t.fonts.body,
+          fontStyle: filled ? 'italic' : 'normal',
+          fontSize: filled ? 19 : 14,
+          color: filled ? skin.valueColor : t.fgFaint,
+        }}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {filled ? value : placeholder}
+        </span>
+        <span style={{
+          color: skin.accentLine, fontSize: 13, flexShrink: 0,
+          transition: 'transform 0.2s ease',
+          transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+        }}>▾</span>
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          style={{
+            position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0,
+            zIndex: 30,
+            background: '#fff',
+            border: `1px solid ${skin.accentLine}`,
+            boxShadow: '0 24px 48px -16px rgba(0,0,0,0.22)',
+            maxHeight: 320, overflowY: 'auto',
+          }}
+        >
+          {options.map((opt, i) => {
+            const selected = opt === value;
+            return (
+              <SelectOption
+                key={opt}
+                option={opt}
+                selected={selected}
+                first={i === 0}
+                onPick={pick}
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SelectOption({ option, selected, first, onPick }) {
+  const skin = useInquirySkin();
+  const t = skin.t;
+  const [hover, setHover] = useState(false);
+  const active = hover || selected;
+  return (
+    <button
+      type="button"
+      role="option"
+      aria-selected={selected}
+      onClick={() => onPick(option)}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        gap: 12, width: '100%', textAlign: 'left',
+        padding: '14px 18px',
+        background: active ? t.bgPanel : '#fff',
+        border: 'none', borderTop: first ? 'none' : `1px solid ${t.line}`,
+        cursor: 'pointer',
+        fontFamily: t.fonts.display,
+        fontStyle: selected ? 'italic' : 'normal',
+        fontSize: 17,
+        color: active ? skin.selectionColor : t.fgPage,
+        transition: 'background 0.12s ease, color 0.12s ease',
+      }}
+    >
+      <span>{option}</span>
+      {selected && (
+        <span style={{ color: skin.accentLine, fontSize: 14, fontFamily: t.fonts.display }}>·</span>
+      )}
+    </button>
+  );
+}
+
+// ─── Dual-thumb price slider ────────────────────────────────────────────────
+function BudgetRange({ label, min, max, range, onChange }) {
+  const skin = useInquirySkin();
+  const t = skin.t;
+  const minParsed = parseMoney(min);
+  const maxParsed = parseMoney(max);
+  const lowVal = minParsed.value + (maxParsed.value - minParsed.value) * range.low;
+  const highVal = minParsed.value + (maxParsed.value - minParsed.value) * range.high;
+  const suffix = minParsed.suffix;
+
+  const trackRef = useRef(null);
+  const draggingRef = useRef(null); // 'low' | 'high' | null
+
+  function pctFromClientX(clientX) {
+    const rect = trackRef.current?.getBoundingClientRect();
+    if (!rect) return 0;
+    const raw = (clientX - rect.left) / rect.width;
+    return Math.min(1, Math.max(0, raw));
+  }
+
+  function startDrag(which) {
+    return (e) => {
+      e.preventDefault();
+      draggingRef.current = which;
+      const move = (ev) => {
+        if (!draggingRef.current) return;
+        const pct = pctFromClientX(ev.clientX);
+        if (draggingRef.current === 'low') {
+          onChange({ low: Math.min(pct, range.high - 0.02), high: range.high });
+        } else {
+          onChange({ low: range.low, high: Math.max(pct, range.low + 0.02) });
+        }
+      };
+      const stop = () => {
+        draggingRef.current = null;
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', stop);
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', stop);
+    };
+  }
+
+  function onTrackPointerDown(e) {
+    const pct = pctFromClientX(e.clientX);
+    // Snap whichever thumb is closer.
+    const distLow = Math.abs(pct - range.low);
+    const distHigh = Math.abs(pct - range.high);
+    const which = distLow <= distHigh ? 'low' : 'high';
+    if (which === 'low') {
+      onChange({ low: Math.min(pct, range.high - 0.02), high: range.high });
+    } else {
+      onChange({ low: range.low, high: Math.max(pct, range.low + 0.02) });
+    }
+    startDrag(which)(e);
+  }
+
+  return (
+    <div style={{ marginBottom: 32 }}>
       <FormLabel>{label}</FormLabel>
       <div style={{
-        marginTop: 10, paddingBottom: 10,
-        borderBottom: `1px solid ${t.fgMuted}`,
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+        marginTop: 14, gap: 12, flexWrap: 'wrap',
       }}>
-        <span style={{
-          fontFamily: value ? t.fonts.display : t.fonts.body,
-          fontStyle: value ? 'italic' : 'normal',
-          fontSize: value ? 19 : 14,
-          color: value ? skin.valueColor : t.fgFaint,
-          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-        }}>{value || placeholder}</span>
-        {dropdown && <span style={{ color: skin.accentLine, fontSize: 13, flexShrink: 0 }}>▾</span>}
+        <span style={{ fontFamily: t.fonts.display, fontSize: 28, color: skin.valueColor }}>
+          {formatMoney(lowVal, suffix)}
+        </span>
+        <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 14, color: t.fgFaint }}>to</span>
+        <span style={{ fontFamily: t.fonts.display, fontSize: 28, color: skin.valueColor }}>
+          {formatMoney(highVal, suffix)}
+        </span>
+      </div>
+      <div
+        ref={trackRef}
+        onPointerDown={onTrackPointerDown}
+        style={{
+          position: 'relative', height: 28, marginTop: 18,
+          touchAction: 'none', userSelect: 'none', cursor: 'pointer',
+        }}
+      >
+        {/* base track */}
+        <div style={{
+          position: 'absolute', left: 0, right: 0, top: '50%',
+          height: 3, borderRadius: 2,
+          transform: 'translateY(-50%)',
+          background: t.fgFaint,
+          opacity: 0.55,
+          pointerEvents: 'none',
+        }} />
+        {/* selected range */}
+        <div style={{
+          position: 'absolute', top: '50%', transform: 'translateY(-50%)',
+          height: 4, borderRadius: 2,
+          left: `${range.low * 100}%`,
+          right: `${(1 - range.high) * 100}%`,
+          background: skin.sliderEnd,
+          pointerEvents: 'none',
+        }} />
+        {/* low thumb */}
+        <Thumb
+          pct={range.low}
+          onPointerDown={startDrag('low')}
+          color={skin.sliderEnd}
+        />
+        {/* high thumb */}
+        <Thumb
+          pct={range.high}
+          onPointerDown={startDrag('high')}
+          color={skin.sliderEnd}
+        />
+      </div>
+      <div style={{
+        display: 'flex', justifyContent: 'space-between',
+        marginTop: 10, gap: 12,
+        fontFamily: t.eyebrowFont, fontSize: 9.5,
+        fontWeight: skin.isB ? 600 : 400,
+        letterSpacing: skin.isB ? '0.24em' : '0.2em',
+        textTransform: 'uppercase', color: t.fgFaint,
+      }}>
+        <span>Min · {formatMoney(minParsed.value, suffix)}</span>
+        <span>Max · {formatMoney(maxParsed.value, suffix)}</span>
       </div>
     </div>
   );
 }
 
-function RoleSection({ s }) {
+function Thumb({ pct, color, onPointerDown }) {
+  return (
+    <button
+      type="button"
+      onPointerDown={(e) => { e.stopPropagation(); onPointerDown(e); }}
+      aria-label="Adjust"
+      style={{
+        position: 'absolute', top: '50%',
+        left: `${pct * 100}%`,
+        transform: 'translate(-50%, -50%)',
+        width: 18, height: 18, borderRadius: '50%',
+        background: color, border: '2px solid #fff',
+        boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+        padding: 0, cursor: 'grab',
+      }}
+    />
+  );
+}
+
+function RoleSection({ s, form, setForm, errors }) {
   const skin = useInquirySkin();
   const t = skin.t;
+
+  const setField = (label) => (v) => {
+    setForm(f => ({ ...f, fields: { ...f.fields, [label]: v } }));
+  };
+  const toggleChip = (sectionLabel, chip) => {
+    setForm(f => {
+      const current = f.chips[sectionLabel] || [];
+      const next = current.includes(chip)
+        ? current.filter(c => c !== chip)
+        : [...current, chip];
+      return { ...f, chips: { ...f.chips, [sectionLabel]: next } };
+    });
+  };
+  const setNote = (label) => (v) => {
+    setForm(f => ({ ...f, notes: { ...f.notes, [label]: v } }));
+  };
 
   if (s.title && s.cols) {
     return (
@@ -133,7 +532,15 @@ function RoleSection({ s }) {
           <Eyebrow color={t.accent}>{s.title}</Eyebrow>
         </div>
         <div className="tw-form-pair" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
-          {s.cols.map((c, i) => <InputField key={i} {...c} />)}
+          {s.cols.map((c, i) => (
+            <InputField
+              key={i} {...c}
+              value={form.fields[c.label] || ''}
+              onChange={setField(c.label)}
+              required={NAME_LABELS.has(c.label) || CONTACT_LABELS.has(c.label)}
+              error={errors[c.label]}
+            />
+          ))}
         </div>
       </div>
     );
@@ -141,76 +548,96 @@ function RoleSection({ s }) {
   if (s.type === 'pair') {
     return (
       <div className="tw-form-pair" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, marginBottom: 24 }}>
-        {s.cols.map((c, i) => <InputField key={i} {...c} />)}
+        {s.cols.map((c, i) => (
+          <InputField
+            key={i} {...c}
+            value={form.fields[c.label] || ''}
+            onChange={setField(c.label)}
+            error={errors[c.label]}
+          />
+        ))}
       </div>
     );
   }
   if (s.type === 'chips') {
+    const selected = form.chips[s.label] || [];
+    const allOptions = [...new Set([...selected, ...s.options])];
     return (
       <div style={{ marginBottom: 26 }}>
         <FormLabel>{s.label}</FormLabel>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
-          {s.value.map(v => (
-            <span key={v} style={{
-              padding: '8px 14px', background: skin.chipBg, color: skin.chipFg,
-              fontFamily: t.eyebrowFont,
-              fontSize: 11, fontWeight: skin.isB ? 600 : 400,
-              letterSpacing: skin.isB ? '0.2em' : '0.16em',
-              textTransform: 'uppercase',
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-            }}>{v} <span style={{ opacity: 0.5 }}>×</span></span>
-          ))}
-          {s.options.map(v => (
-            <span key={v} style={{
-              padding: '8px 14px', border: `1px solid ${t.line}`,
-              fontFamily: t.eyebrowFont,
-              fontSize: 11, fontWeight: skin.isB ? 500 : 400,
-              letterSpacing: skin.isB ? '0.2em' : '0.16em',
-              textTransform: 'uppercase', color: t.fgMuted,
-            }}>{v} +</span>
-          ))}
+          {allOptions.map(opt => {
+            const isOn = selected.includes(opt);
+            return (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => toggleChip(s.label, opt)}
+                style={{
+                  padding: '8px 14px',
+                  background: isOn ? skin.chipBg : 'transparent',
+                  color: isOn ? skin.chipFg : t.fgMuted,
+                  border: isOn ? 'none' : `1px solid ${t.line}`,
+                  fontFamily: t.eyebrowFont,
+                  fontSize: 11, fontWeight: skin.isB ? 600 : 400,
+                  letterSpacing: skin.isB ? '0.2em' : '0.16em',
+                  textTransform: 'uppercase',
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  cursor: 'pointer',
+                }}>
+                {opt} <span style={{ opacity: 0.5 }}>{isOn ? '×' : '+'}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
     );
   }
   if (s.type === 'budget') {
+    const range = form.budget[s.label] || { low: 0.2, high: 0.8 };
+    const setRange = (next) => {
+      setForm(f => ({ ...f, budget: { ...f.budget, [s.label]: next } }));
+    };
     return (
-      <div style={{ marginBottom: 32 }}>
-        <FormLabel>{s.label}</FormLabel>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 14, gap: 12, flexWrap: 'wrap' }}>
-          <span style={{ fontFamily: t.fonts.display, fontSize: 28, color: skin.valueColor }}>{s.min}</span>
-          <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 14, color: t.fgFaint }}>to</span>
-          <span style={{ fontFamily: t.fonts.display, fontSize: 28, color: skin.valueColor }}>{s.max}</span>
-        </div>
-        <div style={{ position: 'relative', height: 1, background: skin.sliderTrack, marginTop: 18 }}>
-          <span style={{ position: 'absolute', left: 0, top: -4, width: 9, height: 9, background: skin.sliderEnd, borderRadius: '50%' }} />
-          <span style={{ position: 'absolute', left: `${(s.center || 0.5) * 100}%`, transform: 'translateX(-50%)', top: -4, width: 9, height: 9, background: skin.sliderMid, borderRadius: '50%' }} />
-          <span style={{ position: 'absolute', right: 0, top: -4, width: 9, height: 9, background: skin.sliderEnd, borderRadius: '50%' }} />
-        </div>
-      </div>
+      <BudgetRange
+        label={s.label}
+        min={s.min}
+        max={s.max}
+        range={range}
+        onChange={setRange}
+      />
     );
   }
   if (s.type === 'note') {
     return (
       <div style={{ marginBottom: 20 }}>
         <FormLabel>{s.label}</FormLabel>
-        <div style={{
-          marginTop: 12, padding: '14px 0',
-          borderBottom: `1px solid ${t.fgMuted}`,
-          fontFamily: t.fonts.display, fontStyle: 'italic',
-          fontSize: 18, color: skin.valueColor, lineHeight: 1.55,
-        }}>{s.value}</div>
+        <textarea
+          value={form.notes[s.label] ?? ''}
+          onChange={e => setNote(s.label)(e.target.value)}
+          placeholder={s.placeholder || "Add anything you'd like Tawny to know…"}
+          rows={3}
+          style={{
+            marginTop: 12, width: '100%', padding: '14px 0',
+            background: 'transparent',
+            border: 'none', borderBottom: `1px solid ${t.fgMuted}`,
+            outline: 'none', resize: 'vertical',
+            fontFamily: t.fonts.display, fontStyle: 'italic',
+            fontSize: 18, color: skin.valueColor, lineHeight: 1.55,
+            boxSizing: 'border-box',
+          }}
+        />
       </div>
     );
   }
   return null;
 }
 
-function RoleForm({ role }) {
+function RoleForm({ role, form, setForm, errors, submitting, submitError, onSubmit }) {
   const skin = useInquirySkin();
   const t = skin.t;
   return (
-    <div style={{ marginTop: 48 }}>
+    <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} style={{ marginTop: 48 }} noValidate>
       <div style={{
         display: 'flex', alignItems: 'center', gap: 12,
         marginBottom: 32, paddingBottom: 16, borderBottom: `1px solid ${t.line}`,
@@ -226,7 +653,83 @@ function RoleForm({ role }) {
         }}>Form tailored for a {role.label.toLowerCase()}</span>
         <span style={{ flex: 1, minWidth: 12, height: 1, background: t.line }} />
       </div>
-      {role.sections.map((s, i) => <RoleSection key={i} s={s} />)}
+
+      {role.sections.map((s, i) => (
+        <RoleSection key={i} s={s} form={form} setForm={setForm} errors={errors} />
+      ))}
+
+      <div style={{
+        marginTop: 48, paddingTop: 28, borderTop: `1px solid ${t.line}`,
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        gap: 24, flexWrap: 'wrap',
+      }}>
+        <p style={{ fontSize: 12, color: t.fgFaint, maxWidth: 380, margin: 0, lineHeight: 1.55 }}>
+          Submitting shares your details with Tawny only. Never with a third party, never with a marketing list.
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          {submitError && (
+            <span style={{ fontSize: 12, color: skin.error, fontFamily: t.fonts.body }}>
+              {submitError}
+            </span>
+          )}
+          <button
+            type="submit"
+            disabled={submitting}
+            style={{
+              padding: '20px 36px',
+              background: skin.submitBg, color: skin.submitFg, border: 'none',
+              fontFamily: t.eyebrowFont,
+              fontSize: 11.5, fontWeight: skin.isB ? 600 : 400,
+              letterSpacing: skin.isB ? '0.28em' : '0.24em',
+              textTransform: 'uppercase',
+              cursor: submitting ? 'wait' : 'pointer',
+              opacity: submitting ? 0.6 : 1,
+            }}>
+            {submitting ? 'Sending…' : 'Send to Tawny →'}
+          </button>
+        </div>
+      </div>
+    </form>
+  );
+}
+
+function SuccessPanel({ role, onReset }) {
+  const skin = useInquirySkin();
+  const t = skin.t;
+  return (
+    <div style={{
+      marginTop: 48, padding: 'clamp(28px, 4vw, 48px)',
+      background: skin.t.bgPanel, border: `1px solid ${t.line}`,
+    }}>
+      <Eyebrow color={t.accent}>— Received</Eyebrow>
+      <h3 style={{
+        fontFamily: t.fonts.display, fontWeight: 400,
+        fontSize: 'clamp(28px, 3vw, 40px)', margin: '14px 0 0',
+        color: skin.selectionColor, letterSpacing: '-0.015em',
+      }}>
+        Thank you — it's in <em style={{ fontStyle: 'italic' }}>her hands</em>.
+      </h3>
+      <p style={{
+        marginTop: 18, fontFamily: t.fonts.display, fontStyle: 'italic',
+        fontSize: 19, color: t.fgMuted, lineHeight: 1.55, maxWidth: 560,
+      }}>
+        Tawny reads each {role.label.toLowerCase()} inquiry personally and replies within one business day.
+        You'll hear from her at the contact you provided.
+      </p>
+      <button
+        type="button"
+        onClick={onReset}
+        style={{
+          marginTop: 24, padding: '14px 22px',
+          background: 'transparent', border: `1px solid ${skin.accentLine}`,
+          color: skin.selectionColor,
+          fontFamily: t.eyebrowFont,
+          fontSize: 11, fontWeight: skin.isB ? 600 : 400,
+          letterSpacing: skin.isB ? '0.28em' : '0.24em',
+          textTransform: 'uppercase', cursor: 'pointer',
+        }}>
+        Send another inquiry
+      </button>
     </div>
   );
 }
@@ -395,12 +898,97 @@ function DropdownOpenBody() {
 }
 
 // ─── The embeddable widget ──────────────────────────────────────────────────
-// Use on the landing page or anywhere else. Handles its own state.
 export function InquiryWidget({ syncUrl = false, showHeading = true }) {
   const skin = useInquirySkin();
   const t = skin.t;
   const inq = useInquiryState({ syncUrl });
-  const { state, selected, open, toggleOpen, pick } = inq;
+  const { state, selected, selectedKey, open, toggleOpen, pick } = inq;
+
+  // Form lifecycle, per-role.
+  const initialForm = useMemo(() => (selected ? buildInitial(selected) : null), [selectedKey]);
+  const [form, setForm] = useState(initialForm);
+  const [errors, setErrors] = useState({});
+  const [status, setStatus] = useState('idle'); // 'idle' | 'submitting' | 'success' | 'error'
+  const [submitError, setSubmitError] = useState(null);
+
+  // Reset form whenever the role changes.
+  useEffect(() => {
+    setForm(initialForm);
+    setErrors({});
+    setStatus('idle');
+    setSubmitError(null);
+  }, [initialForm]);
+
+  async function handleSubmit() {
+    if (!selected || !form) return;
+    const errs = validate(selected, form);
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      setSubmitError('Please fix the highlighted fields.');
+      return;
+    }
+    setErrors({});
+    setSubmitError(null);
+    setStatus('submitting');
+
+    // Find the two universal fields.
+    let name = '';
+    let contact = '';
+    for (const [k, v] of Object.entries(form.fields)) {
+      if (NAME_LABELS.has(k)) name = v;
+      else if (CONTACT_LABELS.has(k)) contact = v;
+    }
+    // Resolve budget percentages back to real dollar amounts for the payload.
+    const budgets = {};
+    for (const s of selected.sections) {
+      if (s.type !== 'budget') continue;
+      const range = form.budget[s.label] || { low: 0, high: 1 };
+      const minP = parseMoney(s.min);
+      const maxP = parseMoney(s.max);
+      const lowVal = minP.value + (maxP.value - minP.value) * range.low;
+      const highVal = minP.value + (maxP.value - minP.value) * range.high;
+      budgets[s.label] = {
+        low: Math.round(lowVal),
+        high: Math.round(highVal),
+        display: `${formatMoney(lowVal, minP.suffix)} – ${formatMoney(highVal, minP.suffix)}`,
+      };
+    }
+    // Build a payload that captures every section's collected data.
+    const payload = {
+      role: selectedKey,
+      fields: form.fields,
+      chips: form.chips,
+      notes: form.notes,
+      budgets,
+    };
+    // Extract a "message" from any note section that has content.
+    const message = Object.values(form.notes).filter(Boolean).join('\n\n').trim() || null;
+
+    const { error } = await submitInquiry({
+      role: selectedKey, name, contact, payload, message,
+    });
+
+    if (error) {
+      setStatus('error');
+      setSubmitError(error.message || 'Something went wrong. Please try again.');
+    } else {
+      setStatus('success');
+      // Scroll the user to the top of the form so they see the success state.
+      if (typeof window !== 'undefined') {
+        setTimeout(() => {
+          const el = document.getElementById('inquiry');
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+      }
+    }
+  }
+
+  function handleReset() {
+    setForm(initialForm);
+    setErrors({});
+    setStatus('idle');
+    setSubmitError(null);
+  }
 
   return (
     <div id="inquiry">
@@ -422,25 +1010,21 @@ export function InquiryWidget({ syncUrl = false, showHeading = true }) {
 
       {!selected && !open && <InitialHint onPick={pick} />}
       {open && <DropdownOpenBody />}
-      {selected && !open && <RoleForm role={selected} />}
 
-      {selected && !open && (
-        <div style={{
-          marginTop: 48, paddingTop: 28, borderTop: `1px solid ${t.line}`,
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          gap: 24, flexWrap: 'wrap',
-        }}>
-          <p style={{ fontSize: 12, color: t.fgFaint, maxWidth: 380, margin: 0, lineHeight: 1.55 }}>
-            Submitting shares your details with Tawny only. Never with a third party, never with a marketing list.
-          </p>
-          <button style={{
-            padding: '20px 36px', background: skin.submitBg, color: skin.submitFg, border: 'none',
-            fontFamily: t.eyebrowFont,
-            fontSize: 11.5, fontWeight: skin.isB ? 600 : 400,
-            letterSpacing: skin.isB ? '0.28em' : '0.24em',
-            textTransform: 'uppercase', cursor: 'pointer',
-          }}>Send to Tawny →</button>
-        </div>
+      {selected && !open && status === 'success' && (
+        <SuccessPanel role={selected} onReset={handleReset} />
+      )}
+
+      {selected && !open && status !== 'success' && form && (
+        <RoleForm
+          role={selected}
+          form={form}
+          setForm={setForm}
+          errors={errors}
+          submitting={status === 'submitting'}
+          submitError={submitError}
+          onSubmit={handleSubmit}
+        />
       )}
 
       {/* Responsive rules baked in so the widget collapses correctly when

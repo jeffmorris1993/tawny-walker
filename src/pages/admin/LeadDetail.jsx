@@ -1,24 +1,75 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { useTheme } from '../../theme/DirectionContext';
 import Eyebrow from '../../components/Eyebrow';
 import AdminShell from '../../components/AdminShell';
 import StatusChanger from '../../components/admin/StatusChanger';
 import StudioLog from '../../components/admin/StudioLog';
 import AttachedListings from '../../components/admin/AttachedListings';
-import { LEAD_DETAIL } from '../../data/leads';
-
-// Demo only renders LEAD_DETAIL (Marisol Vega). In production `:id` would
-// resolve to a detail of the same shape.
+import { useLead, updateLeadStatus, updateLeadNote, detachListing } from '../../lib/queries';
 
 export default function LeadDetail() {
   const t = useTheme();
   const isB = t.key === 'B';
-  const d = LEAD_DETAIL;
+  const { id } = useParams();
+  const { data: d, loading, refresh } = useLead(id);
 
-  const [note, setNote] = useState(d.studioNote);
-  const [status, setStatus] = useState(d.status);
-  const [attached, setAttached] = useState(d.attached);
+  const [note, setNote] = useState('');
+  const [noteSaving, setNoteSaving] = useState(false);
+  const [noteSaved, setNoteSaved] = useState('');
+  const [status, setStatus] = useState('New');
+  const [attached, setAttached] = useState([]);
+
+  // Sync local edit state when the loaded lead changes.
+  useEffect(() => {
+    if (d) {
+      setNote(d.studioNote || '');
+      setStatus(d.status || 'New');
+      setAttached(d.attached || []);
+      setNoteSaved(d.studioNoteSavedAt || '');
+    }
+  }, [d]);
+
+  async function handleStatusChange(next) {
+    setStatus(next);
+    if (d) await updateLeadStatus(d.id, next);
+  }
+
+  async function handleNoteBlur() {
+    if (!d) return;
+    if (note === (d.studioNote || '')) return;
+    setNoteSaving(true);
+    await updateLeadNote(d.id, note);
+    setNoteSaving(false);
+    setNoteSaved(new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }));
+  }
+
+  async function handleDetach(listingId) {
+    if (!d) return;
+    setAttached(list => list.filter(a => a.id !== listingId));
+    await detachListing(d.id, listingId);
+    refresh();
+  }
+
+  if (loading && !d) {
+    return (
+      <AdminShell>
+        <div style={{ padding: 80, color: t.fgFaint, fontFamily: t.fonts.body, textAlign: 'center', letterSpacing: '0.2em', textTransform: 'uppercase', fontSize: 12 }}>
+          Loading…
+        </div>
+      </AdminShell>
+    );
+  }
+  if (!d) {
+    return (
+      <AdminShell>
+        <div style={{ padding: 80, color: t.fgFaint, fontFamily: t.fonts.body, textAlign: 'center' }}>
+          Lead not found.{' '}
+          <Link to="/admin" style={{ color: t.fgPage }}>Back to inbox</Link>
+        </div>
+      </AdminShell>
+    );
+  }
 
   const headlineColor = isB ? t.palette.emerald : t.fgPage;
   const currentLabel = (t.statusLabels[status] || status).toLowerCase();
@@ -73,7 +124,7 @@ export default function LeadDetail() {
             letterSpacing: '0.28em', textTransform: 'uppercase',
             color: t.fgFaint,
           }}>Currently · <span style={{ color: headlineColor }}>{currentLabel}</span></div>
-          <StatusChanger value={status} onChange={setStatus} />
+          <StatusChanger value={status} onChange={handleStatusChange} />
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             <button style={{
               padding: '10px 16px', border: `1px solid ${t.line}`,
@@ -134,12 +185,14 @@ export default function LeadDetail() {
             <textarea
               value={note}
               onChange={e => setNote(e.target.value)}
+              onBlur={handleNoteBlur}
+              placeholder="Add a private note about this lead…"
               style={{
                 width: '100%', marginTop: 14, padding: 0,
                 background: 'transparent', border: 'none',
                 fontFamily: t.fonts.display, fontStyle: 'italic',
                 fontSize: 16, color: isB ? t.palette.emerald : t.fgPage,
-                lineHeight: 1.5, minHeight: 110, resize: 'none', outline: 'none',
+                lineHeight: 1.5, minHeight: 110, resize: 'vertical', outline: 'none',
                 boxSizing: 'border-box',
               }}
             />
@@ -149,7 +202,7 @@ export default function LeadDetail() {
               fontSize: isB ? 9.5 : 10, fontWeight: isB ? 600 : 400,
               letterSpacing: isB ? '0.26em' : '0.2em',
               textTransform: 'uppercase', color: t.fgFaint,
-            }}>Saved · {d.studioNoteSavedAt}</div>
+            }}>{noteSaving ? 'Saving…' : (noteSaved ? `Saved · ${noteSaved}` : 'Click out to save')}</div>
           </div>
 
           <div style={{ marginTop: 32 }}>
@@ -158,7 +211,7 @@ export default function LeadDetail() {
 
           <AttachedListings
             attached={attached}
-            onRemove={id => setAttached(list => list.filter(a => a.id !== id))}
+            onRemove={handleDetach}
           />
         </aside>
       </div>

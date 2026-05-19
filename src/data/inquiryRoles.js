@@ -1,11 +1,17 @@
-// Unified inquiry schema — one form, four paths.
+// Unified inquiry schema, one form per four paths.
 // Shared between Direction A and Direction B; each direction supplies its own
 // renderers (see Inquiry.jsx). Sections support these `type`s:
-//   - (title + cols)  → titled section with paired inputs
-//   - 'pair'          → ungrouped pair of inputs
-//   - 'chips'         → selectable tags (value = selected, options = available)
-//   - 'budget'        → min/max range with a midpoint dot
-//   - 'note'          → free-form long-form prompt
+//   (title + cols)  titled section with paired inputs
+//   'pair'          ungrouped pair of inputs
+//   'chips'         selectable tags (`options` are the available choices)
+//   'budget'        min/max range with a midpoint dot
+//   'note'          free-form long-form prompt
+//
+// Field shape inside `cols`:
+//   { label, placeholder?, dropdown?, options? }
+// When `dropdown: true` and `options` is set, the field renders as a real
+// <select>. When `dropdown: true` without `options`, it renders as a text
+// input with a chevron decoration.
 
 export const ROLES = {
   buyer: {
@@ -22,16 +28,26 @@ export const ROLES = {
         { label: 'Best contact', placeholder: 'Email or mobile' },
       ]},
       { title: 'The search', cols: [
-        { label: 'Household', value: 'Couple, two children', dropdown: true },
-        { label: 'Primary or secondary home?', value: 'Primary residence', dropdown: true },
+        { label: 'Household', dropdown: true, options: [
+          'Single', 'Couple', 'Couple, one child', 'Couple, two children',
+          'Family, three or more', 'Multi-generational',
+        ]},
+        { label: 'Primary or secondary home?', dropdown: true, options: [
+          'Primary residence', 'Secondary residence', 'Investment property',
+        ]},
       ]},
-      { type: 'chips', label: 'Neighborhoods of interest', value: ['Birmingham', 'Bloomfield Hills'], options: ['Royal Oak', 'Ferndale', 'Novi', 'Northville', 'West Bloomfield'] },
+      { type: 'chips', label: 'Neighborhoods of interest', options: ['Birmingham', 'Bloomfield Hills', 'Royal Oak', 'Ferndale', 'Novi', 'Northville', 'West Bloomfield'] },
       { type: 'budget', label: 'Comfortable price range', min: '$50K', max: '$1.42M', center: 0.55 },
       { type: 'pair', cols: [
-        { label: 'Time frame to buy', value: '3–6 months', dropdown: true },
-        { label: 'Are you pre-approved?', value: 'Yes', dropdown: true },
+        { label: 'Time frame to buy', dropdown: true, options: [
+          'Now (under 3 months)', '3 to 6 months', '6 to 12 months',
+          '12+ months', 'Just exploring',
+        ]},
+        { label: 'Are you pre-approved?', dropdown: true, options: [
+          'Yes', 'No', 'In process', 'Cash buyer',
+        ]},
       ]},
-      { type: 'note', label: 'Anything she should know?', value: 'We saw the Linden Cottage on the Index and would love to start there. We have a dog and a slightly nervous teenager.' },
+      { type: 'note', label: 'Anything she should know?', placeholder: 'Tell Tawny anything she should know about your search…' },
     ],
   },
   seller: {
@@ -48,19 +64,28 @@ export const ROLES = {
         { label: 'Best contact', placeholder: 'Email or mobile' },
       ]},
       { title: 'The property', cols: [
-        { label: 'Address', value: '3201 Maple Road, Birmingham' },
-        { label: 'Property type', value: 'Single-family, restored', dropdown: true },
+        { label: 'Address', placeholder: 'Street, city' },
+        { label: 'Property type', dropdown: true, options: [
+          'Single-family', 'Single-family, restored', 'Condo / townhouse',
+          'Multi-family', 'Land', 'Commercial',
+        ]},
       ]},
       { type: 'pair', cols: [
-        { label: 'Approx. square footage', value: '6,420 SF' },
-        { label: 'Year acquired', value: '2014' },
+        { label: 'Approx. square footage', placeholder: 'e.g. 6,420' },
+        { label: 'Year acquired', placeholder: 'e.g. 2014' },
       ]},
       { type: 'budget', label: 'Owner-estimated value (range)', min: '$50K', max: '$1.42M', center: 0.45 },
       { type: 'pair', cols: [
-        { label: 'Condition', value: 'Restored 2023', dropdown: true },
-        { label: 'Time frame to sell', value: '3–6 months', dropdown: true },
+        { label: 'Condition', dropdown: true, options: [
+          'New construction', 'Restored', 'Move-in ready', 'Needs cosmetic work',
+          'Needs full renovation', 'Tear-down',
+        ]},
+        { label: 'Time frame to sell', dropdown: true, options: [
+          'Now (under 3 months)', '3 to 6 months', '6 to 12 months',
+          '12+ months', 'Exploring',
+        ]},
       ]},
-      { type: 'note', label: 'Anything she should know?', value: 'We are open to an off-market introduction first. Photography matters to us. Patrick Lee shot the house last spring.' },
+      { type: 'note', label: 'Anything she should know?', placeholder: 'Photography, off-market preferences, sentimental context…' },
     ],
   },
   investor: {
@@ -74,23 +99,34 @@ export const ROLES = {
     sections: [
       { title: 'Principal & vehicle', cols: [
         { label: 'Name', placeholder: 'First and last' },
-        { label: 'Entity', value: 'Vega Family Office, LLC' },
+        { label: 'Entity', placeholder: 'LLC, family office, or none' },
       ]},
       { title: 'Mandate', cols: [
-        { label: 'Investor type', value: '1031 Exchange · Identifying', dropdown: true },
-        { label: 'Hold horizon', value: '7+ years', dropdown: true },
+        { label: 'Investor type', dropdown: true, options: [
+          'Cash buyer', '1031 Exchange · identifying', 'Family office',
+          'Syndicate', 'Fund', 'Owner-operator',
+        ]},
+        { label: 'Hold horizon', dropdown: true, options: [
+          'Under 3 years (flip)', '3 to 5 years', '5 to 7 years', '7+ years',
+        ]},
       ]},
       { type: 'pair', cols: [
-        { label: 'Residential or commercial?', value: 'Residential', dropdown: true },
-        { label: 'Desired return strategy', value: 'Cash flow', dropdown: true },
+        { label: 'Residential or commercial?', dropdown: true, options: [
+          'Residential', 'Commercial', 'Mixed-use',
+        ]},
+        { label: 'Desired return strategy', dropdown: true, options: [
+          'Cash flow', 'Appreciation', 'Flip / value-add', 'Mixed',
+        ]},
       ]},
-      { type: 'chips', label: 'Preferred markets / areas', value: ['Birmingham', 'Bloomfield Hills'], options: ['Royal Oak', 'Ferndale', 'Novi', 'Northville', 'West Bloomfield'] },
+      { type: 'chips', label: 'Preferred markets / areas', options: ['Birmingham', 'Bloomfield Hills', 'Royal Oak', 'Ferndale', 'Novi', 'Northville', 'West Bloomfield'] },
       { type: 'budget', label: 'Budget to purchase', min: '$50K', max: '$1.42M', center: 0.65 },
       { type: 'pair', cols: [
-        { label: 'Will consider off-market?', value: 'Preferred', dropdown: true },
-        { label: 'Flips successfully completed', value: '4', placeholder: 'e.g. 4' },
+        { label: 'Will consider off-market?', dropdown: true, options: [
+          'Preferred', 'Yes', 'No', 'Either',
+        ]},
+        { label: 'Flips successfully completed', placeholder: 'e.g. 4' },
       ]},
-      { type: 'note', label: 'Mandate notes', value: 'Replacement property must close by Sep 14. Open to portfolios of 2–3 SFRs. Will not consider new construction.' },
+      { type: 'note', label: 'Mandate notes', placeholder: 'Timelines, geographic constraints, basis preferences…' },
     ],
   },
   agent: {
@@ -107,16 +143,20 @@ export const ROLES = {
         { label: 'Best contact', placeholder: 'Email or mobile' },
       ]},
       { title: 'Your role', cols: [
-        { label: 'I am a…', value: 'Referring agent', dropdown: true },
-        { label: 'Brokerage / org', value: 'Coastal & Magnolia, NYC' },
+        { label: 'I am a…', dropdown: true, options: [
+          'Referring agent', 'Co-broke', 'Renter', "Buyer's agent", 'Other',
+        ]},
+        { label: 'Brokerage / org', placeholder: 'e.g. Coastal & Magnolia, NYC' },
       ]},
       { type: 'pair', cols: [
-        { label: 'Stay length (if renter)', value: 'Nov 2026 to Apr 2027', dropdown: true },
-        { label: 'Beds preferred', value: '3 BD' },
+        { label: 'Stay length (if renter)', dropdown: true, options: [
+          'Under 1 month', '1 to 3 months', '3 to 6 months', '6+ months', 'Open / flexible',
+        ]},
+        { label: 'Beds preferred', placeholder: 'e.g. 3 BD' },
       ]},
-      { type: 'chips', label: 'Neighborhoods', value: ['Birmingham', 'Bloomfield Hills'], options: ['Royal Oak', 'Ferndale', 'Novi', 'Northville'] },
+      { type: 'chips', label: 'Neighborhoods', options: ['Birmingham', 'Bloomfield Hills', 'Royal Oak', 'Ferndale', 'Novi', 'Northville'] },
       { type: 'budget', label: 'Budget (monthly, furnished)', min: '$8K/mo', max: '$45K/mo', center: 0.4 },
-      { type: 'note', label: 'Notes', value: 'Buyer is relocating from Brooklyn and will likely convert to purchase by spring. Open to a rent-then-buy structure.' },
+      { type: 'note', label: 'Notes', placeholder: 'Context on the client, timing, structure…' },
     ],
   },
 };

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { DirectionProvider } from './theme/DirectionContext';
 import DirectionToggle from './components/DirectionToggle';
 import Landing from './pages/Landing';
@@ -12,6 +12,13 @@ import LeadDetail from './pages/admin/LeadDetail';
 import ListingsManager from './pages/admin/ListingsManager';
 import AddListing from './pages/admin/AddListing';
 import Login from './pages/admin/Login';
+import { useIsAdmin } from './lib/queries';
+
+function RequireAdmin({ children }) {
+  const isAdmin = useIsAdmin();
+  if (!isAdmin) return <Navigate to="/admin/login" replace />;
+  return children;
+}
 
 // The A/B toggle now appears on admin too, since the studio chrome re-skins
 // per direction. Hide only if we ever route to something explicitly chromeless.
@@ -57,10 +64,10 @@ export default function App() {
           <Route path="/inquiry" element={<Inquiry />} />
           <Route path="/about" element={<About />} />
           <Route path="/admin/login" element={<Login />} />
-          <Route path="/admin" element={<LeadsInbox />} />
-          <Route path="/admin/lead/:id" element={<LeadDetail />} />
-          <Route path="/admin/listings" element={<ListingsManager />} />
-          <Route path="/admin/listings/add" element={<AddListing />} />
+          <Route path="/admin" element={<RequireAdmin><LeadsInbox /></RequireAdmin>} />
+          <Route path="/admin/lead/:id" element={<RequireAdmin><LeadDetail /></RequireAdmin>} />
+          <Route path="/admin/listings" element={<RequireAdmin><ListingsManager /></RequireAdmin>} />
+          <Route path="/admin/listings/add" element={<RequireAdmin><AddListing /></RequireAdmin>} />
         </Routes>
         <PublicChrome />
       </BrowserRouter>

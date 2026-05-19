@@ -5,7 +5,15 @@ import Photo from '../../components/Photo';
 import Eyebrow from '../../components/Eyebrow';
 import StatusChip from '../../components/StatusChip';
 import AdminShell from '../../components/AdminShell';
-import { LEADS, LEAD_FILTERS } from '../../data/leads';
+import { useLeads } from '../../lib/queries';
+
+const FILTER_TABS = [
+  { l: 'All',              key: 'All' },
+  { l: 'Buyers',           key: 'Buyer' },
+  { l: 'Sellers',          key: 'Seller' },
+  { l: 'Investors',        key: 'Investor' },
+  { l: 'Agents / Renters', key: 'Agent' },
+];
 
 // Both directions share the same data + filtering logic. Visual surface is
 // driven entirely by the theme primitives plus a few inline color reads.
@@ -13,10 +21,23 @@ import { LEADS, LEAD_FILTERS } from '../../data/leads';
 export default function LeadsInbox() {
   const t = useTheme();
   const isB = t.key === 'B';
+  const { data: LEADS, loading } = useLeads();
   const [filter, setFilter] = useState('All');
   const filtered = useMemo(
     () => filter === 'All' ? LEADS : LEADS.filter(l => l.type === filter),
-    [filter],
+    [filter, LEADS],
+  );
+  const counts = useMemo(() => {
+    const out = { All: LEADS.length };
+    for (const tab of FILTER_TABS) {
+      if (tab.key === 'All') continue;
+      out[tab.key] = LEADS.filter(l => l.type === tab.key).length;
+    }
+    return out;
+  }, [LEADS]);
+  const answered = useMemo(
+    () => LEADS.filter(l => l.status !== 'New').length,
+    [LEADS],
   );
 
   return (
@@ -45,11 +66,11 @@ export default function LeadsInbox() {
           <span style={{
             fontFamily: t.fonts.display, fontSize: 28,
             color: isB ? t.palette.emerald : t.fgPage,
-          }}>12 <span style={{ fontStyle: 'italic', color: t.fgFaint, fontSize: 18 }}>arrived</span></span>
+          }}>{LEADS.length} <span style={{ fontStyle: 'italic', color: t.fgFaint, fontSize: 18 }}>arrived</span></span>
           <span style={{
             fontFamily: t.fonts.display, fontSize: 28, marginLeft: 16,
             color: isB ? t.palette.emerald : t.fgPage,
-          }}>9 <span style={{ fontStyle: 'italic', color: t.fgFaint, fontSize: 18 }}>answered</span></span>
+          }}>{answered} <span style={{ fontStyle: 'italic', color: t.fgFaint, fontSize: 18 }}>answered</span></span>
         </div>
       </div>
 
@@ -59,8 +80,9 @@ export default function LeadsInbox() {
         alignItems: 'center', borderBottom: `1px solid ${t.line}`, flexWrap: 'wrap', gap: 12,
       }}>
         <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-          {LEAD_FILTERS.map(f => {
+          {FILTER_TABS.map(f => {
             const active = filter === f.key;
+            const n = counts[f.key] ?? 0;
             return (
               <span key={f.key} onClick={() => setFilter(f.key)} style={{
                 fontFamily: t.eyebrowFont,
@@ -72,7 +94,7 @@ export default function LeadsInbox() {
                 paddingBottom: 4, cursor: 'pointer',
                 display: 'flex', alignItems: 'baseline', gap: 6,
               }}>
-                {f.l} <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 12, color: t.fgFaint }}>({f.n})</span>
+                {f.l} <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 12, color: t.fgFaint }}>({n})</span>
               </span>
             );
           })}
@@ -167,7 +189,9 @@ export default function LeadsInbox() {
           color: t.fgFaint,
           letterSpacing: isB ? '0.24em' : '0.18em',
           textTransform: 'uppercase',
-        }}>Showing {filtered.length} of 12 · Active filter: This Week</span>
+        }}>
+          {loading ? 'Loading…' : `Showing ${filtered.length} of ${LEADS.length}`}
+        </span>
         <span style={{
           fontFamily: t.eyebrowFont,
           fontSize: 11, fontWeight: isB ? 600 : 400,

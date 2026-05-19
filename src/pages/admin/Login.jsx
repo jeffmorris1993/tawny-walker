@@ -5,6 +5,8 @@ import Wordmark from '../../components/Wordmark';
 import Photo, { PHOTOS } from '../../components/Photo';
 import Eyebrow from '../../components/Eyebrow';
 import { STUDIO } from '../../data/listings';
+import { signIn } from '../../lib/queries';
+import { required, isEmail, firstError } from '../../lib/validation';
 
 // Private admin login. Split layout: left identity panel with real photography,
 // right form. Same form schema in both directions — visuals diverge through
@@ -13,20 +15,21 @@ import { STUDIO } from '../../data/listings';
 const FOOTER_LICENSE = `© 2026 Tawny & Co. · ${STUDIO.brokeredBy}`;
 const FOOTER_NOTE = 'Private admin only. All activity is logged.';
 
-function FormField({ label, value, onChange, type = 'text', display, trailing, mono = false, large = false }) {
+function FormField({ label, value, onChange, type = 'text', display, trailing, mono = false, large = false, placeholder = '', error, autoComplete }) {
   const t = useTheme();
   const isB = t.key === 'B';
+  const errorColor = '#B5341F';
   return (
     <div>
       <div style={{
         fontFamily: t.eyebrowFont,
         fontSize: 10, fontWeight: isB ? 600 : 400,
         letterSpacing: '0.28em', textTransform: 'uppercase',
-        color: t.fgFaint,
+        color: error ? errorColor : t.fgFaint,
       }}>{label}</div>
       <div style={{
         marginTop: 10, paddingBottom: 14,
-        borderBottom: `1px solid ${isB ? t.palette.emerald : t.palette.ink}`,
+        borderBottom: `1px solid ${error ? errorColor : (isB ? t.palette.emerald : t.palette.ink)}`,
         display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12,
       }}>
         {display ? (
@@ -39,10 +42,13 @@ function FormField({ label, value, onChange, type = 'text', display, trailing, m
         ) : (
           <input
             type={type}
-            value={value}
+            value={value || ''}
             onChange={e => onChange(e.target.value)}
+            placeholder={placeholder}
+            autoComplete={autoComplete}
             style={{
-              flex: 1, background: 'transparent', border: 'none', outline: 'none', padding: 0,
+              flex: 1, minWidth: 0,
+              background: 'transparent', border: 'none', outline: 'none', padding: 0,
               fontFamily: t.fonts.display, fontSize: large ? 26 : 22,
               color: t.fgPage, letterSpacing: mono ? '0.3em' : '-0.005em',
             }}
@@ -50,16 +56,53 @@ function FormField({ label, value, onChange, type = 'text', display, trailing, m
         )}
         {trailing}
       </div>
+      {error && (
+        <div style={{ marginTop: 6, fontSize: 11, color: errorColor, fontFamily: t.fonts.body }}>{error}</div>
+      )}
     </div>
   );
+}
+
+function useLoginForm() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const nextErrors = {};
+    const emailErr = firstError(required(email, 'Email'), isEmail(email));
+    if (emailErr) nextErrors.email = emailErr;
+    const passErr = required(password, 'Password');
+    if (passErr) nextErrors.password = passErr;
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) return;
+
+    setSubmitting(true);
+    setSubmitError(null);
+    const { error } = await signIn(email, password);
+    setSubmitting(false);
+    if (error) {
+      setSubmitError(error.message || 'Sign in failed.');
+      return;
+    }
+    navigate('/admin');
+  }
+
+  return {
+    email, setEmail, password, setPassword,
+    errors, submitError, submitting,
+    handleSubmit,
+  };
 }
 
 // ─── DIRECTION A ────────────────────────────────────────────────────────────
 function LoginA() {
   const t = useTheme();
-  const navigate = useNavigate();
-  const [email] = useState('TAWNYwalker@WeAreDobi.com');
-  const [password] = useState('••••••••••');
+  const { email, setEmail, password, setPassword, errors, submitError, submitting, handleSubmit } = useLoginForm();
 
   return (
     <div className="tw-login-root" style={{
@@ -149,24 +192,38 @@ function LoginA() {
           </p>
         </div>
 
-        <div style={{ marginTop: 56, maxWidth: 460 }}>
+        <form onSubmit={handleSubmit} noValidate style={{ marginTop: 56, maxWidth: 460 }}>
           <FormField
             label="Email address"
-            display={email}
-            trailing={
-              <span style={{
-                fontFamily: t.eyebrowFont,
-                fontSize: 10, letterSpacing: '0.22em', textTransform: 'uppercase',
-                color: t.palette.green,
-              }}>● Recognised</span>
-            }
+            value={email}
+            onChange={setEmail}
+            type="email"
+            autoComplete="username"
+            placeholder="you@studio.com"
+            error={errors.email}
           />
           <div style={{ marginTop: 36 }}>
-            <FormField label="Password" display={password} mono large />
+            <FormField
+              label="Password"
+              value={password}
+              onChange={setPassword}
+              type="password"
+              autoComplete="current-password"
+              placeholder="••••••••••"
+              mono large
+              error={errors.password}
+            />
           </div>
 
+          {submitError && (
+            <div style={{ marginTop: 24, padding: '12px 16px', border: '1px solid #B5341F', color: '#B5341F', fontSize: 12, lineHeight: 1.5 }}>
+              {submitError}
+            </div>
+          )}
+
           <button
-            onClick={() => navigate('/admin')}
+            type="submit"
+            disabled={submitting}
             style={{
               marginTop: 40, width: '100%', boxSizing: 'border-box', border: 'none',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -174,13 +231,14 @@ function LoginA() {
               background: t.palette.ink, color: t.palette.bone,
               fontFamily: t.eyebrowFont,
               fontSize: 11.5, letterSpacing: '0.28em', textTransform: 'uppercase',
-              cursor: 'pointer',
+              cursor: submitting ? 'wait' : 'pointer',
+              opacity: submitting ? 0.6 : 1,
             }}
           >
-            Sign In
+            {submitting ? 'Signing in…' : 'Sign In'}
             <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 22, letterSpacing: 0 }}>→</span>
           </button>
-        </div>
+        </form>
 
         <div className="tw-login-foot" style={{
           marginTop: 'auto', paddingTop: 32, borderTop: `1px solid ${t.line}`,
@@ -201,9 +259,7 @@ function LoginA() {
 // ─── DIRECTION B ────────────────────────────────────────────────────────────
 function LoginB() {
   const t = useTheme();
-  const navigate = useNavigate();
-  const [email] = useState('TAWNYwalker@WeAreDobi.com');
-  const [password] = useState('••••••••••');
+  const { email, setEmail, password, setPassword, errors, submitError, submitting, handleSubmit } = useLoginForm();
 
   return (
     <div className="tw-login-root" style={{
@@ -341,24 +397,38 @@ function LoginB() {
           </p>
         </div>
 
-        <div style={{ marginTop: 56, maxWidth: 460 }}>
+        <form onSubmit={handleSubmit} noValidate style={{ marginTop: 56, maxWidth: 460 }}>
           <FormField
             label="Email address"
-            display={email}
-            trailing={
-              <span style={{
-                fontFamily: t.eyebrowFont,
-                fontSize: 9.5, fontWeight: 600, letterSpacing: '0.24em', textTransform: 'uppercase',
-                color: t.palette.moss,
-              }}>● Recognised</span>
-            }
+            value={email}
+            onChange={setEmail}
+            type="email"
+            autoComplete="username"
+            placeholder="you@studio.com"
+            error={errors.email}
           />
           <div style={{ marginTop: 36 }}>
-            <FormField label="Password" display={password} mono large />
+            <FormField
+              label="Password"
+              value={password}
+              onChange={setPassword}
+              type="password"
+              autoComplete="current-password"
+              placeholder="••••••••••"
+              mono large
+              error={errors.password}
+            />
           </div>
 
+          {submitError && (
+            <div style={{ marginTop: 24, padding: '12px 16px', border: '1px solid #B5341F', color: '#B5341F', fontSize: 12, lineHeight: 1.5 }}>
+              {submitError}
+            </div>
+          )}
+
           <button
-            onClick={() => navigate('/admin')}
+            type="submit"
+            disabled={submitting}
             style={{
               marginTop: 40, width: '100%', boxSizing: 'border-box', border: 'none',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -366,13 +436,14 @@ function LoginB() {
               background: t.palette.emerald, color: '#FFFFFF',
               fontFamily: t.eyebrowFont,
               fontSize: 11.5, fontWeight: 500, letterSpacing: '0.28em', textTransform: 'uppercase',
-              cursor: 'pointer',
+              cursor: submitting ? 'wait' : 'pointer',
+              opacity: submitting ? 0.6 : 1,
             }}
           >
-            Sign In
+            {submitting ? 'Signing in…' : 'Sign In'}
             <span style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: 22, letterSpacing: 0 }}>→</span>
           </button>
-        </div>
+        </form>
 
         <div className="tw-login-foot" style={{
           marginTop: 'auto', paddingTop: 32, borderTop: `1px solid ${t.line}`,

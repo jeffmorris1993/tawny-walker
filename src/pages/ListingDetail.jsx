@@ -5,9 +5,10 @@ import TopNav from '../components/TopNav';
 import SiteFooter from '../components/SiteFooter';
 import Eyebrow from '../components/Eyebrow';
 import StatusChip from '../components/StatusChip';
-import Button from '../components/Button';
 import { STUDIO } from '../data/listings';
-import { getListingDetail, getRelatedListings } from '../data/listingDetails';
+import { useListing, useRelatedListings } from '../lib/queries';
+// Fallback "gallery" data shape used when DB listing lacks editorial details.
+import { getListingDetail as mockListingDetail } from '../data/listingDetails';
 
 // The detail page renders the same content in two visual directions. Shared
 // data, shared section order; the per-direction component supplies the
@@ -52,7 +53,7 @@ function StoryParagraphs({ paragraphs, dropCapColor, color, sizeProps }) {
 // ─── DIRECTION A ────────────────────────────────────────────────────────────
 function ListingDetailA({ L }) {
   const t = useTheme();
-  const related = getRelatedListings(L.id);
+  const related = useRelatedListings(L.id);
 
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
@@ -261,7 +262,7 @@ function ListingDetailA({ L }) {
 // ─── DIRECTION B ────────────────────────────────────────────────────────────
 function ListingDetailB({ L }) {
   const t = useTheme();
-  const related = getRelatedListings(L.id);
+  const related = useRelatedListings(L.id);
   const emerald = t.palette.emerald;
 
   return (
@@ -791,7 +792,39 @@ function DetailStyles() {
 export default function ListingDetail() {
   const t = useTheme();
   const { id } = useParams();
-  const L = getListingDetail(id);
-  if (!L) return <Navigate to="/listings" replace />;
-  return t.key === 'B' ? <ListingDetailB L={L} /> : <ListingDetailA L={L} />;
+  const { data: dbListing, loading } = useListing(id);
+
+  // Merge DB row with the editorial detail map. When the DB has its own
+  // attributes/summary/area, those win; otherwise we splice in the mock
+  // detail content keyed by id (so legacy ids like 'meridian' still render
+  // the full editorial copy).
+  const fallback = mockListingDetail(id);
+  if (loading && !fallback) {
+    return (
+      <div style={{ background: t.bgPage, minHeight: '60vh', display: 'grid', placeItems: 'center', color: t.fgFaint, fontFamily: t.fonts.body, fontSize: 13, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
+        Loading…
+      </div>
+    );
+  }
+
+  const merged = mergeListing(dbListing, fallback);
+  if (!merged) return <Navigate to="/listings" replace />;
+  return t.key === 'B' ? <ListingDetailB L={merged} /> : <ListingDetailA L={merged} />;
+}
+
+function mergeListing(dbListing, fallback) {
+  if (!dbListing && !fallback) return null;
+  const out = { ...(fallback || {}), ...(dbListing || {}) };
+  // Fill in editorial gaps from the fallback when DB doesn't have them.
+  if ((!out.attributes || out.attributes.length === 0) && fallback?.attributes) out.attributes = fallback.attributes;
+  if ((!out.summary || out.summary.length === 0) && fallback?.summary) out.summary = fallback.summary;
+  if ((!out.area || !out.area.name) && fallback?.area) out.area = fallback.area;
+  if (!out.tagline && fallback?.tagline) out.tagline = fallback.tagline;
+  if (!out.gallery && fallback?.gallery) out.gallery = fallback.gallery;
+  if (!out.listedAt && fallback?.listedAt) out.listedAt = fallback.listedAt;
+  if (!out.architect && fallback?.architect) out.architect = fallback.architect;
+  if (!out.built && fallback?.built) out.built = fallback.built;
+  if (!out.renovated && fallback?.renovated) out.renovated = fallback.renovated;
+  if (!out.number && fallback?.number) out.number = fallback.number;
+  return out;
 }
