@@ -4,6 +4,7 @@ import { DirectionProvider } from './theme/DirectionContext';
 import DirectionToggle from './components/DirectionToggle';
 import Landing from './pages/Landing';
 import Listings from './pages/Listings';
+import SoldArchive from './pages/SoldArchive';
 import ListingDetail from './pages/ListingDetail';
 import Inquiry from './pages/Inquiry';
 import About from './pages/About';
@@ -64,6 +65,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/listings" element={<Listings />} />
+          <Route path="/listings/sold" element={<SoldArchive />} />
           <Route path="/listings/:id" element={<ListingDetail />} />
           <Route path="/inquiry" element={<Inquiry />} />
           <Route path="/about" element={<About />} />
@@ -72,6 +74,7 @@ export default function App() {
           <Route path="/admin/lead/:id" element={<RequireAdmin><LeadDetail /></RequireAdmin>} />
           <Route path="/admin/listings" element={<RequireAdmin><ListingsManager /></RequireAdmin>} />
           <Route path="/admin/listings/add" element={<RequireAdmin><AddListing /></RequireAdmin>} />
+          <Route path="/admin/listings/:id/edit" element={<RequireAdmin><AddListing /></RequireAdmin>} />
         </Routes>
         <PublicChrome />
       </BrowserRouter>

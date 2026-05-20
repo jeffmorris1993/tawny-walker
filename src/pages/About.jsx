@@ -80,10 +80,10 @@ function AboutA() {
 
       {/* CREDIBILITY BAND */}
       <div style={{ borderTop: `1px solid ${t.line}`, borderBottom: `1px solid ${t.line}`, padding: 'clamp(40px, 5vw, 64px) clamp(20px, 4.4vw, 64px)', background: t.bgPanel }}>
-        <div className="tw-about-credibility" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'clamp(24px, 4vw, 48px)' }}>
+        <div className="tw-about-credibility" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'clamp(24px, 4vw, 48px)' }}>
           {CREDIBILITY.map((s, i) => (
             <div key={i}>
-              <div className="tw-credibility-h" style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(22px, 2.4vw, 30px)', letterSpacing: '-0.012em', color: t.fgPage, lineHeight: 1.1, whiteSpace: 'nowrap' }}>
+              <div className="tw-credibility-h" style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(20px, 2.2vw, 26px)', letterSpacing: '-0.012em', color: t.fgPage, lineHeight: 1.1, whiteSpace: 'nowrap' }}>
                 {s.h}
               </div>
               <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 17, color: t.fgMuted, marginTop: 12, lineHeight: 1.4 }}>
@@ -229,7 +229,7 @@ function AboutA() {
           .tw-anchor-cell-1      { border-top: none !important; padding-top: 0 !important; }
         }
         @media (max-width: 540px) {
-          .tw-about-credibility  { grid-template-columns: 1fr !important; }
+          .tw-about-credibility  { flex-direction: column !important; align-items: stretch !important; }
           .tw-about-also         { grid-template-columns: 1fr 1fr !important; }
           .tw-also-cell:nth-child(2n+1) { padding-left: 0 !important; }
           .tw-also-cell:nth-child(2n)   { padding-left: 24px !important; }
@@ -302,10 +302,10 @@ function AboutB() {
 
       {/* CREDIBILITY — emerald slab */}
       <div style={{ background: emerald, color: '#FFFFFF', padding: 'clamp(48px, 6vw, 88px) clamp(20px, 5vw, 72px)' }}>
-        <div className="tw-about-credibility" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'clamp(24px, 4vw, 48px)', maxWidth: 1296, margin: '0 auto' }}>
+        <div className="tw-about-credibility" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'clamp(24px, 4vw, 48px)', maxWidth: 1296, margin: '0 auto' }}>
           {CREDIBILITY.map((s, i) => (
             <div key={i}>
-              <div className="tw-credibility-h" style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(22px, 2.4vw, 30px)', letterSpacing: '-0.012em', lineHeight: 1.15, whiteSpace: 'nowrap' }}>{s.h}</div>
+              <div className="tw-credibility-h" style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(20px, 2.2vw, 26px)', letterSpacing: '-0.012em', lineHeight: 1.15, whiteSpace: 'nowrap' }}>{s.h}</div>
               <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 17, color: 'rgba(255,255,255,0.78)', marginTop: 12, lineHeight: 1.4 }}>{s.s}</div>
             </div>
           ))}
@@ -439,7 +439,7 @@ function AboutB() {
           .tw-anchor-cell-1      { border-top: none !important; padding-top: 0 !important; }
         }
         @media (max-width: 540px) {
-          .tw-about-credibility  { grid-template-columns: 1fr !important; }
+          .tw-about-credibility  { flex-direction: column !important; align-items: stretch !important; }
           .tw-about-also         { grid-template-columns: 1fr 1fr !important; }
           .tw-also-cell:nth-child(2n+1) { padding-left: 0 !important; }
           .tw-also-cell:nth-child(2n)   { padding-left: 24px !important; }

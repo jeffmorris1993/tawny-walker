@@ -126,6 +126,10 @@ export function useListing(id) {
   useEffect(() => {
     let alive = true;
     async function load() {
+      if (!id) {
+        if (alive) { setData(null); setLoading(false); }
+        return;
+      }
       if (!isSupabaseConfigured) {
         if (alive) {
           setData(mockListingDetail(id));
@@ -205,6 +209,46 @@ export async function updateListingStatus(id, status) {
     return { data: l, error: null };
   }
   return supabase.from('listings').update({ status }).eq('id', id).select().single();
+}
+
+// Full-field update for an existing listing. Field names mirror createListing
+// (UI camelCase) and are mapped to the DB columns in the same way.
+export async function updateListing(id, input) {
+  const payload = {
+    addr: input.addr || input.name,
+    street: input.street || input.address,
+    loc: input.loc || input.city,
+    price: input.price,
+    specs: input.specs || buildSpecs(input),
+    status: input.status,
+    tone: input.tone,
+    tag: input.tag ?? null,
+    blurb: input.blurb ?? input.description ?? null,
+    img: input.img ?? null,
+    beds: input.beds ?? null,
+    baths: input.baths ?? null,
+    sqft: input.sqft ?? null,
+    lot: input.lot ?? null,
+  };
+
+  if (!isSupabaseConfigured) {
+    const idx = MOCK_LISTINGS.findIndex(l => l.id === id);
+    if (idx >= 0) {
+      const resolvedImg = payload.img && PHOTOS[payload.img] ? PHOTOS[payload.img] : payload.img;
+      MOCK_LISTINGS[idx] = { ...MOCK_LISTINGS[idx], ...payload, id, img: resolvedImg || MOCK_LISTINGS[idx].img };
+    }
+    return { data: { id, ...payload }, error: null };
+  }
+  return supabase.from('listings').update(payload).eq('id', id).select().single();
+}
+
+export async function deleteListing(id) {
+  if (!isSupabaseConfigured) {
+    const idx = MOCK_LISTINGS.findIndex(l => l.id === id);
+    if (idx >= 0) MOCK_LISTINGS.splice(idx, 1);
+    return { error: null };
+  }
+  return supabase.from('listings').delete().eq('id', id);
 }
 
 function slugify(s) {

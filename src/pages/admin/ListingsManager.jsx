@@ -92,9 +92,10 @@ export default function ListingsManager() {
       </div>
 
       <div style={{ overflowX: 'auto' }}>
-        <div style={{ minWidth: 760 }}>
+        <div style={{ minWidth: 820 }}>
           <div style={{
-            display: 'grid', gridTemplateColumns: '60px 80px 1.4fr 1fr 110px 110px 110px',
+            display: 'grid',
+            gridTemplateColumns: '60px 80px 1.4fr 1fr 110px 110px 110px 60px',
             gap: 18, padding: '16px 0', borderBottom: `1px solid ${t.line}`,
             fontFamily: t.eyebrowFont,
             fontSize: isB ? 9 : 9.5, fontWeight: isB ? 600 : 400,
@@ -105,22 +106,35 @@ export default function ListingsManager() {
             <span style={{ textAlign: 'right' }}>Price</span>
             <span>Status</span>
             <span style={{ textAlign: 'right' }}>Listed</span>
+            <span style={{ textAlign: 'right' }}> </span>
           </div>
 
           {filtered.map((l, i) => (
-            <div key={l.id} style={{
-              display: 'grid', gridTemplateColumns: '60px 80px 1.4fr 1fr 110px 110px 110px',
-              gap: 18, padding: '16px 0', borderBottom: `1px solid ${t.lineSoft}`, alignItems: 'center',
-            }}>
+            <Link
+              key={l.id}
+              to={`/admin/listings/${l.id}/edit`}
+              className="tw-listing-row"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '60px 80px 1.4fr 1fr 110px 110px 110px 60px',
+                gap: 18, padding: '16px 0', borderBottom: `1px solid ${t.lineSoft}`,
+                alignItems: 'center',
+                textDecoration: 'none', color: 'inherit',
+              }}
+            >
               <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 18, color: t.fgFaint }}>
                 {String(i + 1).padStart(2, '0')}
               </span>
               <div style={{ width: 64, height: 48 }}>
-                <Photo label="" tone={l.tone} height="100%" />
+                <Photo label="" tone={l.tone} height="100%" src={l.img} />
               </div>
-              <div>
-                <div style={{ fontFamily: t.fonts.display, fontSize: 19, color: isB ? t.palette.emerald : t.fgPage }}>{l.addr}</div>
-                <div style={{ fontSize: 11, color: t.fgFaint }}>{l.street}, {l.loc}</div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{
+                  fontFamily: t.fonts.display, fontSize: 19,
+                  color: isB ? t.palette.emerald : t.fgPage,
+                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                }}>{l.addr}</div>
+                <div style={{ fontSize: 11, color: t.fgFaint }}>{l.street}{l.street && l.loc ? ', ' : ''}{l.loc}</div>
               </div>
               <span style={{ fontSize: 11, color: t.fgMuted, letterSpacing: '0.04em' }}>{l.specs}</span>
               <span style={{
@@ -128,42 +142,67 @@ export default function ListingsManager() {
                 color: isB ? t.palette.emerald : t.fgPage,
               }}>{l.price}</span>
               <StatusChip status={l.status} />
-              <span style={{ fontSize: 11, color: t.fgFaint, textAlign: 'right' }}>Mar 22</span>
-            </div>
+              <span style={{ fontSize: 11, color: t.fgFaint, textAlign: 'right' }}>{l.listedAt || 'Mar 22'}</span>
+              <span style={{
+                textAlign: 'right',
+                fontFamily: t.eyebrowFont,
+                fontSize: 10, fontWeight: isB ? 600 : 400,
+                letterSpacing: isB ? '0.24em' : '0.2em',
+                textTransform: 'uppercase',
+                color: isB ? t.palette.emerald : t.palette.ink,
+              }}>Edit →</span>
+            </Link>
           ))}
 
-          {/* Draft row — always rendered last as a composer hint */}
-          <div style={{
-            display: 'grid', gridTemplateColumns: '60px 80px 1.4fr 1fr 110px 110px 110px',
-            gap: 18, padding: '16px 0', borderBottom: `1px solid ${t.lineSoft}`,
-            alignItems: 'center', opacity: 0.65,
-          }}>
-            <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 18, color: t.fgFaint }}>07</span>
+          {filtered.length === 0 && (
             <div style={{
-              width: 64, height: 48, background: t.lineSoft, border: `1px dashed ${t.line}`,
-              display: 'grid', placeItems: 'center', fontSize: 11, color: t.fgFaint,
-            }}>+</div>
-            <div>
+              padding: '40px 0', textAlign: 'center',
+              fontFamily: t.fonts.display, fontStyle: 'italic',
+              fontSize: 16, color: t.fgFaint,
+            }}>No listings in this view.</div>
+          )}
+
+          {/* Draft hint row */}
+          {filter === 'All' && (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '60px 80px 1.4fr 1fr 110px 110px 110px 60px',
+              gap: 18, padding: '16px 0', borderBottom: `1px solid ${t.lineSoft}`,
+              alignItems: 'center', opacity: 0.65,
+            }}>
+              <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 18, color: t.fgFaint }}>{String(filtered.length + 1).padStart(2, '0')}</span>
               <div style={{
-                fontFamily: t.fonts.display, fontSize: 19, fontStyle: 'italic',
-                color: isB ? t.palette.emerald : t.fgPage,
-              }}>{DRAFT_LISTING.name}</div>
-              <div style={{ fontSize: 11, color: t.fgFaint }}>Address pending</div>
+                width: 64, height: 48, background: t.lineSoft, border: `1px dashed ${t.line}`,
+                display: 'grid', placeItems: 'center', fontSize: 11, color: t.fgFaint,
+              }}>+</div>
+              <div>
+                <div style={{
+                  fontFamily: t.fonts.display, fontSize: 19, fontStyle: 'italic',
+                  color: isB ? t.palette.emerald : t.fgPage,
+                }}>{DRAFT_LISTING.name}</div>
+                <div style={{ fontSize: 11, color: t.fgFaint }}>Address pending</div>
+              </div>
+              <span style={{ fontSize: 11, color: t.fgFaint }}>— —</span>
+              <span style={{
+                fontFamily: t.fonts.display, fontSize: 18, textAlign: 'right', color: t.fgFaint,
+              }}>$—</span>
+              <span style={{
+                fontFamily: t.eyebrowFont,
+                fontSize: isB ? 10 : 10.5, fontWeight: isB ? 600 : 400,
+                letterSpacing: isB ? '0.22em' : '0.18em',
+                textTransform: 'uppercase', color: t.fgFaint,
+              }}>● Draft</span>
+              <span style={{ fontSize: 11, color: t.fgFaint, textAlign: 'right' }}>May 12</span>
+              <span> </span>
             </div>
-            <span style={{ fontSize: 11, color: t.fgFaint }}>— —</span>
-            <span style={{
-              fontFamily: t.fonts.display, fontSize: 18, textAlign: 'right', color: t.fgFaint,
-            }}>$—</span>
-            <span style={{
-              fontFamily: t.eyebrowFont,
-              fontSize: isB ? 10 : 10.5, fontWeight: isB ? 600 : 400,
-              letterSpacing: isB ? '0.22em' : '0.18em',
-              textTransform: 'uppercase', color: t.fgFaint,
-            }}>● Draft</span>
-            <span style={{ fontSize: 11, color: t.fgFaint, textAlign: 'right' }}>May 12</span>
-          </div>
+          )}
         </div>
       </div>
+
+      <style>{`
+        .tw-listing-row { transition: background 0.12s ease; }
+        .tw-listing-row:hover { background: ${t.bgPanel}; }
+      `}</style>
     </AdminShell>
   );
 }

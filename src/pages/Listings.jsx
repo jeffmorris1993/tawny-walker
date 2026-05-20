@@ -14,21 +14,22 @@ import { useListings } from '../lib/queries';
 // Each listing card links into its detail page.
 const linkStyle = { textDecoration: 'none', color: 'inherit', display: 'block' };
 
-// Both directions share the editorial mixed-scale grid (big + 2 stacked,
-// 3 across, 2 stacked + big). The skin per listing card differs.
+const PUBLIC_FILTERS = ['All', 'Active', 'Pending'];
 
-function useFiltered() {
-  const { data: LISTINGS, loading } = useListings();
+// Public listings excludes sold properties entirely — those live in the
+// Sold Archive page. The filter bar only exposes All / Active / Pending.
+function usePublicListings() {
+  const { data: ALL, loading } = useListings();
   const [filter, setFilter] = useState('All');
+  const LISTINGS = useMemo(() => ALL.filter(l => l.status !== 'Sold'), [ALL]);
   const filtered = useMemo(
-    () => filter === 'All' ? LISTINGS : LISTINGS.filter(l => l.status === filter),
+    () => (filter === 'All' ? LISTINGS : LISTINGS.filter(l => l.status === filter)),
     [filter, LISTINGS],
   );
   const counts = useMemo(() => ({
     All: LISTINGS.length,
     Active: LISTINGS.filter(l => l.status === 'Active').length,
     Pending: LISTINGS.filter(l => l.status === 'Pending').length,
-    Sold: LISTINGS.filter(l => l.status === 'Sold').length,
   }), [LISTINGS]);
   return { filter, setFilter, filtered, counts, all: LISTINGS, loading };
 }
@@ -36,7 +37,7 @@ function useFiltered() {
 // ─── DIRECTION A ────────────────────────────────────────────────────────────
 function ListingsA() {
   const t = useTheme();
-  const { filter, setFilter, filtered, counts, all: LISTINGS } = useFiltered();
+  const { filter, setFilter, filtered, counts, all: LISTINGS } = usePublicListings();
 
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
@@ -50,7 +51,7 @@ function ListingsA() {
             </h1>
           </div>
           <p style={{ maxWidth: 380, textAlign: 'right', fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 19, color: t.fgMuted, lineHeight: 1.45, margin: 0 }}>
-            {LISTINGS.length} properties currently represented by the studio, a fraction of the Michigan luxury market, chosen with intent.
+            {LISTINGS.length} properties currently represented by Tawny, a fraction of the Michigan luxury market, chosen with intent.
           </p>
         </div>
 
@@ -60,7 +61,7 @@ function ListingsA() {
       <div style={{ padding: '0 clamp(24px, 4.4vw, 64px) clamp(64px, 8.3vw, 120px)' }}>
         {filter === 'All' ? <FullEditorialA listings={LISTINGS} /> : (
           <div className="tw-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 40 }}>
-            {filtered.map((l, i) => <ListingCardStdA key={l.id} listing={l} num={String(i + 1).padStart(2, '0')} />)}
+            {filtered.map(l => <ListingCardStdA key={l.id} listing={l} />)}
           </div>
         )}
       </div>
@@ -70,7 +71,7 @@ function ListingsA() {
         <h2 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(40px, 4.4vw, 64px)', margin: '20px 0 28px', letterSpacing: '-0.018em' }}>
           {STUDIO.totalSold} <em style={{ fontStyle: 'italic' }}>previous</em> placements.
         </h2>
-        <Button variant="secondary" onClick={() => { setFilter('Sold'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>View the Sold Archive</Button>
+        <Button to="/listings/sold" variant="secondary">View the Sold Archive</Button>
       </div>
 
       <SiteFooter />
@@ -84,13 +85,13 @@ function FilterBarA({ filter, setFilter, counts }) {
   return (
     <div style={{ marginTop: 72, paddingTop: 28, paddingBottom: 12, borderTop: `1px solid ${t.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
       <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
-        {Object.entries(counts).map(([f, n]) => (
+        {PUBLIC_FILTERS.map(f => (
           <span key={f} onClick={() => setFilter(f)} style={{
             fontSize: 11.5, letterSpacing: '0.24em', textTransform: 'uppercase',
             color: filter === f ? t.palette.ink : t.fgFaint,
             borderBottom: filter === f ? `1px solid ${t.palette.ink}` : '1px solid transparent',
             paddingBottom: 6, cursor: 'pointer',
-          }}>{t.statusLabels[f] || f} ({n})</span>
+          }}>{t.statusLabels[f] || f} ({counts[f] ?? 0})</span>
         ))}
       </div>
       <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
@@ -104,46 +105,46 @@ function FilterBarA({ filter, setFilter, counts }) {
 function FullEditorialA({ listings }) {
   if (listings.length === 0) return null;
   if (listings.length < 7) {
-    // Compact fallback: simple 3-up grid until we have a full set.
     return (
       <div className="tw-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 40 }}>
-        {listings.map((l, i) => <ListingCardStdA key={l.id} listing={l} num={String(i + 1).padStart(2, '0')} />)}
+        {listings.map(l => <ListingCardStdA key={l.id} listing={l} />)}
       </div>
     );
   }
   return (
     <>
       <div className="tw-big-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 40, marginBottom: 96 }}>
-        <ListingCardBigA listing={listings[0]} num="01" />
+        <ListingCardBigA listing={listings[0]} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
-          {listings[1] && <ListingCardStdA listing={listings[1]} num="02" />}
-          {listings[2] && <ListingCardStdA listing={listings[2]} num="03" />}
+          {listings[1] && <ListingCardStdA listing={listings[1]} />}
+          {listings[2] && <ListingCardStdA listing={listings[2]} />}
         </div>
       </div>
       <div className="tw-three-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 40, marginBottom: 96 }}>
-        {listings[3] && <ListingCardStdA listing={listings[3]} num="04" />}
-        {listings[4] && <ListingCardStdA listing={listings[4]} num="05" />}
-        {listings[5] && <ListingCardStdA listing={listings[5]} num="06" />}
+        {listings[3] && <ListingCardStdA listing={listings[3]} />}
+        {listings[4] && <ListingCardStdA listing={listings[4]} />}
+        {listings[5] && <ListingCardStdA listing={listings[5]} />}
       </div>
       {listings[6] && (
         <div className="tw-big-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.4fr)', gap: 40 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
-            {listings[7] && <ListingCardStdA listing={listings[7]} num="08" />}
-            {listings[8] && <ListingCardStdA listing={listings[8]} num="09" />}
+            {listings[7] && <ListingCardStdA listing={listings[7]} />}
+            {listings[8] && <ListingCardStdA listing={listings[8]} />}
           </div>
-          <ListingCardBigA listing={listings[6]} num="07" archive />
+          <ListingCardBigA listing={listings[6]} />
         </div>
       )}
     </>
   );
 }
 
-function ListingCardBigA({ listing, num, archive }) {
+function ListingCardBigA({ listing }) {
   const t = useTheme();
+  const muted = listing.status === 'Sold';
   return (
     <Link to={`/listings/${listing.id}`} style={linkStyle}>
       <div style={{ position: 'relative' }}>
-        <Photo label={`${num} — ${listing.addr.toUpperCase()}`} tone={listing.tone} height={620} src={listing.img} />
+        <Photo label="" tone={listing.tone} height={620} src={listing.img} />
         <div style={{ position: 'absolute', top: 20, left: 20, padding: '6px 12px', background: 'rgba(251,249,245,0.95)' }}>
           <StatusChip status={listing.status} />
         </div>
@@ -151,12 +152,11 @@ function ListingCardBigA({ listing, num, archive }) {
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 28, gap: 24, flexWrap: 'wrap' }}>
         <div>
-          {archive && <div style={{ fontSize: 11, letterSpacing: '0.24em', textTransform: 'uppercase', color: t.accent }}>Archive</div>}
-          <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 48, letterSpacing: '-0.018em', margin: archive ? '10px 0 0' : 0 }}>{listing.addr}</h3>
+          <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 48, letterSpacing: '-0.018em', margin: 0 }}>{listing.addr}</h3>
           <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 20, color: t.fgMuted, marginTop: 4 }}>{listing.street}, {listing.loc}</div>
         </div>
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 36 }}>{listing.price}</div>
+          <div style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 36, color: muted ? t.fgFaint : t.fgPage }}>{listing.price}</div>
           <div style={{ fontSize: 10.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.fgFaint, marginTop: 6 }}>{listing.specs}</div>
         </div>
       </div>
@@ -164,12 +164,13 @@ function ListingCardBigA({ listing, num, archive }) {
   );
 }
 
-function ListingCardStdA({ listing, num }) {
+function ListingCardStdA({ listing }) {
   const t = useTheme();
+  const muted = listing.status === 'Sold';
   return (
     <Link to={`/listings/${listing.id}`} style={linkStyle}>
       <div style={{ position: 'relative' }}>
-        <Photo label={`${num} — ${listing.addr.toUpperCase()}`} tone={listing.tone} height={280} src={listing.img} />
+        <Photo label="" tone={listing.tone} height={280} src={listing.img} />
         <div style={{ position: 'absolute', top: 14, left: 14, padding: '5px 10px', background: 'rgba(251,249,245,0.95)' }}>
           <StatusChip status={listing.status} />
         </div>
@@ -182,7 +183,7 @@ function ListingCardStdA({ listing, num }) {
         </div>
       </div>
       <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${t.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <span style={{ fontFamily: t.fonts.display, fontSize: 22, color: listing.status === 'Sold' ? t.fgFaint : t.fgPage }}>{listing.price}</span>
+        <span style={{ fontFamily: t.fonts.display, fontSize: 22, color: muted ? t.fgFaint : t.fgPage }}>{listing.price}</span>
         <span style={{ fontSize: 9.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: t.fgFaint }}>{listing.specs}</span>
       </div>
     </Link>
@@ -192,7 +193,7 @@ function ListingCardStdA({ listing, num }) {
 // ─── DIRECTION B ────────────────────────────────────────────────────────────
 function ListingsB() {
   const t = useTheme();
-  const { filter, setFilter, filtered, counts, all: LISTINGS } = useFiltered();
+  const { filter, setFilter, filtered, counts, all: LISTINGS } = usePublicListings();
 
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
@@ -210,7 +211,7 @@ function ListingsB() {
           fontFamily: t.fonts.display, fontStyle: 'italic',
           fontSize: 20, color: t.fgMuted, maxWidth: 640, margin: '24px auto 0', lineHeight: 1.5,
         }}>
-          {LISTINGS.length} properties currently represented by the studio, a small fraction of the Michigan market, chosen with intent.
+          {LISTINGS.length} properties currently represented by Tawny, a small fraction of the Michigan market, chosen with intent.
         </p>
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32 }}>
           <Rule />
@@ -224,7 +225,7 @@ function ListingsB() {
       <div style={{ padding: '0 clamp(24px, 5vw, 72px) 96px', maxWidth: 1296, margin: '0 auto' }}>
         {filter === 'All' ? <FullEditorialB listings={LISTINGS} /> : (
           <div className="tw-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 32 }}>
-            {filtered.map((l, i) => <ListingCardStdB key={l.id} listing={l} num={String(i + 1).padStart(2, '0')} />)}
+            {filtered.map(l => <ListingCardStdB key={l.id} listing={l} />)}
           </div>
         )}
       </div>
@@ -234,7 +235,7 @@ function ListingsB() {
         <h2 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(40px, 4.7vw, 64px)', margin: '20px 0 32px', letterSpacing: '-0.02em', color: t.palette.emerald, lineHeight: 1.05 }}>
           {STUDIO.totalSold} <em style={{ fontStyle: 'italic' }}>previous</em> placements.
         </h2>
-        <Button variant="secondary" onClick={() => { setFilter('Sold'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>View the Sold Archive</Button>
+        <Button to="/listings/sold" variant="secondary">View the Sold Archive</Button>
       </div>
 
       <SiteFooter />
@@ -253,14 +254,14 @@ function FilterBarB({ filter, setFilter, counts }) {
       flexWrap: 'wrap', gap: 16,
     }}>
       <div style={{ display: 'flex', gap: 36, flexWrap: 'wrap' }}>
-        {Object.entries(counts).map(([f, n]) => (
+        {PUBLIC_FILTERS.map(f => (
           <span key={f} onClick={() => setFilter(f)} style={{
             fontFamily: t.eyebrowFont,
             fontSize: 11, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase',
             color: filter === f ? t.palette.emerald : t.fgFaint,
             borderBottom: filter === f ? `1px solid ${t.palette.emerald}` : '1px solid transparent',
             paddingBottom: 6, cursor: 'pointer',
-          }}>{t.statusLabels[f] || f} ({n})</span>
+          }}>{t.statusLabels[f] || f} ({counts[f] ?? 0})</span>
         ))}
       </div>
       <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
@@ -276,58 +277,54 @@ function FullEditorialB({ listings }) {
   if (listings.length < 7) {
     return (
       <div className="tw-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 32, marginTop: 56 }}>
-        {listings.map((l, i) => <ListingCardStdB key={l.id} listing={l} num={String(i + 1).padStart(2, '0')} />)}
+        {listings.map(l => <ListingCardStdB key={l.id} listing={l} />)}
       </div>
     );
   }
   return (
     <>
       <div className="tw-big-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 40, marginBottom: 72, marginTop: 56 }}>
-        <ListingCardBigB listing={listings[0]} num="01" />
+        <ListingCardBigB listing={listings[0]} />
         <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
-          {listings[1] && <ListingCardStdB listing={listings[1]} num="02" />}
-          {listings[2] && <ListingCardStdB listing={listings[2]} num="03" />}
+          {listings[1] && <ListingCardStdB listing={listings[1]} />}
+          {listings[2] && <ListingCardStdB listing={listings[2]} />}
         </div>
       </div>
       <div className="tw-three-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 32, marginBottom: 72 }}>
-        {listings[3] && <ListingCardStdB listing={listings[3]} num="04" />}
-        {listings[4] && <ListingCardStdB listing={listings[4]} num="05" />}
-        {listings[5] && <ListingCardStdB listing={listings[5]} num="06" />}
+        {listings[3] && <ListingCardStdB listing={listings[3]} />}
+        {listings[4] && <ListingCardStdB listing={listings[4]} />}
+        {listings[5] && <ListingCardStdB listing={listings[5]} />}
       </div>
       {listings[6] && (
         <div className="tw-big-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1.4fr)', gap: 40 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
-            {listings[7] && <ListingCardStdB listing={listings[7]} num="08" />}
-            {listings[8] && <ListingCardStdB listing={listings[8]} num="09" />}
+            {listings[7] && <ListingCardStdB listing={listings[7]} />}
+            {listings[8] && <ListingCardStdB listing={listings[8]} />}
           </div>
-          <ListingCardBigB listing={listings[6]} num="07" archive />
+          <ListingCardBigB listing={listings[6]} />
         </div>
       )}
     </>
   );
 }
 
-function ListingCardBigB({ listing, num, archive }) {
+function ListingCardBigB({ listing }) {
   const t = useTheme();
+  const muted = listing.status === 'Sold';
   return (
     <Link to={`/listings/${listing.id}`} style={{ ...linkStyle, background: '#fff', border: `1px solid ${t.line}` }}>
       <div style={{ position: 'relative' }}>
-        <Photo label={`${num} — ${listing.addr.toUpperCase()}`} tone={listing.tone} height={620} src={listing.img} />
+        <Photo label="" tone={listing.tone} height={620} src={listing.img} />
         <div style={{ position: 'absolute', top: 20, left: 20, padding: '6px 12px', background: '#fff' }}>
           <StatusChip status={listing.status} />
         </div>
         <div style={{ position: 'absolute', bottom: 20, right: 20, fontFamily: t.eyebrowFont, fontSize: 9.5, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)' }}>{listing.tag}</div>
       </div>
       <div style={{ padding: '32px 40px 36px' }}>
-        {archive && (
-          <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 15, color: t.accent }}>
-            Archive
-          </div>
-        )}
-        <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(32px, 3.4vw, 48px)', letterSpacing: '-0.02em', color: t.palette.emerald, margin: archive ? '10px 0 0' : 0, lineHeight: 1 }}>{listing.addr}</h3>
+        <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(32px, 3.4vw, 48px)', letterSpacing: '-0.02em', color: t.palette.emerald, margin: 0, lineHeight: 1 }}>{listing.addr}</h3>
         <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 19, color: t.fgMuted, marginTop: 6 }}>{listing.street}, {listing.loc}</div>
         <div style={{ marginTop: 24, paddingTop: 20, borderTop: `1px solid ${t.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
-          <span style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 36, color: t.palette.emerald }}>{listing.price}</span>
+          <span style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 36, color: muted ? t.fgFaint : t.palette.emerald }}>{listing.price}</span>
           <span style={{ fontFamily: t.eyebrowFont, fontSize: 10, fontWeight: 600, letterSpacing: '0.26em', textTransform: 'uppercase', color: t.fgFaint }}>{listing.specs}</span>
         </div>
       </div>
@@ -335,12 +332,13 @@ function ListingCardBigB({ listing, num, archive }) {
   );
 }
 
-function ListingCardStdB({ listing, num }) {
+function ListingCardStdB({ listing }) {
   const t = useTheme();
+  const muted = listing.status === 'Sold';
   return (
     <Link to={`/listings/${listing.id}`} style={{ ...linkStyle, background: '#fff', border: `1px solid ${t.line}` }}>
       <div style={{ position: 'relative' }}>
-        <Photo label={`${num} — ${listing.addr.toUpperCase()}`} tone={listing.tone} height={260} src={listing.img} />
+        <Photo label="" tone={listing.tone} height={260} src={listing.img} />
         <div style={{ position: 'absolute', top: 14, left: 14, padding: '5px 10px', background: '#fff' }}>
           <StatusChip status={listing.status} />
         </div>
@@ -350,7 +348,7 @@ function ListingCardStdB({ listing, num }) {
         <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 15, color: t.fgMuted, marginTop: 4 }}>{listing.street}</div>
         <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 13.5, color: t.fgFaint }}>{listing.loc}</div>
         <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${t.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <span style={{ fontFamily: t.fonts.display, fontSize: 22, color: listing.status === 'Sold' ? t.fgFaint : t.palette.emerald, fontWeight: 400 }}>{listing.price}</span>
+          <span style={{ fontFamily: t.fonts.display, fontSize: 22, color: muted ? t.fgFaint : t.palette.emerald, fontWeight: 400 }}>{listing.price}</span>
           <span style={{ fontFamily: t.eyebrowFont, fontSize: 9, fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.fgFaint }}>{listing.specs}</span>
         </div>
       </div>
@@ -376,3 +374,12 @@ export default function Listings() {
   const t = useTheme();
   return t.key === 'B' ? <ListingsB /> : <ListingsA />;
 }
+
+// Exports the editorial grid + card components so the Sold Archive page can
+// reuse them with the sold-only listing set.
+export {
+  ListingsGridStyles,
+  FullEditorialA, FullEditorialB,
+  ListingCardBigA, ListingCardStdA,
+  ListingCardBigB, ListingCardStdB,
+};

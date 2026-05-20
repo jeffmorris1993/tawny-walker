@@ -1,12 +1,12 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useTheme } from '../../theme/DirectionContext';
 import Photo from '../../components/Photo';
 import Eyebrow from '../../components/Eyebrow';
 import StatusChip from '../../components/StatusChip';
 import AdminShell from '../../components/AdminShell';
 import { DRAFT_LISTING } from '../../data/leads';
-import { createListing } from '../../lib/queries';
+import { createListing, updateListing, deleteListing, useListing } from '../../lib/queries';
 import { required } from '../../lib/validation';
 
 function FormInput({ label, value, onChange, placeholder, dropdown, error }) {
@@ -51,14 +51,58 @@ function FormInput({ label, value, onChange, placeholder, dropdown, error }) {
 
 const STATUS_CYCLE = ['Draft', 'Active', 'Pending', 'Sold'];
 
+// Map a fetched listing (DB or mock shape) into the local form shape used
+// by the composer.
+function listingToForm(L) {
+  return {
+    number: L.number || '—',
+    name: L.addr || L.name || '',
+    address: L.street || L.address || '',
+    city: L.loc || L.city || '',
+    beds: L.beds || '',
+    baths: L.baths || '',
+    sqft: L.sqft || '',
+    lot: L.lot || '',
+    price: L.price || '',
+    status: L.status || 'Draft',
+    description: L.blurb || L.description || '',
+    tone: L.tone || 'warm',
+  };
+}
+
 export default function AddListing() {
   const t = useTheme();
   const isB = t.key === 'B';
   const navigate = useNavigate();
-  const [form, setForm] = useState({ ...DRAFT_LISTING });
+  const { id: routeId } = useParams();
+  const editing = !!routeId;
+
+  // When editing, load the existing listing and seed the form once it arrives.
+  const { data: existing, loading: loadingExisting } = useListing(editing ? routeId : null);
+
+  const [form, setForm] = useState(() => (editing ? null : { ...DRAFT_LISTING }));
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+
+  useEffect(() => {
+    // Seed the form once the existing listing has been fetched. Safe to setState
+    // here because `existing` is an external async result, not a derived value.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (editing && existing && !form) setForm(listingToForm(existing));
+  }, [editing, existing, form]);
+
+  if (editing && (!form || (loadingExisting && !existing))) {
+    return (
+      <AdminShell>
+        <div style={{
+          padding: '64px 0', textAlign: 'center',
+          color: t.fgFaint, fontFamily: t.fonts.body, fontSize: 13,
+          letterSpacing: '0.2em', textTransform: 'uppercase',
+        }}>Loading listing…</div>
+      </AdminShell>
+    );
+  }
 
   const set = (k) => (v) => setForm(f => ({ ...f, [k]: v }));
   const cycleStatus = () => {
@@ -90,7 +134,8 @@ export default function AddListing() {
     }
     setSubmitting(true);
     setSubmitError(null);
-    const { error } = await createListing({
+
+    const payload = {
       addr: form.name,
       street: form.address,
       loc: form.city,
@@ -102,10 +147,30 @@ export default function AddListing() {
       status: targetStatus || form.status,
       tone: form.tone,
       blurb: form.description,
-    });
+    };
+
+    const { error } = editing
+      ? await updateListing(routeId, payload)
+      : await createListing(payload);
+
     setSubmitting(false);
     if (error) {
       setSubmitError(error.message || 'Could not save. Try again.');
+      return;
+    }
+    navigate('/admin/listings');
+  }
+
+  async function handleDelete() {
+    if (!editing) return;
+    const confirmed = window.confirm(`Delete "${form.name}"? This cannot be undone.`);
+    if (!confirmed) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    const { error } = await deleteListing(routeId);
+    setSubmitting(false);
+    if (error) {
+      setSubmitError(error.message || 'Could not delete. Try again.');
       return;
     }
     navigate('/admin/listings');
@@ -116,6 +181,10 @@ export default function AddListing() {
   const primaryFg = isB ? '#fff' : t.palette.bone;
   const secondaryBorder = isB ? t.palette.emerald : t.palette.ink;
   const secondaryFg = isB ? t.palette.emerald : t.fgPage;
+
+  const publishLabel = editing
+    ? (submitting ? 'Saving…' : 'Save Changes →')
+    : (submitting ? 'Saving…' : 'Publish to Index →');
 
   return (
     <AdminShell>
@@ -131,43 +200,71 @@ export default function AddListing() {
           {t.admin.indexHeadline}
         </Link>
         {' / '}
-        <span style={{ color: headlineColor }}>Add a {t.admin.composeHeadline.charAt(0).toUpperCase() + t.admin.composeHeadline.slice(1)}</span>
+        <span style={{ color: headlineColor }}>
+          {editing ? `Edit ${form.name || 'Listing'}` : `Add a ${t.admin.composeHeadline.charAt(0).toUpperCase() + t.admin.composeHeadline.slice(1)}`}
+        </span>
       </div>
 
       {/* Header */}
-      <div style={{
+      <div className="tw-add-header" style={{
         display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end',
         paddingBottom: 28, borderBottom: `1px solid ${t.line}`, flexWrap: 'wrap', gap: 16,
       }}>
         <div>
-          <Eyebrow>New Property · Draft № {form.number}</Eyebrow>
+          <Eyebrow>
+            {editing
+              ? `Edit Property · ${form.status}`
+              : `New Property · Draft № ${form.number}`}
+          </Eyebrow>
           <h1 style={{
             fontFamily: t.fonts.display, fontWeight: 400,
             fontSize: 'clamp(32px, 3.3vw, 48px)', margin: '14px 0 0',
             letterSpacing: '-0.018em', color: headlineColor,
           }}>
-            Compose a <em style={{ fontStyle: 'italic' }}>{t.admin.composeHeadline}.</em>
+            {editing
+              ? <>Edit <em style={{ fontStyle: 'italic' }}>{t.admin.composeHeadline}.</em></>
+              : <>Compose a <em style={{ fontStyle: 'italic' }}>{t.admin.composeHeadline}.</em></>}
           </h1>
         </div>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div className="tw-add-actions" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
           {submitError && (
             <span style={{ color: '#B5341F', fontSize: 11, fontFamily: t.fonts.body }}>{submitError}</span>
           )}
+          {editing ? (
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={submitting}
+              style={{
+                padding: '14px 22px', border: `1px solid #B5341F`,
+                background: 'transparent',
+                fontFamily: t.eyebrowFont,
+                fontSize: isB ? 10.5 : 11, fontWeight: isB ? 600 : 400,
+                letterSpacing: isB ? '0.26em' : '0.24em',
+                textTransform: 'uppercase', color: '#B5341F',
+                cursor: submitting ? 'wait' : 'pointer',
+              }}>Delete</button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => handleSave('Draft')}
+              disabled={submitting}
+              style={{
+                padding: '14px 22px', border: `1px solid ${t.line}`,
+                background: 'transparent',
+                fontFamily: t.eyebrowFont,
+                fontSize: isB ? 10.5 : 11, fontWeight: isB ? 600 : 400,
+                letterSpacing: isB ? '0.26em' : '0.24em',
+                textTransform: 'uppercase', color: t.fgMuted,
+                cursor: submitting ? 'wait' : 'pointer',
+              }}>Save Draft</button>
+          )}
           <button
             type="button"
-            onClick={() => handleSave('Draft')}
-            disabled={submitting}
-            style={{
-              padding: '14px 22px', border: `1px solid ${t.line}`,
-              background: 'transparent',
-              fontFamily: t.eyebrowFont,
-              fontSize: isB ? 10.5 : 11, fontWeight: isB ? 600 : 400,
-              letterSpacing: isB ? '0.26em' : '0.24em',
-              textTransform: 'uppercase', color: t.fgMuted, cursor: submitting ? 'wait' : 'pointer',
-            }}>Save Draft</button>
-          <button
-            type="button"
-            onClick={() => alert('Preview opens once the listing is saved.')}
+            onClick={() => editing
+              ? navigate(`/listings/${routeId}`)
+              : alert('Preview opens once the listing is saved.')
+            }
             style={{
               padding: '14px 22px', border: `1px solid ${secondaryBorder}`,
               background: 'transparent',
@@ -179,7 +276,7 @@ export default function AddListing() {
             }}>Preview</button>
           <button
             type="button"
-            onClick={() => handleSave('Active')}
+            onClick={() => handleSave(editing ? form.status : 'Active')}
             disabled={submitting}
             style={{
               padding: '14px 22px', background: primaryBg, color: primaryFg, border: 'none',
@@ -188,7 +285,7 @@ export default function AddListing() {
               letterSpacing: isB ? '0.26em' : '0.24em',
               textTransform: 'uppercase', cursor: submitting ? 'wait' : 'pointer',
               opacity: submitting ? 0.6 : 1,
-            }}>{submitting ? 'Saving…' : 'Publish to Index →'}</button>
+            }}>{publishLabel}</button>
         </div>
       </div>
 
@@ -289,8 +386,8 @@ export default function AddListing() {
               marginTop: 8, fontSize: 10.5, color: t.fgFaint, letterSpacing: '0.06em',
               display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
             }}>
-              <span>Will be used as the Index card subtitle.</span>
-              <span>{form.description.length} / 280 characters</span>
+              <span>Shown as the tagline on the listing detail page · also the Index card subtitle.</span>
+              <span>{(form.description || '').length} / 280 characters</span>
             </div>
           </div>
         </div>
@@ -302,7 +399,7 @@ export default function AddListing() {
             marginTop: 18, padding: 18, background: t.bgPanel, border: `1px solid ${t.line}`,
           }}>
             <div style={{ position: 'relative' }}>
-              <Photo label={form.name.toUpperCase()} tone={form.tone} height={180} />
+              <Photo label={(form.name || '').toUpperCase()} tone={form.tone} height={180} />
               <div style={{
                 position: 'absolute', top: 10, left: 10, padding: '4px 9px',
                 background: isB ? '#fff' : 'rgba(251,249,245,0.95)',
@@ -311,19 +408,13 @@ export default function AddListing() {
               </div>
             </div>
             <div style={{ marginTop: 14 }}>
-              <div style={{
-                fontFamily: t.eyebrowFont,
-                fontSize: isB ? 9 : 9.5, fontWeight: isB ? 600 : 400,
-                letterSpacing: isB ? '0.26em' : '0.22em',
-                textTransform: 'uppercase', color: t.accent,
-              }}>№ {form.number}</div>
               <h3 style={{
                 fontFamily: t.fonts.display, fontWeight: 400,
-                fontSize: 20, margin: '4px 0 0',
+                fontSize: 20, margin: 0,
                 color: isB ? t.palette.emerald : t.fgPage, lineHeight: 1.1,
-              }}>{form.name}</h3>
+              }}>{form.name || '—'}</h3>
               <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 13, color: t.fgMuted }}>
-                {form.address}, {form.city}
+                {form.address}{form.city ? `, ${form.city}` : ''}
               </div>
               <div style={{
                 marginTop: 10, paddingTop: 10, borderTop: `1px solid ${t.line}`,
@@ -332,13 +423,13 @@ export default function AddListing() {
                 <span style={{
                   fontFamily: t.fonts.display, fontSize: 16,
                   color: isB ? t.palette.emerald : t.fgPage,
-                }}>{form.price}</span>
+                }}>{form.price || '$—'}</span>
                 <span style={{
                   fontFamily: t.eyebrowFont,
                   fontSize: isB ? 9 : 9, fontWeight: isB ? 600 : 400,
                   letterSpacing: isB ? '0.22em' : '0.18em',
                   textTransform: 'uppercase', color: t.fgFaint,
-                }}>{form.beds} BD · {form.baths} BA</span>
+                }}>{form.beds || '—'} BD · {form.baths || '—'} BA</span>
               </div>
             </div>
           </div>
@@ -349,6 +440,8 @@ export default function AddListing() {
       <style>{`
         @media (max-width: 900px) {
           .tw-add-grid     { grid-template-columns: 1fr !important; }
+          .tw-add-header   { align-items: flex-start !important; }
+          .tw-add-actions  { width: 100% !important; }
         }
         @media (max-width: 600px) {
           .tw-add-pair-2-1 { grid-template-columns: 1fr !important; }
