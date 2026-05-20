@@ -2,13 +2,11 @@ import { useMemo } from 'react';
 import { useTheme } from '../theme/DirectionContext';
 import TopNav from '../components/TopNav';
 import SiteFooter from '../components/SiteFooter';
-import Eyebrow from '../components/Eyebrow';
 import Rule from '../components/Rule';
-import { STUDIO } from '../data/listings';
 import { useListings } from '../lib/queries';
 import {
   ListingsGridStyles,
-  FullEditorialA, FullEditorialB,
+  UniformGrid,
   ListingCardStdA, ListingCardStdB,
 } from './Listings';
 
@@ -30,13 +28,12 @@ function ArchiveA({ listings }) {
       <div style={{ padding: 'clamp(48px, 6.1vw, 88px) clamp(24px, 4.4vw, 64px) clamp(32px, 3.9vw, 56px)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 24 }}>
           <div>
-            <Eyebrow>The Archive</Eyebrow>
-            <h1 style={{ fontFamily: t.fonts.display, fontWeight: 300, fontSize: 'clamp(52px, 6.7vw, 96px)', letterSpacing: '-0.022em', margin: '24px 0 0', lineHeight: 0.95 }}>
-              Previously <em style={{ fontStyle: 'italic' }}>placed</em>.
+            <h1 style={{ fontFamily: t.fonts.display, fontWeight: 300, fontSize: 'clamp(52px, 6.7vw, 96px)', letterSpacing: '-0.022em', margin: 0, lineHeight: 0.95 }}>
+              Sold <em style={{ fontStyle: 'italic' }}>listings</em>.
             </h1>
           </div>
           <p style={{ maxWidth: 380, textAlign: 'right', fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 19, color: t.fgMuted, lineHeight: 1.45, margin: 0 }}>
-            A selection of recent placements — {STUDIO.totalSold} in total since 2012.
+            A selection of recent placements, {listings.length} in total.
           </p>
         </div>
         <div style={{ marginTop: 72, paddingTop: 28, borderTop: `1px solid ${t.line}` }} />
@@ -48,12 +45,10 @@ function ArchiveA({ listings }) {
             fontFamily: t.fonts.display, fontStyle: 'italic',
             fontSize: 18, color: t.fgMuted, textAlign: 'center', padding: '64px 0',
           }}>No closed placements yet.</p>
-        ) : listings.length >= 7 ? (
-          <FullEditorialA listings={listings} />
         ) : (
-          <div className="tw-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 40 }}>
+          <UniformGrid>
             {listings.map(l => <ListingCardStdA key={l.id} listing={l} />)}
-          </div>
+          </UniformGrid>
         )}
       </div>
 
@@ -71,19 +66,18 @@ function ArchiveB({ listings }) {
       <TopNav active="Listings" />
 
       <div style={{ padding: 'clamp(56px, 7vw, 96px) clamp(24px, 5vw, 72px) clamp(32px, 4vw, 56px)', textAlign: 'center' }}>
-        <Eyebrow>The Archive</Eyebrow>
         <h1 style={{
           fontFamily: t.fonts.display, fontWeight: 300,
           fontSize: 'clamp(52px, 7vw, 96px)', letterSpacing: '-0.024em',
-          margin: '24px 0 0', lineHeight: 0.95, color: t.palette.emerald,
+          margin: 0, lineHeight: 0.95, color: t.palette.emerald,
         }}>
-          Previously <em style={{ fontStyle: 'italic' }}>placed.</em>
+          Sold <em style={{ fontStyle: 'italic' }}>listings.</em>
         </h1>
         <p style={{
           fontFamily: t.fonts.display, fontStyle: 'italic',
           fontSize: 20, color: t.fgMuted, maxWidth: 640, margin: '24px auto 0', lineHeight: 1.5,
         }}>
-          A selection of recent placements — {STUDIO.totalSold} in total since 2012.
+          A selection of recent placements, {listings.length} in total.
         </p>
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32 }}>
           <Rule />
@@ -96,12 +90,10 @@ function ArchiveB({ listings }) {
             fontFamily: t.fonts.display, fontStyle: 'italic',
             fontSize: 18, color: t.fgMuted, textAlign: 'center', padding: '64px 0',
           }}>No closed placements yet.</p>
-        ) : listings.length >= 7 ? (
-          <FullEditorialB listings={listings} />
         ) : (
-          <div className="tw-grid-3" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 32, marginTop: 56 }}>
+          <UniformGrid variant="b">
             {listings.map(l => <ListingCardStdB key={l.id} listing={l} />)}
-          </div>
+          </UniformGrid>
         )}
       </div>
 

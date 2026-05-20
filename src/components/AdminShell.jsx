@@ -7,7 +7,6 @@ import { signOut, useLeads, useListings } from '../lib/queries';
 const NAV_PATHS = {
   Leads: '/admin',
   Listings: '/admin/listings',
-  'Sold Archive': '#',
   Settings: '#',
 };
 

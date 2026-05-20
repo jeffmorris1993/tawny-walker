@@ -27,7 +27,7 @@ export default function SiteFooter() {
     },
     { h: 'Explore', items: [
       { label: 'Active Listings', to: '/listings' },
-      { label: 'Sold Archive', to: '/listings#archive' },
+      { label: 'Sold Listings', to: '/listings/sold' },
     ] },
     { h: isB ? 'Follow' : 'Connect', items: [
       { label: 'Instagram', href: INSTAGRAM_URL },
