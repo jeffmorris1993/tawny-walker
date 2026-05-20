@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../theme/DirectionContext';
 import Photo from '../components/Photo';
@@ -7,36 +7,67 @@ import SiteFooter from '../components/SiteFooter';
 import StatusChip from '../components/StatusChip';
 import Button from '../components/Button';
 import Rule from '../components/Rule';
-import { useListings } from '../lib/queries';
+import PaginationBar from '../components/PaginationBar';
+import { SkeletonCardA, SkeletonCardB, SkeletonStyles } from '../components/SkeletonCard';
+import { usePagedListings, useListingCounts } from '../lib/queries';
 
 // Each listing card links into its detail page.
 const linkStyle = { textDecoration: 'none', color: 'inherit', display: 'block' };
 
 const PUBLIC_FILTERS = ['All', 'Active', 'Pending'];
+const PAGE_SIZE = 12;
 
 // Public listings excludes sold properties entirely — those live in the
 // Sold Archive page. The filter bar only exposes All / Active / Pending.
 function usePublicListings() {
-  const { data: ALL, loading } = useListings();
   const [filter, setFilter] = useState('All');
-  const LISTINGS = useMemo(() => ALL.filter(l => l.status !== 'Sold'), [ALL]);
-  const soldCount = useMemo(() => ALL.filter(l => l.status === 'Sold').length, [ALL]);
-  const filtered = useMemo(
-    () => (filter === 'All' ? LISTINGS : LISTINGS.filter(l => l.status === filter)),
-    [filter, LISTINGS],
-  );
-  const counts = useMemo(() => ({
-    All: LISTINGS.length,
-    Active: LISTINGS.filter(l => l.status === 'Active').length,
-    Pending: LISTINGS.filter(l => l.status === 'Pending').length,
-  }), [LISTINGS]);
-  return { filter, setFilter, filtered, counts, all: LISTINGS, soldCount, loading };
+  const [page, setPage] = useState(1);
+  const { counts: rawCounts } = useListingCounts();
+  const statusEquals = filter === 'All' ? null : filter;
+  const { data, total, pageCount, loading } = usePagedListings({
+    statusEquals,
+    statusNotIn: ['Sold'],
+    page,
+    pageSize: PAGE_SIZE,
+  });
+
+  // Active inventory counts (sold excluded) so the filter bar labels stay
+  // accurate even though the page itself only loads PAGE_SIZE rows.
+  const active = rawCounts.Active || 0;
+  const pending = rawCounts.Pending || 0;
+  const counts = {
+    All: active + pending,
+    Active: active,
+    Pending: pending,
+  };
+
+  function changeFilter(nextFilter) {
+    if (nextFilter === filter) return;
+    setFilter(nextFilter);
+    setPage(1);
+  }
+
+  return {
+    filter, setFilter: changeFilter,
+    page, setPage,
+    listings: data, total, pageCount,
+    counts, soldCount: rawCounts.Sold || 0,
+    loading,
+  };
 }
 
 // ─── DIRECTION A ────────────────────────────────────────────────────────────
 function ListingsA() {
   const t = useTheme();
-  const { filter, setFilter, filtered, counts, all: LISTINGS, soldCount } = usePublicListings();
+  const { filter, setFilter, page, setPage, listings, pageCount, counts, soldCount, loading } = usePublicListings();
+  const filterRef = useRef(null);
+
+  function goToPage(p) {
+    setPage(p);
+    if (filterRef.current) {
+      filterRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
 
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
@@ -50,17 +81,29 @@ function ListingsA() {
             </h1>
           </div>
           <p style={{ maxWidth: 380, textAlign: 'right', fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 19, color: t.fgMuted, lineHeight: 1.45, margin: 0 }}>
-            {LISTINGS.length} properties currently represented by Tawny, a fraction of the Michigan luxury market, chosen with intent.
+            {counts.All} properties currently represented by Tawny, a fraction of the Michigan luxury market, chosen with intent.
           </p>
         </div>
 
-        <FilterBarA filter={filter} setFilter={setFilter} counts={counts} />
+        <div ref={filterRef} style={{ scrollMarginTop: 24 }}>
+          <FilterBarA filter={filter} setFilter={setFilter} counts={counts} />
+        </div>
       </div>
 
       <div style={{ padding: '0 clamp(24px, 4.4vw, 64px) clamp(64px, 8.3vw, 120px)' }}>
         <UniformGrid>
-          {filtered.map(l => <ListingCardStdA key={l.id} listing={l} />)}
+          {loading
+            ? Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonCardA key={`s-${i}`} />)
+            : listings.map(l => <ListingCardStdA key={l.id} listing={l} />)}
         </UniformGrid>
+        {!loading && listings.length === 0 && (
+          <p style={{
+            textAlign: 'center', padding: '64px 0',
+            fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 18, color: t.fgMuted,
+          }}>No listings match this view.</p>
+        )}
+        <PaginationBar page={page} pageCount={pageCount} onChange={goToPage} />
+        <SkeletonStyles />
       </div>
 
       <div id="archive" style={{ padding: '96px clamp(24px, 4.4vw, 64px)', borderTop: `1px solid ${t.line}`, background: t.bgPanel, textAlign: 'center' }}>
@@ -98,6 +141,20 @@ function FilterBarA({ filter, setFilter, counts }) {
   );
 }
 
+// Card-line specs render as Beds · Baths · Sq Ft on every viewport. Lot
+// acreage is dropped to keep the card tidy. Falls back to building the
+// string from individual columns when `listing.specs` isn't set.
+function cardSpecs(listing) {
+  if (listing.specs) {
+    return listing.specs.split(' · ').slice(0, 3).join(' · ');
+  }
+  const parts = [];
+  if (listing.beds)  parts.push(`${listing.beds} BD`);
+  if (listing.baths) parts.push(`${listing.baths} BA`);
+  if (listing.sqft)  parts.push(`${listing.sqft} SF`);
+  return parts.join(' · ');
+}
+
 // Uniform 3-up grid used by both Listings and the Sold Archive. Each card
 // renders at the same scale regardless of how many listings are in the row.
 function UniformGrid({ children, variant = 'a' }) {
@@ -131,7 +188,7 @@ function ListingCardStdA({ listing }) {
       </div>
       <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${t.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
         <span style={{ fontFamily: t.fonts.display, fontSize: 22, color: muted ? t.fgFaint : t.fgPage }}>{listing.price}</span>
-        <span style={{ fontSize: 9.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: t.fgFaint }}>{listing.specs}</span>
+        <span style={{ fontSize: 9.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: t.fgFaint }}>{cardSpecs(listing)}</span>
       </div>
     </Link>
   );
@@ -140,7 +197,15 @@ function ListingCardStdA({ listing }) {
 // ─── DIRECTION B ────────────────────────────────────────────────────────────
 function ListingsB() {
   const t = useTheme();
-  const { filter, setFilter, filtered, counts, all: LISTINGS, soldCount } = usePublicListings();
+  const { filter, setFilter, page, setPage, listings, pageCount, counts, soldCount, loading } = usePublicListings();
+  const filterRef = useRef(null);
+
+  function goToPage(p) {
+    setPage(p);
+    if (filterRef.current) {
+      filterRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
 
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
@@ -158,21 +223,31 @@ function ListingsB() {
           fontFamily: t.fonts.display, fontStyle: 'italic',
           fontSize: 20, color: t.fgMuted, maxWidth: 640, margin: '24px auto 0', lineHeight: 1.5,
         }}>
-          {LISTINGS.length} properties currently represented by Tawny, a small fraction of the Michigan market, chosen with intent.
+          {counts.All} properties currently represented by Tawny, a small fraction of the Michigan market, chosen with intent.
         </p>
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32 }}>
           <Rule />
         </div>
       </div>
 
-      <div style={{ padding: '0 clamp(24px, 5vw, 72px) 56px', maxWidth: 1296, margin: '0 auto' }}>
+      <div ref={filterRef} style={{ padding: '0 clamp(24px, 5vw, 72px) 56px', maxWidth: 1296, margin: '0 auto', scrollMarginTop: 24 }}>
         <FilterBarB filter={filter} setFilter={setFilter} counts={counts} />
       </div>
 
       <div style={{ padding: '0 clamp(24px, 5vw, 72px) 96px', maxWidth: 1296, margin: '0 auto' }}>
         <UniformGrid variant="b">
-          {filtered.map(l => <ListingCardStdB key={l.id} listing={l} />)}
+          {loading
+            ? Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonCardB key={`s-${i}`} />)
+            : listings.map(l => <ListingCardStdB key={l.id} listing={l} />)}
         </UniformGrid>
+        {!loading && listings.length === 0 && (
+          <p style={{
+            textAlign: 'center', padding: '64px 0',
+            fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 18, color: t.fgMuted,
+          }}>No listings match this view.</p>
+        )}
+        <PaginationBar page={page} pageCount={pageCount} onChange={goToPage} />
+        <SkeletonStyles />
       </div>
 
       <div id="archive" style={{ padding: '96px clamp(24px, 5vw, 72px)', borderTop: `1px solid ${t.line}`, background: t.bgPanel, textAlign: 'center' }}>
@@ -233,7 +308,7 @@ function ListingCardStdB({ listing }) {
         <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 13.5, color: t.fgFaint }}>{listing.loc}</div>
         <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${t.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
           <span style={{ fontFamily: t.fonts.display, fontSize: 22, color: muted ? t.fgFaint : t.palette.emerald, fontWeight: 400 }}>{listing.price}</span>
-          <span style={{ fontFamily: t.eyebrowFont, fontSize: 9, fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.fgFaint }}>{listing.specs}</span>
+          <span style={{ fontFamily: t.eyebrowFont, fontSize: 9, fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.fgFaint }}>{cardSpecs(listing)}</span>
         </div>
       </div>
     </Link>
@@ -258,11 +333,12 @@ export default function Listings() {
   return t.key === 'B' ? <ListingsB /> : <ListingsA />;
 }
 
-// Exports the uniform grid + card components so the Sold Archive page can
+// Exports the uniform grid + card components so the Sold Listings page can
 // reuse the exact same surface.
 export {
   ListingsGridStyles,
   UniformGrid,
   ListingCardStdA,
   ListingCardStdB,
+  PAGE_SIZE,
 };

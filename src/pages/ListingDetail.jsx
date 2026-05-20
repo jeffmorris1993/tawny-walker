@@ -5,7 +5,6 @@ import TopNav from '../components/TopNav';
 import SiteFooter from '../components/SiteFooter';
 import StatusChip from '../components/StatusChip';
 import { useListing, useRelatedListings } from '../lib/queries';
-import { getListingDetail as mockListingDetail } from '../data/listingDetails';
 
 // The detail page is the same content rendered in two visual directions.
 // Section order: breadcrumb → hero → head (name, address, tagline subtitle,
@@ -497,8 +496,7 @@ export default function ListingDetail() {
   const { id } = useParams();
   const { data: dbListing, loading } = useListing(id);
 
-  const fallback = mockListingDetail(id);
-  if (loading && !fallback) {
+  if (loading) {
     return (
       <div style={{ background: t.bgPage, minHeight: '60vh', display: 'grid', placeItems: 'center', color: t.fgFaint, fontFamily: t.fonts.body, fontSize: 13, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
         Loading…
@@ -506,18 +504,9 @@ export default function ListingDetail() {
     );
   }
 
-  const merged = mergeListing(dbListing, fallback);
-  if (!merged) return <Navigate to="/listings" replace />;
-  return t.key === 'B' ? <ListingDetailB L={merged} /> : <ListingDetailA L={merged} />;
-}
+  if (!dbListing) return <Navigate to="/listings" replace />;
 
-function mergeListing(dbListing, fallback) {
-  if (!dbListing && !fallback) return null;
-  const out = { ...(fallback || {}), ...(dbListing || {}) };
-  // Use the DB-stored short description (blurb) as the tagline if the DB didn't
-  // give us one explicitly.
-  if (!out.tagline) out.tagline = dbListing?.blurb || fallback?.tagline || null;
-  if (!out.gallery && fallback?.gallery) out.gallery = fallback.gallery;
-  if (!out.listedAt && fallback?.listedAt) out.listedAt = fallback.listedAt;
-  return out;
+  // The admin's "Short description" maps to the public tagline subtitle.
+  const L = { ...dbListing, tagline: dbListing.tagline || dbListing.blurb || null };
+  return t.key === 'B' ? <ListingDetailB L={L} /> : <ListingDetailA L={L} />;
 }

@@ -1,14 +1,33 @@
 // Data access layer. Every page reads/writes through these hooks/functions.
-// When Supabase is configured (VITE_SUPABASE_URL + ANON_KEY), all calls hit the
-// database. Otherwise they fall back to the bundled mock data so the UI still
-// works (useful for design review, local dev without a project, etc.).
+// All calls hit Supabase — set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
+// in your environment. There is no mock fallback.
 
 import { useEffect, useState, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from './supabase';
-import { LISTINGS as MOCK_LISTINGS } from '../data/listings';
-import { LEADS as MOCK_LEADS, LEAD_DETAIL as MOCK_LEAD_DETAIL } from '../data/leads';
-import { getListingDetail as mockListingDetail } from '../data/listingDetails';
 import { PHOTOS } from '../components/Photo';
+
+if (!isSupabaseConfigured) {
+  // Loud, dev-time warning. Pages will render empty if the queries can't
+  // resolve, so surface the misconfiguration immediately rather than
+  // silently degrading.
+  console.warn(
+    '[tw] Supabase not configured. Set VITE_SUPABASE_URL and ' +
+    'VITE_SUPABASE_ANON_KEY in your environment.'
+  );
+}
+
+// Returns true if the supabase client is missing. Hooks use this to bail
+// early so a misconfigured env yields empty data instead of throwing.
+function noClient() {
+  if (!supabase) {
+    console.error(
+      '[tw] Supabase client unavailable — request skipped. ' +
+      'Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY and restart `vite`.'
+    );
+    return true;
+  }
+  return false;
+}
 
 // ─── shape converters ───────────────────────────────────────────────────────
 // DB rows use snake_case + a `img` text key (matches PHOTOS map). UI expects
@@ -86,31 +105,25 @@ function relativeTime(iso, short = false) {
 }
 
 // ─── Listings ──────────────────────────────────────────────────────────────
-const MOCK_NUMBERS = Object.fromEntries(
-  MOCK_LISTINGS.map((l, i) => [l.id, String(i + 1).padStart(2, '0')]),
-);
-
 export function useListings() {
-  const [data, setData] = useState(isSupabaseConfigured ? null : MOCK_LISTINGS);
-  const [loading, setLoading] = useState(isSupabaseConfigured);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const refresh = useCallback(async () => {
-    if (!isSupabaseConfigured) {
-      setData(MOCK_LISTINGS);
-      return;
-    }
+    if (noClient()) { setData([]); setLoading(false); return; }
     setLoading(true);
     const { data: rows, error: err } = await supabase
       .from('listings')
       .select('*')
       .order('sort_order', { ascending: true });
     if (err) {
-      console.warn('[tw] listings fetch failed, falling back to mock', err);
-      setData(MOCK_LISTINGS);
+      console.error('[tw] listings fetch failed', err);
+      setData([]);
       setError(err);
     } else {
       setData(rows.map(rowToListing));
+      setError(null);
     }
     setLoading(false);
   }, []);
@@ -130,26 +143,16 @@ export function useListing(id) {
         if (alive) { setData(null); setLoading(false); }
         return;
       }
-      if (!isSupabaseConfigured) {
-        if (alive) {
-          setData(mockListingDetail(id));
-          setLoading(false);
-        }
-        return;
-      }
+      if (noClient()) { if (alive) { setData(null); setLoading(false); } return; }
+      setLoading(true);
       const { data: row, error: err } = await supabase
         .from('listings')
         .select('*')
         .eq('id', id)
         .maybeSingle();
       if (!alive) return;
-      if (err || !row) {
-        // Try mock fallback before declaring not-found.
-        setData(mockListingDetail(id));
-      } else {
-        const listing = rowToListing(row);
-        setData({ ...listing, number: MOCK_NUMBERS[id] || '—' });
-      }
+      if (err) console.error('[tw] listing fetch failed', err);
+      setData(row ? rowToListing(row) : null);
       setLoading(false);
     }
     load();
@@ -157,6 +160,92 @@ export function useListing(id) {
   }, [id]);
 
   return { data, loading };
+}
+
+// Page-aware fetch used by the public Listings + Sold pages. Only the rows
+// for the current page round-trip to Supabase (range query), so adding more
+// rows doesn't increase the initial payload.
+export function usePagedListings({ statusEquals, statusNotIn, page = 1, pageSize = 12 } = {}) {
+  const [data, setData] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  // Stable string key for the filter — avoids re-fetching when the caller
+  // creates a new array literal each render.
+  const notInKey = (statusNotIn || []).join(',');
+
+  useEffect(() => {
+    let alive = true;
+    async function load() {
+      if (noClient()) {
+        if (alive) { setData([]); setTotal(0); setLoading(false); }
+        return;
+      }
+      setLoading(true);
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+
+      let q = supabase
+        .from('listings')
+        .select('*', { count: 'exact' })
+        .order('sort_order', { ascending: true })
+        .range(from, to);
+      if (statusEquals) q = q.eq('status', statusEquals);
+      if (statusNotIn?.length) {
+        const list = statusNotIn.map(s => `"${s}"`).join(',');
+        q = q.not('status', 'in', `(${list})`);
+      }
+      const { data: rows, count, error } = await q;
+      if (!alive) return;
+      if (error) {
+        console.error('[tw] paged listings fetch failed', error);
+        setData([]);
+        setTotal(0);
+      } else {
+        setData((rows || []).map(rowToListing));
+        setTotal(count ?? 0);
+      }
+      setLoading(false);
+    }
+    load();
+    return () => { alive = false; };
+  }, [statusEquals, notInKey, page, pageSize]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  return { data, total, pageCount, loading };
+}
+
+// One-shot counts query — selects only the `status` column so the filter
+// bar can show accurate per-bucket totals without loading every full row.
+export function useListingCounts() {
+  const [counts, setCounts] = useState({ All: 0, Active: 0, Pending: 0, Sold: 0, Draft: 0 });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    async function load() {
+      if (noClient()) {
+        if (alive) { setCounts({ All: 0, Active: 0, Pending: 0, Sold: 0, Draft: 0 }); setLoading(false); }
+        return;
+      }
+      setLoading(true);
+      const { data: rows, error } = await supabase.from('listings').select('status');
+      if (!alive) return;
+      if (error || !rows) {
+        if (error) console.error('[tw] listing counts fetch failed', error);
+        setCounts({ All: 0, Active: 0, Pending: 0, Sold: 0, Draft: 0 });
+      } else {
+        const next = { All: rows.length, Active: 0, Pending: 0, Sold: 0, Draft: 0 };
+        for (const r of rows) next[r.status] = (next[r.status] || 0) + 1;
+        setCounts(next);
+      }
+      setLoading(false);
+    }
+    load();
+    return () => { alive = false; };
+  }, []);
+
+  return { counts, loading };
 }
 
 export function useRelatedListings(currentId, limit = 3) {
@@ -167,7 +256,6 @@ export function useRelatedListings(currentId, limit = 3) {
 }
 
 export async function createListing(input) {
-  // input: { id, addr, street, loc, price, specs, status, tone, tag, blurb, beds, baths, sqft, lot, img }
   const cleanedId = (input.id || slugify(input.addr || input.name || ''));
   const payload = {
     id: cleanedId,
@@ -187,27 +275,14 @@ export async function createListing(input) {
     lot: input.lot || null,
     sort_order: input.sort_order || 200,
   };
-
-  if (!isSupabaseConfigured) {
-    // Mutation in mock mode: push to in-memory array so the user can see it
-    // until reload. Returns a synthetic row.
-    MOCK_LISTINGS.push({
-      ...payload,
-      img: payload.img && PHOTOS[payload.img] ? PHOTOS[payload.img] : payload.img,
-    });
-    return { data: payload, error: null };
-  }
-
+  if (noClient()) return { data: null, error: { message: 'Supabase not configured' } };
   const { data, error } = await supabase.from('listings').insert(payload).select().single();
+  if (error) console.error('[tw] listing insert failed', error);
   return { data, error };
 }
 
 export async function updateListingStatus(id, status) {
-  if (!isSupabaseConfigured) {
-    const l = MOCK_LISTINGS.find(x => x.id === id);
-    if (l) l.status = status;
-    return { data: l, error: null };
-  }
+  if (noClient()) return { data: null, error: { message: 'Supabase not configured' } };
   return supabase.from('listings').update({ status }).eq('id', id).select().single();
 }
 
@@ -230,25 +305,17 @@ export async function updateListing(id, input) {
     sqft: input.sqft ?? null,
     lot: input.lot ?? null,
   };
-
-  if (!isSupabaseConfigured) {
-    const idx = MOCK_LISTINGS.findIndex(l => l.id === id);
-    if (idx >= 0) {
-      const resolvedImg = payload.img && PHOTOS[payload.img] ? PHOTOS[payload.img] : payload.img;
-      MOCK_LISTINGS[idx] = { ...MOCK_LISTINGS[idx], ...payload, id, img: resolvedImg || MOCK_LISTINGS[idx].img };
-    }
-    return { data: { id, ...payload }, error: null };
-  }
-  return supabase.from('listings').update(payload).eq('id', id).select().single();
+  if (noClient()) return { data: null, error: { message: 'Supabase not configured' } };
+  const { data, error } = await supabase.from('listings').update(payload).eq('id', id).select().single();
+  if (error) console.error('[tw] listing update failed', error);
+  return { data, error };
 }
 
 export async function deleteListing(id) {
-  if (!isSupabaseConfigured) {
-    const idx = MOCK_LISTINGS.findIndex(l => l.id === id);
-    if (idx >= 0) MOCK_LISTINGS.splice(idx, 1);
-    return { error: null };
-  }
-  return supabase.from('listings').delete().eq('id', id);
+  if (noClient()) return { error: { message: 'Supabase not configured' } };
+  const { error } = await supabase.from('listings').delete().eq('id', id);
+  if (error) console.error('[tw] listing delete failed', error);
+  return { error };
 }
 
 function slugify(s) {
@@ -268,22 +335,19 @@ function buildSpecs(input) {
 
 // ─── Leads ──────────────────────────────────────────────────────────────────
 export function useLeads() {
-  const [data, setData] = useState(isSupabaseConfigured ? null : MOCK_LEADS);
-  const [loading, setLoading] = useState(isSupabaseConfigured);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    if (!isSupabaseConfigured) {
-      setData(MOCK_LEADS);
-      return;
-    }
+    if (noClient()) { setData([]); setLoading(false); return; }
     setLoading(true);
     const { data: rows, error } = await supabase
       .from('leads')
       .select('*')
       .order('created_at', { ascending: false });
     if (error) {
-      console.warn('[tw] leads fetch failed, falling back to mock', error);
-      setData(MOCK_LEADS);
+      console.error('[tw] leads fetch failed', error);
+      setData([]);
     } else {
       setData(rows.map(rowToLead));
     }
@@ -299,42 +363,14 @@ export function useLead(id) {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    if (!isSupabaseConfigured) {
-      // Mock mode: only one detail exists. If id matches its id, return it,
-      // otherwise synthesize from the LEADS array.
-      const lead = MOCK_LEADS.find(l => String(l.id) === String(id));
-      if (lead && String(lead.id) === String(MOCK_LEAD_DETAIL.id)) {
-        setData({ ...MOCK_LEAD_DETAIL });
-      } else if (lead) {
-        setData({
-          ...lead,
-          firstName: lead.name.split(' ')[0],
-          lastName: lead.name.split(' ').slice(1).join(' '),
-          email: '—',
-          phone: '—',
-          entity: '—',
-          city: '—',
-          referredBy: '—',
-          number: String(lead.id).padStart(2, '0'),
-          intake: [],
-          mandateNotes: '',
-          studioNote: '',
-          studioNoteSavedAt: '',
-          studioLog: [{ t: 'Intake received', when: lead.when, highlight: true }],
-          attached: [],
-        });
-      } else {
-        setData(null);
-      }
-      setLoading(false);
-      return;
-    }
+    if (noClient()) { setData(null); setLoading(false); return; }
     setLoading(true);
-    const { data: row } = await supabase
+    const { data: row, error } = await supabase
       .from('leads')
       .select('*, attached_listings(listing_id, shared_at, listings(addr, tone))')
       .eq('id', id)
       .maybeSingle();
+    if (error) console.error('[tw] lead fetch failed', error);
     if (row) {
       const lead = rowToLead(row);
       const attached = (row.attached_listings || []).map(a => ({
@@ -369,23 +405,12 @@ export function useLead(id) {
 }
 
 export async function updateLeadStatus(id, status) {
-  if (!isSupabaseConfigured) {
-    const lead = MOCK_LEADS.find(l => String(l.id) === String(id));
-    if (lead) lead.status = status;
-    if (String(id) === String(MOCK_LEAD_DETAIL.id)) MOCK_LEAD_DETAIL.status = status;
-    return { error: null };
-  }
+  if (noClient()) return { error: { message: 'Supabase not configured' } };
   return supabase.from('leads').update({ status }).eq('id', id);
 }
 
 export async function updateLeadNote(id, studioNote) {
-  if (!isSupabaseConfigured) {
-    if (String(id) === String(MOCK_LEAD_DETAIL.id)) {
-      MOCK_LEAD_DETAIL.studioNote = studioNote;
-      MOCK_LEAD_DETAIL.studioNoteSavedAt = new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-    }
-    return { error: null };
-  }
+  if (noClient()) return { error: { message: 'Supabase not configured' } };
   return supabase
     .from('leads')
     .update({ studio_note: studioNote, studio_note_saved_at: new Date().toISOString() })
@@ -393,7 +418,7 @@ export async function updateLeadNote(id, studioNote) {
 }
 
 export async function detachListing(leadId, listingId) {
-  if (!isSupabaseConfigured) return { error: null };
+  if (noClient()) return { error: { message: 'Supabase not configured' } };
   return supabase
     .from('attached_listings')
     .delete()
@@ -407,13 +432,7 @@ export async function detachListing(leadId, listingId) {
 // free-text fields. No separate audit table.
 export async function submitInquiry({ role, name, contact, payload, message }) {
   const leadInsert = inquiryToLead({ role, name, contact, payload, message });
-
-  if (!isSupabaseConfigured) {
-    console.info('[tw] inquiry (mock):', leadInsert);
-    await new Promise(r => setTimeout(r, 400));
-    return { data: { id: `mock-${Date.now()}` }, error: null };
-  }
-
+  if (noClient()) return { data: null, error: { message: 'Supabase not configured' } };
   const { data, error } = await supabase
     .from('leads')
     .insert(leadInsert)
@@ -496,8 +515,8 @@ function inquiryToLead({ role, name, contact, payload, message }) {
 
 // ─── Auth ──────────────────────────────────────────────────────────────────
 export async function signIn(email, password) {
-  // Env-driven demo creds, used when Supabase isn't configured OR when the
-  // operator wants a simple shared password.
+  // Env-driven shared password, useful while there's only one studio user
+  // and you don't want to provision a full Supabase Auth user.
   const demoEmail = import.meta.env.VITE_ADMIN_EMAIL;
   const demoPassword = import.meta.env.VITE_ADMIN_PASSWORD;
   if (demoEmail && demoPassword) {
@@ -507,12 +526,7 @@ export async function signIn(email, password) {
     }
     return { error: { message: 'Incorrect email or password.' } };
   }
-  if (!isSupabaseConfigured) {
-    // No env creds, no supabase: open admin to anyone with non-empty values.
-    if (!email || !password) return { error: { message: 'Email and password required.' } };
-    sessionStorage.setItem('tw.admin', '1');
-    return { error: null };
-  }
+  if (noClient()) return { error: { message: 'Supabase not configured' } };
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (!error) sessionStorage.setItem('tw.admin', '1');
   return { error };
@@ -520,7 +534,7 @@ export async function signIn(email, password) {
 
 export async function signOut() {
   sessionStorage.removeItem('tw.admin');
-  if (isSupabaseConfigured) await supabase.auth.signOut();
+  if (supabase) await supabase.auth.signOut();
 }
 
 export function useIsAdmin() {
@@ -530,7 +544,7 @@ export function useIsAdmin() {
   });
 
   useEffect(() => {
-    if (!isSupabaseConfigured) return;
+    if (!supabase) return;
     let alive = true;
     supabase.auth.getSession().then(({ data }) => {
       if (alive && data.session) setAdmin(true);

@@ -1,25 +1,39 @@
-import { useMemo } from 'react';
+import { useRef, useState } from 'react';
 import { useTheme } from '../theme/DirectionContext';
 import TopNav from '../components/TopNav';
 import SiteFooter from '../components/SiteFooter';
 import Rule from '../components/Rule';
-import { useListings } from '../lib/queries';
+import PaginationBar from '../components/PaginationBar';
+import { SkeletonCardA, SkeletonCardB, SkeletonStyles } from '../components/SkeletonCard';
+import { usePagedListings } from '../lib/queries';
 import {
   ListingsGridStyles,
   UniformGrid,
   ListingCardStdA, ListingCardStdB,
+  PAGE_SIZE,
 } from './Listings';
 
-// Mirrors the Listings editorial layout for closed placements only.
-// No filter, no sort — read-only historical view.
-function useSoldListings() {
-  const { data, loading } = useListings();
-  const sold = useMemo(() => data.filter(l => l.status === 'Sold'), [data]);
-  return { sold, loading };
+function useSoldPage() {
+  const [page, setPage] = useState(1);
+  const { data, total, pageCount, loading } = usePagedListings({
+    statusEquals: 'Sold',
+    page,
+    pageSize: PAGE_SIZE,
+  });
+  return { page, setPage, listings: data, total, pageCount, loading };
 }
 
-function ArchiveA({ listings }) {
+function ArchiveA() {
   const t = useTheme();
+  const { page, setPage, listings, total, pageCount, loading } = useSoldPage();
+  const gridRef = useRef(null);
+
+  function goToPage(p) {
+    setPage(p);
+    if (gridRef.current) {
+      gridRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
 
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
@@ -33,23 +47,26 @@ function ArchiveA({ listings }) {
             </h1>
           </div>
           <p style={{ maxWidth: 380, textAlign: 'right', fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 19, color: t.fgMuted, lineHeight: 1.45, margin: 0 }}>
-            A selection of recent placements, {listings.length} in total.
+            A selection of recent placements, {total} in total.
           </p>
         </div>
         <div style={{ marginTop: 72, paddingTop: 28, borderTop: `1px solid ${t.line}` }} />
       </div>
 
-      <div style={{ padding: '0 clamp(24px, 4.4vw, 64px) clamp(64px, 8.3vw, 120px)' }}>
-        {listings.length === 0 ? (
+      <div ref={gridRef} style={{ padding: '0 clamp(24px, 4.4vw, 64px) clamp(64px, 8.3vw, 120px)', scrollMarginTop: 24 }}>
+        <UniformGrid>
+          {loading
+            ? Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonCardA key={`s-${i}`} />)
+            : listings.map(l => <ListingCardStdA key={l.id} listing={l} />)}
+        </UniformGrid>
+        {!loading && listings.length === 0 && (
           <p style={{
-            fontFamily: t.fonts.display, fontStyle: 'italic',
-            fontSize: 18, color: t.fgMuted, textAlign: 'center', padding: '64px 0',
+            textAlign: 'center', padding: '64px 0',
+            fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 18, color: t.fgMuted,
           }}>No closed placements yet.</p>
-        ) : (
-          <UniformGrid>
-            {listings.map(l => <ListingCardStdA key={l.id} listing={l} />)}
-          </UniformGrid>
         )}
+        <PaginationBar page={page} pageCount={pageCount} onChange={goToPage} />
+        <SkeletonStyles />
       </div>
 
       <SiteFooter />
@@ -58,8 +75,17 @@ function ArchiveA({ listings }) {
   );
 }
 
-function ArchiveB({ listings }) {
+function ArchiveB() {
   const t = useTheme();
+  const { page, setPage, listings, total, pageCount, loading } = useSoldPage();
+  const gridRef = useRef(null);
+
+  function goToPage(p) {
+    setPage(p);
+    if (gridRef.current) {
+      gridRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
 
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
@@ -77,24 +103,27 @@ function ArchiveB({ listings }) {
           fontFamily: t.fonts.display, fontStyle: 'italic',
           fontSize: 20, color: t.fgMuted, maxWidth: 640, margin: '24px auto 0', lineHeight: 1.5,
         }}>
-          A selection of recent placements, {listings.length} in total.
+          A selection of recent placements, {total} in total.
         </p>
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32 }}>
           <Rule />
         </div>
       </div>
 
-      <div style={{ padding: '0 clamp(24px, 5vw, 72px) 120px', maxWidth: 1296, margin: '0 auto' }}>
-        {listings.length === 0 ? (
+      <div ref={gridRef} style={{ padding: '0 clamp(24px, 5vw, 72px) 120px', maxWidth: 1296, margin: '0 auto', scrollMarginTop: 24 }}>
+        <UniformGrid variant="b">
+          {loading
+            ? Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonCardB key={`s-${i}`} />)
+            : listings.map(l => <ListingCardStdB key={l.id} listing={l} />)}
+        </UniformGrid>
+        {!loading && listings.length === 0 && (
           <p style={{
-            fontFamily: t.fonts.display, fontStyle: 'italic',
-            fontSize: 18, color: t.fgMuted, textAlign: 'center', padding: '64px 0',
+            textAlign: 'center', padding: '64px 0',
+            fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 18, color: t.fgMuted,
           }}>No closed placements yet.</p>
-        ) : (
-          <UniformGrid variant="b">
-            {listings.map(l => <ListingCardStdB key={l.id} listing={l} />)}
-          </UniformGrid>
         )}
+        <PaginationBar page={page} pageCount={pageCount} onChange={goToPage} />
+        <SkeletonStyles />
       </div>
 
       <SiteFooter />
@@ -105,13 +134,5 @@ function ArchiveB({ listings }) {
 
 export default function SoldArchive() {
   const t = useTheme();
-  const { sold, loading } = useSoldListings();
-  if (loading) {
-    return (
-      <div style={{ background: t.bgPage, minHeight: '60vh', display: 'grid', placeItems: 'center', color: t.fgFaint, fontFamily: t.fonts.body, fontSize: 13, letterSpacing: '0.2em', textTransform: 'uppercase' }}>
-        Loading…
-      </div>
-    );
-  }
-  return t.key === 'B' ? <ArchiveB listings={sold} /> : <ArchiveA listings={sold} />;
+  return t.key === 'B' ? <ArchiveB /> : <ArchiveA />;
 }

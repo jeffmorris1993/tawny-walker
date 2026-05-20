@@ -36,7 +36,7 @@ export const ROLES = {
           'Primary residence', 'Secondary residence', 'Investment property',
         ]},
       ]},
-      { type: 'chips', label: 'Neighborhoods of interest', options: ['Birmingham', 'Bloomfield Hills', 'Royal Oak', 'Ferndale', 'Novi', 'Northville', 'West Bloomfield'] },
+      { type: 'dropdown', label: 'Neighborhood of interest', options: ['Birmingham', 'Bloomfield Hills', 'Royal Oak', 'Ferndale', 'Novi', 'Northville', 'West Bloomfield', 'Farmington Hills', 'Grosse Pointe', 'Other'] },
       { type: 'budget', label: 'Comfortable price range', min: '$50K', max: '$1.42M', center: 0.55 },
       { type: 'pair', cols: [
         { label: 'Time frame to buy', dropdown: true, options: [
@@ -154,7 +154,7 @@ export const ROLES = {
         ]},
         { label: 'Beds preferred', placeholder: 'e.g. 3 BD' },
       ]},
-      { type: 'chips', label: 'Neighborhoods', options: ['Birmingham', 'Bloomfield Hills', 'Royal Oak', 'Ferndale', 'Novi', 'Northville'] },
+      { type: 'dropdown', label: 'Neighborhood', options: ['Birmingham', 'Bloomfield Hills', 'Royal Oak', 'Ferndale', 'Novi', 'Northville', 'West Bloomfield', 'Farmington Hills', 'Grosse Pointe', 'Other'] },
       { type: 'budget', label: 'Budget (monthly, furnished)', min: '$8K/mo', max: '$45K/mo', center: 0.4 },
       { type: 'note', label: 'Notes', placeholder: 'Context on the client, timing, structure…' },
     ],

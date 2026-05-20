@@ -1,11 +1,11 @@
 import { useTheme } from '../../theme/DirectionContext';
 import Eyebrow from '../Eyebrow';
 import Photo from '../Photo';
-import { LISTINGS } from '../../data/listings';
 
 // Renders the studio's private record of listings tied to a lead.
-// `attached` is `[{ id, name?, tone?, sharedAt }]`. If `id` matches a listing
-// in the public LISTINGS data, that listing's tone + name is used.
+// `attached` is `[{ id, name?, tone?, sharedAt }]`. Each row supplies its
+// own name/tone via the lead query's joined listings columns; this view
+// only renders what the API returns.
 //
 // `onRemove(id)` / `onAttach()` are optional. When omitted the buttons are
 // still rendered so the design reads correctly in screenshots.
@@ -14,13 +14,10 @@ export default function AttachedListings({ attached = [], onRemove, onAttach }) 
   const isB = t.key === 'B';
   const noun = t.admin.attachedNoun;
 
-  const resolve = (a) => {
-    const ref = LISTINGS.find(l => l.id === a.id);
-    return {
-      name: a.name || ref?.addr || 'Untitled',
-      tone: a.tone || ref?.tone || 'warm',
-    };
-  };
+  const resolve = (a) => ({
+    name: a.name || 'Untitled',
+    tone: a.tone || 'warm',
+  });
 
   return (
     <div style={{ marginTop: 32, padding: 24, border: `1px solid ${t.line}` }}>

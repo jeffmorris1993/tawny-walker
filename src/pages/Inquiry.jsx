@@ -97,6 +97,7 @@ function buildInitial(role) {
       for (const c of s.cols) fields[c.label] = '';
     }
     if (s.type === 'chips') chips[s.label] = [];
+    if (s.type === 'dropdown') fields[s.label] = '';
     if (s.type === 'note') notes[s.label] = '';
     if (s.type === 'budget') {
       // Seed with the middle 50% of the range; the user drags from there.
@@ -556,6 +557,20 @@ function RoleSection({ s, form, setForm, errors }) {
             error={errors[c.label]}
           />
         ))}
+      </div>
+    );
+  }
+  if (s.type === 'dropdown') {
+    return (
+      <div style={{ marginBottom: 26 }}>
+        <InputField
+          label={s.label}
+          value={form.fields[s.label] || ''}
+          onChange={setField(s.label)}
+          dropdown
+          options={s.options}
+          error={errors[s.label]}
+        />
       </div>
     );
   }
