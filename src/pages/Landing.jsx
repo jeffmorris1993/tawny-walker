@@ -241,8 +241,8 @@ function LandingA() {
           .tw-hero-vol     { display: none !important; }
           .tw-listings-grid { grid-template-columns: 1fr !important; }
         }
-        @media (max-width: 480px) {
-          .tw-stats-row    { grid-template-columns: 1fr 1fr !important; }
+        @media (max-width: 700px) {
+          .tw-stats-row    { grid-template-columns: 1fr !important; gap: 24px !important; }
         }
       `}</style>
     </div>
@@ -373,7 +373,7 @@ function LandingB() {
           </div>
         </div>
         <div className="tw-listings-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'clamp(32px, 7vw, 96px)', alignItems: 'start', maxWidth: 1180, margin: '0 auto' }}>
-          <div style={{ position: 'relative', width: '100%', minHeight: 720, alignSelf: 'stretch', background: '#fff' }}>
+          <div className="tw-landing-portrait" style={{ position: 'relative', width: '100%', minHeight: 720, alignSelf: 'stretch', background: '#fff' }}>
             <Photo label="" tone="warm" height="100%" src={PHOTOS.portraitWhite} fit="cover" objectPosition="center top" bg="#fff" />
           </div>
           <div>
@@ -486,9 +486,16 @@ function LandingB() {
           .tw-listings-grid     { grid-template-columns: 1fr !important; }
           .tw-colophon-mid      { display: none !important; }
           .tw-hero-colophon span:first-child + span { display: none; }
+          .tw-landing-portrait  {
+            min-height: 0 !important;
+            aspect-ratio: 1 / 1;
+            max-width: 480px;
+            margin: 0 auto;
+          }
+          .tw-landing-portrait img { object-fit: contain !important; object-position: center !important; }
         }
-        @media (max-width: 480px) {
-          .tw-stats-row { grid-template-columns: 1fr 1fr !important; }
+        @media (max-width: 700px) {
+          .tw-stats-row { grid-template-columns: 1fr !important; gap: 24px !important; }
         }
       `}</style>
     </div>

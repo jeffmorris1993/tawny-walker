@@ -97,7 +97,10 @@ function buildInitial(role) {
       for (const c of s.cols) fields[c.label] = '';
     }
     if (s.type === 'chips') chips[s.label] = [];
-    if (s.type === 'dropdown') fields[s.label] = '';
+    if (s.type === 'dropdown') {
+      if (s.multi) chips[s.label] = [];
+      else fields[s.label] = '';
+    }
     if (s.type === 'note') notes[s.label] = '';
     if (s.type === 'budget') {
       // Seed with the middle 50% of the range; the user drags from there.
@@ -323,6 +326,158 @@ function EditorialSelect({ value, onChange, options, placeholder, error }) {
         </div>
       )}
     </div>
+  );
+}
+
+// Editorial multi-select: same look as EditorialSelect but each option is
+// a togglable checkbox row. Selected items render as a comma-joined list
+// in the trigger; long lists collapse to "{count} selected" so the field
+// stays one line.
+function EditorialMultiSelect({ value, onChange, options, placeholder }) {
+  const skin = useInquirySkin();
+  const t = skin.t;
+  const selected = Array.isArray(value) ? value : [];
+  const filled = selected.length > 0;
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDocClick(e) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    }
+    function onKey(e) { if (e.key === 'Escape') setOpen(false); }
+    document.addEventListener('mousedown', onDocClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDocClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  function toggle(opt) {
+    const next = selected.includes(opt)
+      ? selected.filter(s => s !== opt)
+      : [...selected, opt];
+    onChange && onChange(next);
+  }
+  function clearAll() {
+    onChange && onChange([]);
+  }
+
+  const summary = !filled
+    ? placeholder
+    : (selected.length <= 2 ? selected.join(', ') : `${selected.length} selected`);
+
+  return (
+    <div ref={wrapRef} style={{ position: 'relative' }}>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%', marginTop: 10, paddingBottom: 10, padding: 0,
+          background: 'transparent', border: 'none', outline: 'none',
+          borderBottom: `1px solid ${t.fgMuted}`,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
+          cursor: 'pointer', textAlign: 'left',
+          fontFamily: filled ? t.fonts.display : t.fonts.body,
+          fontStyle: filled ? 'italic' : 'normal',
+          fontSize: filled ? 19 : 14,
+          color: filled ? skin.valueColor : t.fgFaint,
+        }}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {summary}
+        </span>
+        <span style={{
+          color: skin.accentLine, fontSize: 13, flexShrink: 0,
+          transition: 'transform 0.2s ease',
+          transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+        }}>▾</span>
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          aria-multiselectable="true"
+          style={{
+            position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0,
+            zIndex: 30,
+            background: '#fff',
+            border: `1px solid ${skin.accentLine}`,
+            boxShadow: '0 24px 48px -16px rgba(0,0,0,0.22)',
+            maxHeight: 320, overflowY: 'auto',
+          }}
+        >
+          {options.map((opt, i) => {
+            const isOn = selected.includes(opt);
+            return (
+              <MultiOption
+                key={opt}
+                option={opt}
+                selected={isOn}
+                first={i === 0}
+                onToggle={toggle}
+              />
+            );
+          })}
+          {filled && (
+            <button
+              type="button"
+              onClick={clearAll}
+              style={{
+                width: '100%', textAlign: 'left', padding: '12px 18px',
+                background: t.bgPanel, border: 'none', borderTop: `1px solid ${t.line}`,
+                fontFamily: t.eyebrowFont, fontSize: 10.5,
+                letterSpacing: '0.22em', textTransform: 'uppercase',
+                color: t.fgMuted, cursor: 'pointer',
+              }}
+            >Clear all</button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MultiOption({ option, selected, first, onToggle }) {
+  const skin = useInquirySkin();
+  const t = skin.t;
+  const [hover, setHover] = useState(false);
+  const active = hover || selected;
+  return (
+    <button
+      type="button"
+      role="option"
+      aria-selected={selected}
+      onClick={() => onToggle(option)}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        width: '100%', textAlign: 'left',
+        padding: '14px 18px',
+        background: active ? t.bgPanel : '#fff',
+        border: 'none', borderTop: first ? 'none' : `1px solid ${t.line}`,
+        cursor: 'pointer',
+        fontFamily: t.fonts.display,
+        fontStyle: selected ? 'italic' : 'normal',
+        fontSize: 17,
+        color: active ? skin.selectionColor : t.fgPage,
+        transition: 'background 0.12s ease, color 0.12s ease',
+      }}
+    >
+      <span style={{
+        width: 16, height: 16, flexShrink: 0,
+        border: `1px solid ${selected ? skin.accentLine : t.fgMuted}`,
+        background: selected ? skin.accentLine : 'transparent',
+        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+        color: '#fff', fontSize: 12, lineHeight: 1,
+      }}>{selected ? '✓' : ''}</span>
+      <span>{option}</span>
+    </button>
   );
 }
 
@@ -561,6 +716,23 @@ function RoleSection({ s, form, setForm, errors }) {
     );
   }
   if (s.type === 'dropdown') {
+    if (s.multi) {
+      const selected = form.chips[s.label] || [];
+      const setSelected = (next) => {
+        setForm(f => ({ ...f, chips: { ...f.chips, [s.label]: next } }));
+      };
+      return (
+        <div style={{ marginBottom: 26 }}>
+          <FormLabel>{s.label}</FormLabel>
+          <EditorialMultiSelect
+            value={selected}
+            onChange={setSelected}
+            options={s.options}
+            placeholder="Select…"
+          />
+        </div>
+      );
+    }
     return (
       <div style={{ marginBottom: 26 }}>
         <InputField
