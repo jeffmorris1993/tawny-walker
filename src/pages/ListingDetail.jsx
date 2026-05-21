@@ -114,48 +114,50 @@ function ListingDetailA({ L }) {
       {/* GALLERY */}
       <Gallery L={L} />
 
-      {/* CTA */}
-      <div style={{ padding: 'clamp(0px, 1vw, 8px) clamp(20px, 4.4vw, 64px) clamp(56px, 8vw, 120px)' }}>
-        <div className="tw-detail-cta" style={{
-          padding: 'clamp(40px, 6vw, 80px) clamp(28px, 6vw, 88px)',
-          background: t.bgDark, color: t.palette.bone,
-          display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 'clamp(28px, 6vw, 80px)', alignItems: 'center',
-        }}>
-          <div>
-            <span style={{
-              fontFamily: t.eyebrowFont, fontSize: 11,
-              letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(251,249,245,0.6)',
-            }}>Continue</span>
-            <h2 style={{
-              fontFamily: t.fonts.display, fontWeight: 300,
-              fontSize: 'clamp(36px, 4.5vw, 56px)', margin: '18px 0 0',
-              lineHeight: 1.05, letterSpacing: '-0.015em',
-            }}>
-              Arrange a <em style={{ fontStyle: 'italic' }}>private viewing</em>.
-            </h2>
-            <p style={{
-              marginTop: 16, fontFamily: t.fonts.display, fontStyle: 'italic',
-              fontSize: 'clamp(17px, 1.7vw, 20px)', color: 'rgba(251,249,245,0.7)',
-              maxWidth: 520, lineHeight: 1.5,
-            }}>
-              Shown by appointment with Tawny — she prefers weekday mornings, when the light is at its best.
-            </p>
-          </div>
-          <div>
-            <Link to="/#inquiry" style={{ textDecoration: 'none' }}>
+      {/* CTA — hidden on sold listings since "Inquire" doesn't apply */}
+      {L.status !== 'Sold' && (
+        <div style={{ padding: 'clamp(0px, 1vw, 8px) clamp(20px, 4.4vw, 64px) clamp(56px, 8vw, 120px)' }}>
+          <div className="tw-detail-cta" style={{
+            padding: 'clamp(40px, 6vw, 80px) clamp(28px, 6vw, 88px)',
+            background: t.bgDark, color: t.palette.bone,
+            display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 'clamp(28px, 6vw, 80px)', alignItems: 'center',
+          }}>
+            <div>
               <span style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '24px 32px', background: t.palette.bone, color: t.palette.ink,
-                fontFamily: t.eyebrowFont, fontSize: 11.5,
-                letterSpacing: '0.28em', textTransform: 'uppercase', cursor: 'pointer',
+                fontFamily: t.eyebrowFont, fontSize: 11,
+                letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(251,249,245,0.6)',
+              }}>Continue</span>
+              <h2 style={{
+                fontFamily: t.fonts.display, fontWeight: 300,
+                fontSize: 'clamp(36px, 4.5vw, 56px)', margin: '18px 0 0',
+                lineHeight: 1.05, letterSpacing: '-0.015em',
               }}>
-                Inquire
-                <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 24 }}>→</span>
-              </span>
-            </Link>
+                Arrange a <em style={{ fontStyle: 'italic' }}>private viewing</em>.
+              </h2>
+              <p style={{
+                marginTop: 16, fontFamily: t.fonts.display, fontStyle: 'italic',
+                fontSize: 'clamp(17px, 1.7vw, 20px)', color: 'rgba(251,249,245,0.7)',
+                maxWidth: 520, lineHeight: 1.5,
+              }}>
+                Shown by appointment with Tawny — she prefers weekday mornings, when the light is at its best.
+              </p>
+            </div>
+            <div>
+              <Link to="/#inquiry" style={{ textDecoration: 'none' }}>
+                <span style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '24px 32px', background: t.palette.bone, color: t.palette.ink,
+                  fontFamily: t.eyebrowFont, fontSize: 11.5,
+                  letterSpacing: '0.28em', textTransform: 'uppercase', cursor: 'pointer',
+                }}>
+                  Inquire
+                  <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 24 }}>→</span>
+                </span>
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* CONTINUE THROUGH THE LISTINGS */}
       <RelatedRail related={related} />
@@ -267,53 +269,55 @@ function ListingDetailB({ L }) {
       {/* GALLERY */}
       <Gallery L={L} />
 
-      {/* CTA — emerald with motif */}
-      <div style={{ padding: '0 clamp(20px, 5vw, 72px) clamp(56px, 8vw, 120px)' }}>
-        <div className="tw-detail-cta" style={{
-          padding: 'clamp(40px, 6vw, 80px) clamp(28px, 6vw, 88px)',
-          background: emerald, color: '#FFFFFF',
-          display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 'clamp(28px, 6vw, 80px)', alignItems: 'center',
-          position: 'relative', overflow: 'hidden',
-        }}>
-          <div style={{
-            position: 'absolute', top: -100, right: -100, width: 320, height: 320,
-            border: `1px solid ${t.palette.gold}`, borderRadius: '50%', opacity: 0.15,
-          }} />
-          <div style={{ position: 'relative' }}>
-            <span style={{
-              fontFamily: t.eyebrowFont, fontSize: 10, fontWeight: 600,
-              letterSpacing: '0.32em', textTransform: 'uppercase', color: t.palette.gold,
-            }}>Continue</span>
-            <h2 style={{
-              fontFamily: t.fonts.display, fontWeight: 400,
-              fontSize: 'clamp(36px, 4.5vw, 56px)', margin: '18px 0 0',
-              lineHeight: 1.05, letterSpacing: '-0.015em',
-            }}>
-              Arrange a <em style={{ fontStyle: 'italic' }}>private viewing</em>.
-            </h2>
-            <p style={{
-              marginTop: 16, fontFamily: t.fonts.display, fontStyle: 'italic',
-              fontSize: 'clamp(17px, 1.7vw, 20px)', color: 'rgba(255,255,255,0.78)',
-              maxWidth: 520, lineHeight: 1.5,
-            }}>
-              Shown by appointment with Tawny — she prefers weekday mornings, when the light is at its best.
-            </p>
-          </div>
-          <div style={{ position: 'relative' }}>
-            <Link to="/#inquiry" style={{ textDecoration: 'none' }}>
+      {/* CTA — emerald with motif. Hidden on sold listings. */}
+      {L.status !== 'Sold' && (
+        <div style={{ padding: '0 clamp(20px, 5vw, 72px) clamp(56px, 8vw, 120px)' }}>
+          <div className="tw-detail-cta" style={{
+            padding: 'clamp(40px, 6vw, 80px) clamp(28px, 6vw, 88px)',
+            background: emerald, color: '#FFFFFF',
+            display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 'clamp(28px, 6vw, 80px)', alignItems: 'center',
+            position: 'relative', overflow: 'hidden',
+          }}>
+            <div style={{
+              position: 'absolute', top: -100, right: -100, width: 320, height: 320,
+              border: `1px solid ${t.palette.gold}`, borderRadius: '50%', opacity: 0.15,
+            }} />
+            <div style={{ position: 'relative' }}>
               <span style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '24px 32px', background: '#FFFFFF', color: emerald,
-                fontFamily: t.eyebrowFont, fontSize: 11, fontWeight: 600,
-                letterSpacing: '0.28em', textTransform: 'uppercase', cursor: 'pointer',
+                fontFamily: t.eyebrowFont, fontSize: 10, fontWeight: 600,
+                letterSpacing: '0.32em', textTransform: 'uppercase', color: t.palette.gold,
+              }}>Continue</span>
+              <h2 style={{
+                fontFamily: t.fonts.display, fontWeight: 400,
+                fontSize: 'clamp(36px, 4.5vw, 56px)', margin: '18px 0 0',
+                lineHeight: 1.05, letterSpacing: '-0.015em',
               }}>
-                Inquire
-                <span style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: 24 }}>→</span>
-              </span>
-            </Link>
+                Arrange a <em style={{ fontStyle: 'italic' }}>private viewing</em>.
+              </h2>
+              <p style={{
+                marginTop: 16, fontFamily: t.fonts.display, fontStyle: 'italic',
+                fontSize: 'clamp(17px, 1.7vw, 20px)', color: 'rgba(255,255,255,0.78)',
+                maxWidth: 520, lineHeight: 1.5,
+              }}>
+                Shown by appointment with Tawny — she prefers weekday mornings, when the light is at its best.
+              </p>
+            </div>
+            <div style={{ position: 'relative' }}>
+              <Link to="/#inquiry" style={{ textDecoration: 'none' }}>
+                <span style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '24px 32px', background: '#FFFFFF', color: emerald,
+                  fontFamily: t.eyebrowFont, fontSize: 11, fontWeight: 600,
+                  letterSpacing: '0.28em', textTransform: 'uppercase', cursor: 'pointer',
+                }}>
+                  Inquire
+                  <span style={{ fontFamily: '"Cormorant Garamond", serif', fontStyle: 'italic', fontSize: 24 }}>→</span>
+                </span>
+              </Link>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       <RelatedRail related={related} />
 

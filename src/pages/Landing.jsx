@@ -240,9 +240,16 @@ function LandingA() {
         @media (max-width: 768px) {
           .tw-hero-vol     { display: none !important; }
           .tw-listings-grid { grid-template-columns: 1fr !important; }
+          .tw-featured-photo > div:first-child { height: 260px !important; }
         }
         @media (max-width: 700px) {
-          .tw-stats-row    { grid-template-columns: 1fr !important; gap: 24px !important; }
+          .tw-stats-row { grid-template-columns: 1fr !important; gap: 0 !important; }
+          .tw-stats-row > * { padding: 22px 0; border-top: 1px solid rgba(0,0,0,0.08); }
+          .tw-stats-row > *:first-child { border-top: 0; padding-top: 0; }
+          .tw-stats-row > *:last-child  { padding-bottom: 0; }
+          .tw-stats-row > * > div:first-child { font-size: 28px !important; line-height: 1.15 !important; }
+          .tw-stats-row > * > div:last-child  { font-size: 15px !important; margin-top: 8px !important; }
+          .tw-landing-intro { padding-bottom: 64px !important; }
         }
       `}</style>
     </div>
@@ -253,7 +260,7 @@ function FeaturedBigA({ listing, num }) {
   const t = useTheme();
   return (
     <Link to={`/listings/${listing.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
-      <div style={{ position: 'relative' }}>
+      <div className="tw-featured-photo" style={{ position: 'relative' }}>
         <Photo label={`${num} — ${listing.addr.toUpperCase()}`} tone={listing.tone} height={620} src={listing.img} />
         <div style={{ position: 'absolute', top: 20, left: 20, padding: '6px 12px', background: 'rgba(251,249,245,0.95)' }}>
           <StatusChip status={listing.status} />
@@ -283,7 +290,7 @@ function FeaturedSmallA({ listing }) {
   const t = useTheme();
   return (
     <Link to={`/listings/${listing.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
-      <div style={{ position: 'relative' }}>
+      <div className="tw-featured-photo" style={{ position: 'relative' }}>
         <Photo label={listing.addr.toUpperCase()} tone={listing.tone} height={260} src={listing.img} />
         <div style={{ position: 'absolute', top: 14, left: 14, padding: '5px 10px', background: 'rgba(251,249,245,0.95)' }}>
           <StatusChip status={listing.status} />
@@ -358,7 +365,7 @@ function LandingB() {
       )}
 
       {/* INTRO — centered, two columns */}
-      <div style={{ padding: 'clamp(64px, 11vw, 160px) clamp(20px, 5vw, 72px) 0' }}>
+      <div className="tw-landing-intro" style={{ padding: 'clamp(64px, 11vw, 160px) clamp(20px, 5vw, 72px) 0' }}>
         <div style={{ textAlign: 'center', marginBottom: 'clamp(40px, 6vw, 80px)' }}>
           <Eyebrow>The practice</Eyebrow>
           <h2 style={{
@@ -493,9 +500,16 @@ function LandingB() {
             margin: 0 auto;
           }
           .tw-landing-portrait img { object-fit: contain !important; object-position: center !important; }
+          .tw-featured-photo > div:first-child { height: 260px !important; }
         }
         @media (max-width: 700px) {
-          .tw-stats-row { grid-template-columns: 1fr !important; gap: 24px !important; }
+          .tw-stats-row { grid-template-columns: 1fr !important; gap: 0 !important; }
+          .tw-stats-row > * { padding: 22px 0; border-top: 1px solid rgba(0,0,0,0.08); }
+          .tw-stats-row > *:first-child { border-top: 0; padding-top: 0; }
+          .tw-stats-row > *:last-child  { padding-bottom: 0; }
+          .tw-stats-row > * > div:first-child { font-size: 28px !important; line-height: 1.15 !important; }
+          .tw-stats-row > * > div:last-child  { font-size: 15px !important; margin-top: 8px !important; }
+          .tw-landing-intro { padding-bottom: 64px !important; }
         }
       `}</style>
     </div>
@@ -506,7 +520,7 @@ function FeaturedBigB({ listing, num }) {
   const t = useTheme();
   return (
     <Link to={`/listings/${listing.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', background: '#fff', border: `1px solid ${t.line}` }}>
-      <div style={{ position: 'relative' }}>
+      <div className="tw-featured-photo" style={{ position: 'relative' }}>
         <Photo label={`${listing.addr.toUpperCase()}`} tone={listing.tone} height={620} src={listing.img} />
         <div style={{ position: 'absolute', top: 20, left: 20, padding: '6px 12px', background: '#fff' }}>
           <StatusChip status={listing.status} />
@@ -532,7 +546,7 @@ function FeaturedSmallB({ listing }) {
   const t = useTheme();
   return (
     <Link to={`/listings/${listing.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', background: '#fff', border: `1px solid ${t.line}` }}>
-      <div style={{ position: 'relative' }}>
+      <div className="tw-featured-photo" style={{ position: 'relative' }}>
         <Photo label={listing.addr.toUpperCase()} tone={listing.tone} height={250} src={listing.img} />
         <div style={{ position: 'absolute', top: 14, left: 14, padding: '5px 10px', background: '#fff' }}>
           <StatusChip status={listing.status} />

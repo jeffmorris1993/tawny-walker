@@ -23,3 +23,13 @@ h1, h2, h3, h4 { overflow-wrap: break-word; }
   scrollbar-width: thin;
   scrollbar-color: #C8C3B6 transparent;
 }
+
+/* Status chip is wide on mobile because of letter-spacing — tighten it so
+   long labels like "AVAILABLE" / "IN CONTRACT" don't dominate small cards. */
+@media (max-width: 600px) {
+  .tw-status-chip {
+    font-size: 9px !important;
+    letter-spacing: 0.12em !important;
+    gap: 5px !important;
+  }
+}

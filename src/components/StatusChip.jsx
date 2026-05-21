@@ -9,7 +9,7 @@ export default function StatusChip({ status, size = 'sm' }) {
   const f = size === 'lg' ? 12 : 10.5;
   const isB = t.key === 'B';
   return (
-    <span style={{
+    <span className="tw-status-chip" style={{
       display: 'inline-flex', alignItems: 'center', gap: 7,
       fontFamily: t.eyebrowFont,
       fontWeight: isB ? 600 : 400,
@@ -18,6 +18,7 @@ export default function StatusChip({ status, size = 'sm' }) {
       textTransform: 'uppercase',
       color: isB ? t.palette.emerald : t.palette.ink,
       padding: size === 'lg' ? '4px 10px' : '0',
+      whiteSpace: 'nowrap',
     }}>
       <span style={{ width: f * 0.55, height: f * 0.55, borderRadius: '50%', background: dot, flexShrink: 0 }} />
       {label}
