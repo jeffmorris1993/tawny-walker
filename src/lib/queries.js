@@ -347,6 +347,71 @@ function buildSpecs(input) {
   return parts.join(' · ');
 }
 
+// Page-aware fetch for the admin Leads inbox. Filters by role/status via
+// .in() arrays (empty array = no filter), sorts on the server via the
+// `status_rank` generated column for the "By Status" sort.
+const LEAD_SORT_COLUMN = {
+  status: 'status_rank',
+  date:   'created_at',
+  type:   'role',
+};
+
+export function usePagedLeads({
+  roleIn = [],
+  statusIn = [],
+  page = 1,
+  pageSize = 12,
+  sort = 'status',
+  sortDir = 'asc',
+} = {}) {
+  const [data, setData] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+
+  const rolesKey = (roleIn || []).slice().sort().join(',');
+  const statusesKey = (statusIn || []).slice().sort().join(',');
+
+  useEffect(() => {
+    let alive = true;
+    async function load() {
+      if (noClient()) {
+        if (alive) { setData([]); setTotal(0); setLoading(false); }
+        return;
+      }
+      setLoading(true);
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+
+      const column = LEAD_SORT_COLUMN[sort] || 'created_at';
+      let q = supabase
+        .from('leads')
+        .select('*', { count: 'exact' })
+        .order(column, { ascending: sortDir === 'asc', nullsFirst: false })
+        // Stable secondary order so equal primary values keep their slot.
+        .order('id', { ascending: true })
+        .range(from, to);
+      if (roleIn?.length)   q = q.in('role',   roleIn);
+      if (statusIn?.length) q = q.in('status', statusIn);
+      const { data: rows, count, error } = await q;
+      if (!alive) return;
+      if (error) {
+        console.error('[tw] paged leads fetch failed', error);
+        setData([]);
+        setTotal(0);
+      } else {
+        setData((rows || []).map(rowToLead));
+        setTotal(count ?? 0);
+      }
+      setLoading(false);
+    }
+    load();
+    return () => { alive = false; };
+  }, [rolesKey, statusesKey, page, pageSize, sort, sortDir]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  return { data, total, pageCount, loading };
+}
+
 // ─── Leads ──────────────────────────────────────────────────────────────────
 export function useLeads() {
   const [data, setData] = useState(null);
