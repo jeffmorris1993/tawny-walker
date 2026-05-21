@@ -510,7 +510,7 @@ function LandingB() {
           .tw-listings-grid     { grid-template-columns: 1fr !important; }
           .tw-colophon-mid      { display: none !important; }
           .tw-hero-colophon span:first-child + span { display: none; }
-          .tw-landing-portrait  { max-width: 480px !important; }
+          .tw-landing-portrait  { display: none !important; }
           .tw-featured-photo > div:first-child { height: 260px !important; }
         }
         @media (max-width: 700px) {

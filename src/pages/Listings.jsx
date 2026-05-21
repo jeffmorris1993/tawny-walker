@@ -132,28 +132,29 @@ function ListingsA() {
 function FilterBarA({ filter, setFilter, counts, priceAsc, togglePriceSort }) {
   const t = useTheme();
   return (
-    <div style={{ marginTop: 72, paddingTop: 28, paddingBottom: 12, borderTop: `1px solid ${t.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-      <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
+    <div className="tw-filter-bar" style={{ marginTop: 72, paddingTop: 28, paddingBottom: 12, borderTop: `1px solid ${t.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
+      <div className="tw-filter-tabs" style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
         {PUBLIC_FILTERS.map(f => (
-          <span key={f} onClick={() => setFilter(f)} style={{
+          <span key={f} onClick={() => setFilter(f)} className="tw-filter-chip" style={{
             fontSize: 11.5, letterSpacing: '0.24em', textTransform: 'uppercase',
             color: filter === f ? t.palette.ink : t.fgFaint,
             borderBottom: filter === f ? `1px solid ${t.palette.ink}` : '1px solid transparent',
-            paddingBottom: 6, cursor: 'pointer',
+            paddingBottom: 6, cursor: 'pointer', whiteSpace: 'nowrap',
           }}>{t.statusLabels[f] || f} ({counts[f] ?? 0})</span>
         ))}
       </div>
-      <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
-        <span style={{ fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.fgFaint }}>Sort</span>
+      <div className="tw-filter-sort" style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+        <span className="tw-sort-label" style={{ fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.fgFaint }}>Sort</span>
         <button
           type="button"
           onClick={togglePriceSort}
           aria-label={`Sort by price ${priceAsc ? 'ascending' : 'descending'}`}
+          className="tw-filter-chip tw-sort-btn"
           style={{
             background: 'transparent', border: 'none', padding: '0 0 4px',
             fontSize: 11.5, letterSpacing: '0.22em', textTransform: 'uppercase',
             color: t.palette.ink, borderBottom: `1px solid ${t.palette.ink}`,
-            cursor: 'pointer', fontFamily: 'inherit',
+            cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
           }}
         >By Price {priceAsc ? '↑' : '↓'}</button>
       </div>
@@ -286,35 +287,36 @@ function ListingsB() {
 function FilterBarB({ filter, setFilter, counts, priceAsc, togglePriceSort }) {
   const t = useTheme();
   return (
-    <div style={{
+    <div className="tw-filter-bar" style={{
       paddingTop: 24, paddingBottom: 16,
       borderTop: `1px solid ${t.line}`, borderBottom: `1px solid ${t.line}`,
       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       flexWrap: 'wrap', gap: 16,
     }}>
-      <div style={{ display: 'flex', gap: 36, flexWrap: 'wrap' }}>
+      <div className="tw-filter-tabs" style={{ display: 'flex', gap: 36, flexWrap: 'wrap' }}>
         {PUBLIC_FILTERS.map(f => (
-          <span key={f} onClick={() => setFilter(f)} style={{
+          <span key={f} onClick={() => setFilter(f)} className="tw-filter-chip" style={{
             fontFamily: t.eyebrowFont,
             fontSize: 11, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase',
             color: filter === f ? t.palette.emerald : t.fgFaint,
             borderBottom: filter === f ? `1px solid ${t.palette.emerald}` : '1px solid transparent',
-            paddingBottom: 6, cursor: 'pointer',
+            paddingBottom: 6, cursor: 'pointer', whiteSpace: 'nowrap',
           }}>{t.statusLabels[f] || f} ({counts[f] ?? 0})</span>
         ))}
       </div>
-      <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
-        <span style={{ fontFamily: t.eyebrowFont, fontSize: 10.5, fontWeight: 500, letterSpacing: '0.28em', textTransform: 'uppercase', color: t.fgFaint }}>Sort</span>
+      <div className="tw-filter-sort" style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+        <span className="tw-sort-label" style={{ fontFamily: t.eyebrowFont, fontSize: 10.5, fontWeight: 500, letterSpacing: '0.28em', textTransform: 'uppercase', color: t.fgFaint }}>Sort</span>
         <button
           type="button"
           onClick={togglePriceSort}
           aria-label={`Sort by price ${priceAsc ? 'ascending' : 'descending'}`}
+          className="tw-filter-chip tw-sort-btn"
           style={{
             background: 'transparent', border: 'none', padding: '0 0 4px',
             fontFamily: t.eyebrowFont, fontSize: 11, fontWeight: 600,
             letterSpacing: '0.28em', textTransform: 'uppercase',
             color: t.palette.emerald, borderBottom: `1px solid ${t.palette.emerald}`,
-            cursor: 'pointer',
+            cursor: 'pointer', whiteSpace: 'nowrap',
           }}
         >By Price {priceAsc ? '↑' : '↓'}</button>
       </div>
@@ -354,6 +356,30 @@ function ListingsGridStyles() {
       }
       @media (max-width: 600px) {
         .tw-grid-3 { grid-template-columns: 1fr !important; }
+        /* Filter bar on phones: stack tabs on top, sort underneath,
+           tighter type so all three filters fit on a single line. */
+        .tw-filter-bar {
+          flex-direction: column !important;
+          align-items: stretch !important;
+          gap: 14px !important;
+        }
+        .tw-filter-tabs {
+          gap: 18px !important;
+          justify-content: space-between !important;
+        }
+        .tw-filter-sort {
+          justify-content: flex-end !important;
+          gap: 14px !important;
+        }
+        .tw-filter-chip {
+          font-size: 10px !important;
+          letter-spacing: 0.16em !important;
+          padding-bottom: 4px !important;
+        }
+        .tw-sort-label {
+          font-size: 9.5px !important;
+          letter-spacing: 0.16em !important;
+        }
       }
     `}</style>
   );

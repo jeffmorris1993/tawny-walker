@@ -29,7 +29,7 @@ function ListingDetailA({ L }) {
         padding: 'clamp(20px, 3vw, 32px) clamp(20px, 4.4vw, 64px) 24px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12,
       }}>
-        <span style={{
+        <span className="tw-detail-crumb" style={{
           fontFamily: t.eyebrowFont, fontSize: 10.5,
           letterSpacing: '0.24em', textTransform: 'uppercase', color: t.fgFaint,
         }}>
@@ -56,9 +56,9 @@ function ListingDetailA({ L }) {
           display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 'clamp(28px, 5vw, 80px)', alignItems: 'flex-end',
         }}>
           <div>
-            <h1 style={{
+            <h1 className="tw-detail-name" style={{
               fontFamily: t.fonts.display, fontWeight: 300,
-              fontSize: 'clamp(48px, 6.7vw, 96px)', letterSpacing: '-0.022em', lineHeight: 0.95,
+              fontSize: 'clamp(36px, 6.7vw, 96px)', letterSpacing: '-0.022em', lineHeight: 0.95,
               margin: 0,
             }}>
               {splitName(L.addr)[0]} {splitName(L.addr)[1] && <em style={{ fontStyle: 'italic' }}>{splitName(L.addr)[1]}</em>}.
@@ -183,7 +183,7 @@ function ListingDetailB({ L }) {
         padding: 'clamp(20px, 3vw, 32px) clamp(20px, 5vw, 72px) 24px',
         display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12,
       }}>
-        <span style={{
+        <span className="tw-detail-crumb" style={{
           fontFamily: t.eyebrowFont, fontSize: 10, fontWeight: 600,
           letterSpacing: '0.28em', textTransform: 'uppercase', color: t.fgFaint,
         }}>
@@ -210,9 +210,9 @@ function ListingDetailB({ L }) {
           display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 'clamp(28px, 5vw, 80px)', alignItems: 'flex-end',
         }}>
           <div>
-            <h1 style={{
+            <h1 className="tw-detail-name" style={{
               fontFamily: t.fonts.display, fontWeight: 400,
-              fontSize: 'clamp(48px, 6.7vw, 96px)', letterSpacing: '-0.022em', lineHeight: 0.95,
+              fontSize: 'clamp(36px, 6.7vw, 96px)', letterSpacing: '-0.022em', lineHeight: 0.95,
               color: emerald, margin: 0,
             }}>
               {splitName(L.addr)[0]} {splitName(L.addr)[1] && <em style={{ fontStyle: 'italic' }}>{splitName(L.addr)[1]}</em>}.
@@ -488,6 +488,17 @@ function DetailStyles() {
         .tw-detail-related  { grid-template-columns: 1fr !important; }
         .tw-gallery-1, .tw-gallery-2, .tw-gallery-3 {
           grid-template-columns: 1fr !important;
+        }
+        /* Breadcrumb path wraps awkwardly with long names — hide on phones
+           and lean on the "Return to Listings" link for back nav. */
+        .tw-detail-crumb { display: none !important; }
+        /* Keep the listing name on a single line on phones. The scaled
+           font (vw-based) already shrinks, white-space:nowrap is the
+           guardrail in case a really long name shows up. */
+        .tw-detail-name {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
       }
     `}</style>

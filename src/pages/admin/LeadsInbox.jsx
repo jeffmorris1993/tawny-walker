@@ -60,10 +60,10 @@ export default function LeadsInbox() {
     }
     return out;
   }, [LEADS]);
-  const answered = useMemo(
-    () => LEADS.filter(l => l.status !== 'New').length,
-    [LEADS],
-  );
+
+  const today = new Date().toLocaleDateString('en-US', {
+    month: 'long', day: 'numeric', year: 'numeric',
+  });
 
   return (
     <AdminShell>
@@ -73,29 +73,13 @@ export default function LeadsInbox() {
         paddingBottom: 32, borderBottom: `1px solid ${t.line}`, flexWrap: 'wrap', gap: 16,
       }}>
         <div>
-          <Eyebrow>The Studio Inbox · May 16, 2026</Eyebrow>
+          <Eyebrow>The Studio Inbox · {today}</Eyebrow>
           <h1 style={{
             fontFamily: t.fonts.display, fontWeight: 400,
             fontSize: 'clamp(36px, 3.9vw, 56px)', margin: '14px 0 0',
             letterSpacing: '-0.018em',
             color: isB ? t.palette.emerald : t.fgPage,
           }}>Leads</h1>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-          <span style={{
-            fontFamily: t.eyebrowFont,
-            fontSize: isB ? 10.5 : 11, fontWeight: isB ? 600 : 400,
-            letterSpacing: isB ? '0.28em' : '0.22em',
-            textTransform: 'uppercase', color: t.fgFaint,
-          }}>This week</span>
-          <span style={{
-            fontFamily: t.fonts.display, fontSize: 28,
-            color: isB ? t.palette.emerald : t.fgPage,
-          }}>{LEADS.length} <span style={{ fontStyle: 'italic', color: t.fgFaint, fontSize: 18 }}>arrived</span></span>
-          <span style={{
-            fontFamily: t.fonts.display, fontSize: 28, marginLeft: 16,
-            color: isB ? t.palette.emerald : t.fgPage,
-          }}>{answered} <span style={{ fontStyle: 'italic', color: t.fgFaint, fontSize: 18 }}>answered</span></span>
         </div>
       </div>
 
@@ -147,43 +131,30 @@ export default function LeadsInbox() {
 
       {/* Lead table */}
       <div style={{ overflowX: 'auto' }}>
-        <div style={{ minWidth: 720 }}>
+        <div style={{ minWidth: 680 }}>
           <div style={{
-            display: 'grid', gridTemplateColumns: '80px 220px 120px 1fr 140px 110px',
+            display: 'grid', gridTemplateColumns: '220px 120px 1fr 140px 110px',
             gap: 20, padding: '18px 0', borderBottom: `1px solid ${t.line}`,
             fontFamily: t.eyebrowFont,
             fontSize: isB ? 9 : 9.5, fontWeight: isB ? 600 : 400,
             letterSpacing: isB ? '0.28em' : '0.24em',
             textTransform: 'uppercase', color: t.fgFaint,
           }}>
-            <span>No.</span><span>Name</span><span>Type</span><span>Summary</span>
+            <span>Name</span><span>Type</span><span>Summary</span>
             <span>Status</span><span style={{ textAlign: 'right' }}>Received</span>
           </div>
 
-          {filtered.map((lead, i) => (
+          {filtered.map((lead) => (
             <Link key={lead.id} to={`/admin/lead/${lead.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
               <div
                 style={{
-                  display: 'grid', gridTemplateColumns: '80px 220px 120px 1fr 140px 110px',
+                  display: 'grid', gridTemplateColumns: '220px 120px 1fr 140px 110px',
                   gap: 20, padding: '20px 0', borderBottom: `1px solid ${t.lineSoft}`,
                   alignItems: 'center', cursor: 'pointer',
                 }}
                 onMouseEnter={e => e.currentTarget.style.background = t.bgPanel}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 18, color: t.fgFaint }}>
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                  <span style={{ display: 'flex', gap: 2 }}>
-                    {[1, 2, 3].map(s => (
-                      <span key={s} style={{
-                        width: 5, height: 5, borderRadius: '50%',
-                        background: s <= lead.stars ? t.accent : t.line,
-                      }} />
-                    ))}
-                  </span>
-                </div>
                 <span style={{
                   fontFamily: t.fonts.display, fontSize: 17,
                   color: isB ? t.palette.emerald : t.fgPage,

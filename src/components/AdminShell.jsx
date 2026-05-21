@@ -63,7 +63,6 @@ export default function AdminShell({ children }) {
             const label = a.navLabels[key] || key;
             const count = navCounts[key];
             const path = NAV_PATHS[key] || '#';
-            const showDot = key === 'Leads';
             return (
               <Link key={key} to={path} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div style={{
@@ -74,7 +73,6 @@ export default function AdminShell({ children }) {
                   transition: 'background 0.15s',
                 }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    {showDot && <span style={{ width: 6, height: 6, borderRadius: '50%', background: a.sidebarAccent }} />}
                     <span style={{ fontSize: 13, color: a.sidebarFg }}>{label}</span>
                   </span>
                   {count && (
