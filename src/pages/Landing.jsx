@@ -489,17 +489,28 @@ function LandingB() {
       <SiteFooter />
 
       <style>{`
+        /* Below the 1180px grid-cap, the 2-col layout squeezes the portrait
+           column thin enough that the cover crop chops Tawny's arms off
+           (Surface Pro 7 etc). Stack the intro grid to 1 column so the
+           portrait gets the full row width — same treatment as the About
+           page. Also adds a gap below the credibility row so it doesn't
+           sit flush against the emerald inquiry section. */
+        @media (max-width: 1200px) {
+          .tw-landing-intro .tw-listings-grid { grid-template-columns: 1fr !important; gap: 48px !important; }
+          .tw-landing-portrait {
+            min-height: 0 !important;
+            aspect-ratio: 1 / 1;
+            max-width: 640px;
+            margin: 0 auto;
+          }
+          .tw-landing-portrait img { object-fit: contain !important; object-position: center !important; }
+          .tw-landing-intro { padding-bottom: clamp(56px, 7vw, 96px) !important; }
+        }
         @media (max-width: 768px) {
           .tw-listings-grid     { grid-template-columns: 1fr !important; }
           .tw-colophon-mid      { display: none !important; }
           .tw-hero-colophon span:first-child + span { display: none; }
-          .tw-landing-portrait  {
-            min-height: 0 !important;
-            aspect-ratio: 1 / 1;
-            max-width: 480px;
-            margin: 0 auto;
-          }
-          .tw-landing-portrait img { object-fit: contain !important; object-position: center !important; }
+          .tw-landing-portrait  { max-width: 480px !important; }
           .tw-featured-photo > div:first-child { height: 260px !important; }
         }
         @media (max-width: 700px) {
@@ -509,7 +520,6 @@ function LandingB() {
           .tw-stats-row > *:last-child  { padding-bottom: 0; }
           .tw-stats-row > * > div:first-child { font-size: 28px !important; line-height: 1.15 !important; }
           .tw-stats-row > * > div:last-child  { font-size: 15px !important; margin-top: 8px !important; }
-          .tw-landing-intro { padding-bottom: 64px !important; }
         }
       `}</style>
     </div>
