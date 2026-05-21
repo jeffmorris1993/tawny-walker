@@ -22,13 +22,17 @@ const PAGE_SIZE = 12;
 function usePublicListings() {
   const [filter, setFilter] = useState('All');
   const [page, setPage] = useState(1);
+  // Default: highest-price first (matches the "By Price ↓" label that
+  // shipped before the toggle was interactive).
+  const [priceAsc, setPriceAsc] = useState(false);
   const { counts: rawCounts } = useListingCounts();
   const statusEquals = filter === 'All' ? null : filter;
   const { data, total, pageCount, loading } = usePagedListings({
     statusEquals,
-    statusNotIn: ['Sold'],
+    statusNotIn: ['Sold', 'Draft'],
     page,
     pageSize: PAGE_SIZE,
+    sort: { column: 'price_value', ascending: priceAsc },
   });
 
   // Active inventory counts (sold excluded) so the filter bar labels stay
@@ -47,19 +51,25 @@ function usePublicListings() {
     setPage(1);
   }
 
+  function togglePriceSort() {
+    setPriceAsc(v => !v);
+    setPage(1);
+  }
+
   return {
     filter, setFilter: changeFilter,
     page, setPage,
     listings: data, total, pageCount,
     counts, soldCount: rawCounts.Sold || 0,
     loading,
+    priceAsc, togglePriceSort,
   };
 }
 
 // ─── DIRECTION A ────────────────────────────────────────────────────────────
 function ListingsA() {
   const t = useTheme();
-  const { filter, setFilter, page, setPage, listings, pageCount, counts, soldCount, loading } = usePublicListings();
+  const { filter, setFilter, page, setPage, listings, pageCount, counts, soldCount, loading, priceAsc, togglePriceSort } = usePublicListings();
   const filterRef = useRef(null);
 
   function goToPage(p) {
@@ -86,7 +96,7 @@ function ListingsA() {
         </div>
 
         <div ref={filterRef} style={{ scrollMarginTop: 24 }}>
-          <FilterBarA filter={filter} setFilter={setFilter} counts={counts} />
+          <FilterBarA filter={filter} setFilter={setFilter} counts={counts} priceAsc={priceAsc} togglePriceSort={togglePriceSort} />
         </div>
       </div>
 
@@ -119,7 +129,7 @@ function ListingsA() {
   );
 }
 
-function FilterBarA({ filter, setFilter, counts }) {
+function FilterBarA({ filter, setFilter, counts, priceAsc, togglePriceSort }) {
   const t = useTheme();
   return (
     <div style={{ marginTop: 72, paddingTop: 28, paddingBottom: 12, borderTop: `1px solid ${t.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
@@ -135,7 +145,17 @@ function FilterBarA({ filter, setFilter, counts }) {
       </div>
       <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
         <span style={{ fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.fgFaint }}>Sort</span>
-        <span style={{ fontSize: 11.5, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.palette.ink, borderBottom: `1px solid ${t.palette.ink}`, paddingBottom: 4 }}>By Price ↓</span>
+        <button
+          type="button"
+          onClick={togglePriceSort}
+          aria-label={`Sort by price ${priceAsc ? 'ascending' : 'descending'}`}
+          style={{
+            background: 'transparent', border: 'none', padding: '0 0 4px',
+            fontSize: 11.5, letterSpacing: '0.22em', textTransform: 'uppercase',
+            color: t.palette.ink, borderBottom: `1px solid ${t.palette.ink}`,
+            cursor: 'pointer', fontFamily: 'inherit',
+          }}
+        >By Price {priceAsc ? '↑' : '↓'}</button>
       </div>
     </div>
   );
@@ -197,7 +217,7 @@ function ListingCardStdA({ listing }) {
 // ─── DIRECTION B ────────────────────────────────────────────────────────────
 function ListingsB() {
   const t = useTheme();
-  const { filter, setFilter, page, setPage, listings, pageCount, counts, soldCount, loading } = usePublicListings();
+  const { filter, setFilter, page, setPage, listings, pageCount, counts, soldCount, loading, priceAsc, togglePriceSort } = usePublicListings();
   const filterRef = useRef(null);
 
   function goToPage(p) {
@@ -231,7 +251,7 @@ function ListingsB() {
       </div>
 
       <div ref={filterRef} style={{ padding: '0 clamp(24px, 5vw, 72px) 56px', maxWidth: 1296, margin: '0 auto', scrollMarginTop: 24 }}>
-        <FilterBarB filter={filter} setFilter={setFilter} counts={counts} />
+        <FilterBarB filter={filter} setFilter={setFilter} counts={counts} priceAsc={priceAsc} togglePriceSort={togglePriceSort} />
       </div>
 
       <div style={{ padding: '0 clamp(24px, 5vw, 72px) 96px', maxWidth: 1296, margin: '0 auto' }}>
@@ -263,7 +283,7 @@ function ListingsB() {
   );
 }
 
-function FilterBarB({ filter, setFilter, counts }) {
+function FilterBarB({ filter, setFilter, counts, priceAsc, togglePriceSort }) {
   const t = useTheme();
   return (
     <div style={{
@@ -285,7 +305,18 @@ function FilterBarB({ filter, setFilter, counts }) {
       </div>
       <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
         <span style={{ fontFamily: t.eyebrowFont, fontSize: 10.5, fontWeight: 500, letterSpacing: '0.28em', textTransform: 'uppercase', color: t.fgFaint }}>Sort</span>
-        <span style={{ fontFamily: t.eyebrowFont, fontSize: 11, fontWeight: 600, letterSpacing: '0.28em', textTransform: 'uppercase', color: t.palette.emerald, borderBottom: `1px solid ${t.palette.emerald}`, paddingBottom: 4 }}>By Price ↓</span>
+        <button
+          type="button"
+          onClick={togglePriceSort}
+          aria-label={`Sort by price ${priceAsc ? 'ascending' : 'descending'}`}
+          style={{
+            background: 'transparent', border: 'none', padding: '0 0 4px',
+            fontFamily: t.eyebrowFont, fontSize: 11, fontWeight: 600,
+            letterSpacing: '0.28em', textTransform: 'uppercase',
+            color: t.palette.emerald, borderBottom: `1px solid ${t.palette.emerald}`,
+            cursor: 'pointer',
+          }}
+        >By Price {priceAsc ? '↑' : '↓'}</button>
       </div>
     </div>
   );

@@ -825,22 +825,6 @@ function RoleForm({ role, form, setForm, errors, submitting, submitError, onSubm
   const t = skin.t;
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} style={{ marginTop: 48 }} noValidate>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        marginBottom: 32, paddingBottom: 16, borderBottom: `1px solid ${t.line}`,
-        flexWrap: 'wrap',
-      }}>
-        <span style={{ width: 6, height: 6, borderRadius: '50%', background: t.accent }} />
-        <span style={{
-          fontFamily: t.eyebrowFont, fontSize: 10.5,
-          fontWeight: skin.isB ? 600 : 400,
-          letterSpacing: skin.isB ? '0.28em' : '0.24em',
-          textTransform: 'uppercase',
-          color: skin.isB ? t.palette.emerald : t.fgMuted,
-        }}>Form tailored for a {role.label.toLowerCase()}</span>
-        <span style={{ flex: 1, minWidth: 12, height: 1, background: t.line }} />
-      </div>
-
       {role.sections.map((s, i) => (
         <RoleSection key={i} s={s} form={form} setForm={setForm} errors={errors} />
       ))}

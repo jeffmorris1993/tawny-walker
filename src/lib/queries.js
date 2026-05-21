@@ -165,14 +165,25 @@ export function useListing(id) {
 // Page-aware fetch used by the public Listings + Sold pages. Only the rows
 // for the current page round-trip to Supabase (range query), so adding more
 // rows doesn't increase the initial payload.
-export function usePagedListings({ statusEquals, statusNotIn, page = 1, pageSize = 12 } = {}) {
+//
+// `sort` is { column: 'sort_order' | 'price_value' | …, ascending: boolean }.
+// `price_value` is a stored generated column on `listings` that strips the
+// text price down to a numeric, so server-side ordering works across pages.
+export function usePagedListings({
+  statusEquals,
+  statusNotIn,
+  page = 1,
+  pageSize = 12,
+  sort = { column: 'sort_order', ascending: true },
+} = {}) {
   const [data, setData] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // Stable string key for the filter — avoids re-fetching when the caller
-  // creates a new array literal each render.
+  // Stable string keys for the filter/sort — avoids re-fetching when the
+  // caller creates a new array/object literal each render.
   const notInKey = (statusNotIn || []).join(',');
+  const sortKey  = `${sort.column}:${sort.ascending ? 'asc' : 'desc'}`;
 
   useEffect(() => {
     let alive = true;
@@ -188,7 +199,10 @@ export function usePagedListings({ statusEquals, statusNotIn, page = 1, pageSize
       let q = supabase
         .from('listings')
         .select('*', { count: 'exact' })
-        .order('sort_order', { ascending: true })
+        .order(sort.column, { ascending: sort.ascending, nullsFirst: false })
+        // Stable secondary sort so listings with the same primary value
+        // keep a deterministic order across pages.
+        .order('id', { ascending: true })
         .range(from, to);
       if (statusEquals) q = q.eq('status', statusEquals);
       if (statusNotIn?.length) {
@@ -209,7 +223,7 @@ export function usePagedListings({ statusEquals, statusNotIn, page = 1, pageSize
     }
     load();
     return () => { alive = false; };
-  }, [statusEquals, notInKey, page, pageSize]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [statusEquals, notInKey, page, pageSize, sortKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
   return { data, total, pageCount, loading };
