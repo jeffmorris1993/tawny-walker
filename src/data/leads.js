@@ -22,9 +22,10 @@ export const DRAFT_LISTING = {
 // Pared back to just the two screens that ship: Leads inbox + Listings/Residences.
 export const ADMIN_NAV_KEYS = ['Leads', 'Listings'];
 
-// The four statuses a lead can move through; rendered as a segmented control
-// on the LeadDetail page.
-export const LEAD_STATUS_SEQUENCE = ['New', 'Contacted', 'Qualified', 'Cold'];
+// The lifecycle a lead can move through; rendered as a segmented control on
+// the LeadDetail page. New → Contacted → Active → Closed is the success
+// path; Cold is the dead-end branch.
+export const LEAD_STATUS_SEQUENCE = ['New', 'Contacted', 'Active', 'Closed', 'Cold'];
 
 // Status filter rows for ListingsManager. Labels resolve via theme.statusLabels.
 export const LISTING_FILTERS = ['All', 'Active', 'Pending', 'Sold', 'Draft'];

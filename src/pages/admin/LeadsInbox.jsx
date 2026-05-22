@@ -18,9 +18,10 @@ const ROLES = [
 ];
 
 const STATUSES = [
-  { key: 'New',       label: 'New Lead' },
+  { key: 'New',       label: 'New' },
   { key: 'Contacted', label: 'Contacted' },
-  { key: 'Qualified', label: 'Qualified' },
+  { key: 'Active',    label: 'Active' },
+  { key: 'Closed',    label: 'Closed' },
   { key: 'Cold',      label: 'Cold' },
 ];
 
@@ -179,7 +180,7 @@ export default function LeadsInbox() {
           options={STATUSES}
           selection={statusSel}
           onToggle={key => togglePill('status', key)}
-          dotFor={(key) => t.statusDots[key] || t.fgFaint}
+          dotFor={(key) => t.leadStatusDots[key] || t.fgFaint}
         />
       </div>
 
@@ -224,7 +225,7 @@ export default function LeadsInbox() {
                       textTransform: 'uppercase', color: t.fgMuted,
                     }}>{lead.type}</span>
                     <span style={{ fontSize: 13, color: t.fgMuted, lineHeight: 1.5 }}>{lead.summary}</span>
-                    <StatusChip status={lead.status} />
+                    <StatusChip status={lead.status} kind="lead" />
                     <span style={{ fontSize: 11, color: t.fgFaint, textAlign: 'right', letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
                       {lead.when}
                     </span>

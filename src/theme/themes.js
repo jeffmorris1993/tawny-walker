@@ -100,11 +100,20 @@ export const THEMES = {
     headlineWeight: 400,             // Cormorant 400 reads beautifully large
     statusLabels: {
       Active: 'Active', Pending: 'Pending', Sold: 'Sold',
-      New: 'New Lead', Contacted: 'Contacted', Qualified: 'Qualified', Cold: 'Cold',
     },
     statusDots: {
       Active: A_PALETTE.green, Pending: A_PALETTE.amber, Sold: A_PALETTE.ink2,
-      New: A_PALETTE.bronze, Contacted: A_PALETTE.ink3, Qualified: A_PALETTE.green, Cold: A_PALETTE.ink4,
+    },
+    // Lead lifecycle uses its own labels/dots so it doesn't collide with
+    // the listing statuses (which share keys like "Active" in some maps).
+    leadStatusLabels: {
+      New: 'New', Contacted: 'Contacted', Active: 'Active',
+      Closed: 'Closed', Cold: 'Cold',
+    },
+    leadStatusDots: {
+      New: A_PALETTE.bronze, Contacted: A_PALETTE.ink3,
+      Active: A_PALETTE.green, Closed: A_PALETTE.ink2,
+      Cold: A_PALETTE.ink4,
     },
     navItems: ['Listings', 'About'],
     indexNoun: 'Listings',           // "Current listings"
@@ -183,11 +192,18 @@ export const THEMES = {
     headlineWeight: 400,
     statusLabels: {
       Active: 'Available', Pending: 'In Contract', Sold: 'Closed',
-      New: 'New Lead', Contacted: 'Contacted', Qualified: 'Qualified', Cold: 'Cold',
     },
     statusDots: {
       Active: B_PALETTE.moss, Pending: B_PALETTE.gold, Sold: B_PALETTE.ink3,
-      New: B_PALETTE.gold, Contacted: B_PALETTE.ink3, Qualified: B_PALETTE.moss, Cold: B_PALETTE.ink4,
+    },
+    leadStatusLabels: {
+      New: 'New', Contacted: 'Contacted', Active: 'Active',
+      Closed: 'Closed', Cold: 'Cold',
+    },
+    leadStatusDots: {
+      New: B_PALETTE.gold, Contacted: B_PALETTE.ink3,
+      Active: B_PALETTE.moss, Closed: B_PALETTE.emerald,
+      Cold: B_PALETTE.ink4,
     },
     navItems: ['Listings', 'About'],
     indexNoun: 'Listings',

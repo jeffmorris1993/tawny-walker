@@ -1,11 +1,15 @@
 import { useTheme } from '../theme/DirectionContext';
 
-// Uses theme.statusLabels so Direction A reads "Active / Pending / Sold"
-// and Direction B reads "Available / In Contract / Closed".
-export default function StatusChip({ status, size = 'sm' }) {
+// Uses theme.statusLabels for listing statuses (Active/Pending/Sold). When
+// rendering a lead's status, pass kind="lead" so the chip looks up
+// theme.leadStatusLabels instead — the two enums share key names (e.g.
+// "Active") but mean different things, so the maps stay separate.
+export default function StatusChip({ status, size = 'sm', kind = 'listing' }) {
   const t = useTheme();
-  const label = t.statusLabels[status] || status;
-  const dot = t.statusDots[status] || t.fgFaint;
+  const labels = kind === 'lead' ? t.leadStatusLabels : t.statusLabels;
+  const dots = kind === 'lead' ? t.leadStatusDots : t.statusDots;
+  const label = labels[status] || status;
+  const dot = dots[status] || t.fgFaint;
   const f = size === 'lg' ? 12 : 10.5;
   const isB = t.key === 'B';
   return (

@@ -446,32 +446,15 @@ export function useLead(id) {
     setLoading(true);
     const { data: row, error } = await supabase
       .from('leads')
-      .select('*, attached_listings(listing_id, shared_at, listings(addr, tone))')
+      .select('*')
       .eq('id', id)
       .maybeSingle();
     if (error) console.error('[tw] lead fetch failed', error);
     if (row) {
       const lead = rowToLead(row);
-      const attached = (row.attached_listings || []).map(a => ({
-        id: a.listing_id,
-        name: a.listings?.addr,
-        tone: a.listings?.tone,
-        sharedAt: a.shared_at,
-      }));
-      const studioLog = [
-        { t: 'Intake received', when: lead.when, highlight: true },
-      ];
-      if (lead.studioNoteSavedAt) {
-        studioLog.push({
-          t: 'Studio note edited — TW',
-          when: relativeTime(lead.studioNoteSavedAt, true),
-        });
-      }
       setData({
         ...lead,
         number: String(row.id).slice(0, 2).toUpperCase(),
-        studioLog,
-        attached,
       });
     } else {
       setData(null);
@@ -483,17 +466,89 @@ export function useLead(id) {
   return { data, loading, refresh };
 }
 
-export async function updateLeadStatus(id, status) {
-  if (noClient()) return { error: { message: 'Supabase not configured' } };
-  return supabase.from('leads').update({ status }).eq('id', id);
+// Paginated fetch of lead_events for a single lead. Used by the studio log
+// to "infinite scroll" inside a bounded container — each call to loadMore
+// fetches the next `pageSize` events (newest-first) and appends them. The
+// `bumpKey` argument lets the parent force a refetch (e.g. after writing a
+// new event) without re-mounting the hook.
+export function useLeadEvents(leadId, { pageSize = 15, bumpKey = 0 } = {}) {
+  const [events, setEvents] = useState([]);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(true);
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  // Whenever the lead changes (or a write bumps the key) reset to page 0.
+  useEffect(() => {
+    setEvents([]);
+    setPage(0);
+    setHasMore(true);
+    setLoading(true);
+  }, [leadId, bumpKey]);
+
+  useEffect(() => {
+    if (!leadId) { setLoading(false); return; }
+    if (noClient()) { setLoading(false); return; }
+    let alive = true;
+    async function load() {
+      const from = page * pageSize;
+      const to = from + pageSize - 1;
+      const { data: rows, error } = await supabase
+        .from('lead_events')
+        .select('*')
+        .eq('lead_id', leadId)
+        .order('created_at', { ascending: false })
+        .range(from, to);
+      if (!alive) return;
+      if (error) {
+        console.error('[tw] lead events fetch failed', error);
+        setHasMore(false);
+        setLoading(false);
+        return;
+      }
+      setEvents(prev => page === 0 ? (rows || []) : [...prev, ...(rows || [])]);
+      setHasMore((rows || []).length === pageSize);
+      setLoading(false);
+    }
+    load();
+    return () => { alive = false; };
+  }, [leadId, page, pageSize, bumpKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const loadMore = useCallback(() => {
+    if (!loading && hasMore) setPage(p => p + 1);
+  }, [loading, hasMore]);
+
+  return { events, hasMore, loading, loadMore };
+  /* eslint-enable react-hooks/set-state-in-effect */
 }
 
-export async function updateLeadNote(id, studioNote) {
+export async function updateLeadStatus(id, status, previousStatus) {
   if (noClient()) return { error: { message: 'Supabase not configured' } };
-  return supabase
+  const { error } = await supabase.from('leads').update({ status }).eq('id', id);
+  if (!error && previousStatus !== status) {
+    await supabase.from('lead_events').insert({
+      lead_id: id, kind: 'status',
+      previous_value: previousStatus || null,
+      next_value: status,
+    });
+  }
+  return { error };
+}
+
+export async function updateLeadNote(id, studioNote, previousNote) {
+  if (noClient()) return { error: { message: 'Supabase not configured' } };
+  const { error } = await supabase
     .from('leads')
     .update({ studio_note: studioNote, studio_note_saved_at: new Date().toISOString() })
     .eq('id', id);
+  if (!error) {
+    await supabase.from('lead_events').insert({
+      lead_id: id, kind: 'note',
+      previous_value: previousNote || null,
+      next_value: studioNote || null,
+    });
+  }
+  return { error };
 }
 
 export async function detachListing(leadId, listingId) {

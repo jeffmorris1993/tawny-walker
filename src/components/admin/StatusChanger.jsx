@@ -14,7 +14,7 @@ export default function StatusChanger({ value, onChange }) {
     }}>
       {LEAD_STATUS_SEQUENCE.map((status, i) => {
         const active = value === status;
-        const dot = t.statusDots[status];
+        const dot = t.leadStatusDots[status];
         return (
           <button
             key={status}

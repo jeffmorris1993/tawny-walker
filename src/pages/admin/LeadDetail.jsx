@@ -5,8 +5,7 @@ import Eyebrow from '../../components/Eyebrow';
 import AdminShell from '../../components/AdminShell';
 import StatusChanger from '../../components/admin/StatusChanger';
 import StudioLog from '../../components/admin/StudioLog';
-import AttachedListings from '../../components/admin/AttachedListings';
-import { useLead, updateLeadStatus, updateLeadNote, detachListing } from '../../lib/queries';
+import { useLead, updateLeadStatus, updateLeadNote } from '../../lib/queries';
 
 export default function LeadDetail() {
   const t = useTheme();
@@ -18,37 +17,39 @@ export default function LeadDetail() {
   const [noteSaving, setNoteSaving] = useState(false);
   const [noteSaved, setNoteSaved] = useState('');
   const [status, setStatus] = useState('New');
-  const [attached, setAttached] = useState([]);
+  // Bump after every event write so StudioLog refetches and the new entry
+  // appears immediately.
+  const [logBump, setLogBump] = useState(0);
 
   // Sync local edit state when the loaded lead changes.
   useEffect(() => {
     if (d) {
       setNote(d.studioNote || '');
       setStatus(d.status || 'New');
-      setAttached(d.attached || []);
-      setNoteSaved(d.studioNoteSavedAt || '');
+      setNoteSaved(d.studioNoteSavedAt ? formatStamp(d.studioNoteSavedAt) : '');
     }
   }, [d]);
 
   async function handleStatusChange(next) {
+    if (!d) return;
+    const previous = d.status || status;
     setStatus(next);
-    if (d) await updateLeadStatus(d.id, next);
+    await updateLeadStatus(d.id, next, previous);
+    // Refresh the lead row + bump the studio log so the new event appears.
+    refresh();
+    setLogBump(b => b + 1);
   }
 
   async function handleNoteBlur() {
     if (!d) return;
-    if (note === (d.studioNote || '')) return;
+    const previous = d.studioNote || '';
+    if (note === previous) return;
     setNoteSaving(true);
-    await updateLeadNote(d.id, note);
+    await updateLeadNote(d.id, note, previous);
     setNoteSaving(false);
-    setNoteSaved(new Date().toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }));
-  }
-
-  async function handleDetach(listingId) {
-    if (!d) return;
-    setAttached(list => list.filter(a => a.id !== listingId));
-    await detachListing(d.id, listingId);
+    setNoteSaved(formatStamp(new Date()));
     refresh();
+    setLogBump(b => b + 1);
   }
 
   if (loading && !d) {
@@ -72,7 +73,7 @@ export default function LeadDetail() {
   }
 
   const headlineColor = isB ? t.palette.emerald : t.fgPage;
-  const currentLabel = (t.statusLabels[status] || status).toLowerCase();
+  const currentLabel = (t.leadStatusLabels[status] || status).toLowerCase();
 
   return (
     <AdminShell>
@@ -96,7 +97,7 @@ export default function LeadDetail() {
         paddingBottom: 32, borderBottom: `1px solid ${t.line}`,
       }}>
         <div>
-          <Eyebrow>Lead № {d.number} · {d.type} Intake · received {d.receivedAt}</Eyebrow>
+          <Eyebrow>{d.type} Intake · received {d.receivedAt}</Eyebrow>
           <h1 style={{
             fontFamily: t.fonts.display, fontWeight: 400,
             fontSize: 'clamp(36px, 3.9vw, 56px)', margin: '14px 0 0',
@@ -104,16 +105,10 @@ export default function LeadDetail() {
           }}>
             {d.firstName} <em style={{ fontStyle: 'italic' }}>{d.lastName}</em>
           </h1>
-          <div style={{
-            fontFamily: t.fonts.display, fontStyle: 'italic',
-            fontSize: 20, color: t.fgMuted, marginTop: 6,
-          }}>{d.entity} · {d.city}</div>
           <div style={{ marginTop: 18, display: 'flex', gap: 18, fontSize: 14, color: t.fgPage, flexWrap: 'wrap', alignItems: 'center' }}>
             <a href={`mailto:${d.email}`} style={{ fontWeight: 600, color: headlineColor, textDecoration: 'none' }}>{d.email}</a>
             <span style={{ color: t.fgFaint }}>·</span>
             <a href={`tel:${d.phone}`} style={{ fontWeight: 600, color: headlineColor, textDecoration: 'none' }}>{d.phone}</a>
-            <span style={{ color: t.fgFaint }}>·</span>
-            <span style={{ fontSize: 12, color: t.fgMuted }}>Referred by · {d.referredBy}</span>
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'flex-end' }}>
@@ -125,16 +120,6 @@ export default function LeadDetail() {
             color: t.fgFaint,
           }}>Currently · <span style={{ color: headlineColor }}>{currentLabel}</span></div>
           <StatusChanger value={status} onChange={handleStatusChange} />
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-            <button style={{
-              padding: '10px 16px', border: `1px solid ${t.line}`,
-              background: 'transparent', color: t.fgMuted,
-              fontFamily: t.eyebrowFont,
-              fontSize: isB ? 10 : 10.5,
-              fontWeight: isB ? 600 : 400,
-              letterSpacing: '0.24em', textTransform: 'uppercase', cursor: 'pointer',
-            }}>Archive</button>
-          </div>
         </div>
       </div>
 
@@ -168,13 +153,18 @@ export default function LeadDetail() {
 
           <div style={{ marginTop: 32 }}>
             <Eyebrow color={t.accent}>Mandate notes</Eyebrow>
-            <p style={{
-              marginTop: 16, padding: '20px 24px',
-              background: t.bgPanel, border: `1px solid ${t.line}`,
-              fontFamily: t.fonts.display, fontStyle: 'italic',
-              fontSize: 19, lineHeight: 1.55,
-              color: isB ? t.palette.emerald : t.fgPage,
-            }}>{d.mandateNotes}</p>
+            {(() => {
+              const hasNotes = d.mandateNotes && d.mandateNotes.trim().length > 0;
+              return (
+                <p style={{
+                  marginTop: 16, padding: '20px 24px',
+                  background: t.bgPanel, border: `1px solid ${t.line}`,
+                  fontFamily: t.fonts.display, fontStyle: 'italic',
+                  fontSize: 19, lineHeight: 1.55,
+                  color: hasNotes ? (isB ? t.palette.emerald : t.fgPage) : t.fgFaint,
+                }}>{hasNotes ? d.mandateNotes : 'None'}</p>
+              );
+            })()}
           </div>
         </div>
 
@@ -206,13 +196,13 @@ export default function LeadDetail() {
           </div>
 
           <div style={{ marginTop: 32 }}>
-            <StudioLog items={d.studioLog} />
+            <StudioLog
+              leadId={d.id}
+              leadCreatedAt={d.createdAt}
+              leadWhen={d.when}
+              bumpKey={logBump}
+            />
           </div>
-
-          <AttachedListings
-            attached={attached}
-            onRemove={handleDetach}
-          />
         </aside>
       </div>
 
@@ -225,4 +215,17 @@ export default function LeadDetail() {
       `}</style>
     </AdminShell>
   );
+}
+
+// "May 22 · 10:08 AM" — short, human-readable; copes with both ISO strings
+// and Date objects.
+function formatStamp(d) {
+  if (!d) return '';
+  try {
+    return new Date(d).toLocaleString([], {
+      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+    });
+  } catch {
+    return String(d);
+  }
 }
