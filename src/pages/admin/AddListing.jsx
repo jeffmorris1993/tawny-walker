@@ -5,6 +5,8 @@ import Photo from '../../components/Photo';
 import Eyebrow from '../../components/Eyebrow';
 import StatusChip from '../../components/StatusChip';
 import AdminShell from '../../components/AdminShell';
+import ConfirmDialog from '../../components/admin/ConfirmDialog';
+import PhotoUploader from '../../components/admin/PhotoUploader';
 import { DRAFT_LISTING } from '../../data/leads';
 import { createListing, updateListing, deleteListing, useListing } from '../../lib/queries';
 import { required } from '../../lib/validation';
@@ -67,6 +69,7 @@ function listingToForm(L) {
     status: L.status || 'Draft',
     description: L.blurb || L.description || '',
     tone: L.tone || 'warm',
+    photos: Array.isArray(L.photos) ? L.photos : [],
   };
 }
 
@@ -84,6 +87,7 @@ export default function AddListing() {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     // Seed the form once the existing listing has been fetched. Safe to setState
@@ -91,6 +95,40 @@ export default function AddListing() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (editing && existing && !form) setForm(listingToForm(existing));
   }, [editing, existing, form]);
+
+  // Mirror in-progress edits to localStorage so the /studio/preview/<id> tab
+  // can render them live. Cleared on unmount so the preview tab falls back to
+  // the saved DB row once the editor closes.
+  useEffect(() => {
+    if (!editing || !routeId || !form) return;
+    const key = `tw.preview.${routeId}`;
+    const photos = form.photos || [];
+    const blob = {
+      addr: form.name,
+      street: form.address,
+      loc: form.city,
+      price: form.price,
+      beds: form.beds,
+      baths: form.baths,
+      sqft: form.sqft,
+      lot: form.lot,
+      status: form.status,
+      tone: form.tone,
+      blurb: form.description,
+      photos,
+      // Keep `img` in sync so the public detail hero (which reads L.img)
+      // updates live as the user uploads or reorders photos.
+      img: photos[0]?.url || null,
+      _stamp: Date.now(),
+    };
+    try { localStorage.setItem(key, JSON.stringify(blob)); } catch { /* quota */ }
+  }, [editing, routeId, form]);
+
+  useEffect(() => {
+    if (!editing || !routeId) return;
+    const key = `tw.preview.${routeId}`;
+    return () => { try { localStorage.removeItem(key); } catch { /* noop */ } };
+  }, [editing, routeId]);
 
   if (editing && (!form || (loadingExisting && !existing))) {
     return (
@@ -147,6 +185,7 @@ export default function AddListing() {
       status: targetStatus || form.status,
       tone: form.tone,
       blurb: form.description,
+      photos: form.photos || [],
     };
 
     const { error } = editing
@@ -161,14 +200,13 @@ export default function AddListing() {
     navigate('/admin/listings');
   }
 
-  async function handleDelete() {
+  async function performDelete() {
     if (!editing) return;
-    const confirmed = window.confirm(`Delete "${form.name}"? This cannot be undone.`);
-    if (!confirmed) return;
     setSubmitting(true);
     setSubmitError(null);
     const { error } = await deleteListing(routeId);
     setSubmitting(false);
+    setConfirmDelete(false);
     if (error) {
       setSubmitError(error.message || 'Could not delete. Try again.');
       return;
@@ -179,8 +217,6 @@ export default function AddListing() {
   const headlineColor = isB ? t.palette.emerald : t.fgPage;
   const primaryBg = isB ? t.palette.emerald : t.palette.ink;
   const primaryFg = isB ? '#fff' : t.palette.bone;
-  const secondaryBorder = isB ? t.palette.emerald : t.palette.ink;
-  const secondaryFg = isB ? t.palette.emerald : t.fgPage;
 
   const publishLabel = editing
     ? (submitting ? 'Saving…' : 'Save Changes →')
@@ -233,7 +269,7 @@ export default function AddListing() {
           {editing ? (
             <button
               type="button"
-              onClick={handleDelete}
+              onClick={() => setConfirmDelete(true)}
               disabled={submitting}
               style={{
                 padding: '14px 22px', border: `1px solid #B5341F`,
@@ -259,21 +295,20 @@ export default function AddListing() {
                 cursor: submitting ? 'wait' : 'pointer',
               }}>Save Draft</button>
           )}
-          <button
-            type="button"
-            onClick={() => editing
-              ? navigate(`/listings/${routeId}`)
-              : alert('Preview opens once the listing is saved.')
-            }
-            style={{
-              padding: '14px 22px', border: `1px solid ${secondaryBorder}`,
-              background: 'transparent',
-              color: secondaryFg,
-              fontFamily: t.eyebrowFont,
-              fontSize: isB ? 10.5 : 11, fontWeight: isB ? 600 : 400,
-              letterSpacing: isB ? '0.26em' : '0.24em',
-              textTransform: 'uppercase', cursor: 'pointer',
-            }}>Preview</button>
+          {editing && (
+            <button
+              type="button"
+              onClick={() => window.open(`/studio/preview/${routeId}`, '_blank', 'noopener')}
+              style={{
+                padding: '14px 22px', border: `1px solid ${isB ? t.palette.emerald : t.palette.ink}`,
+                background: 'transparent',
+                color: isB ? t.palette.emerald : t.fgPage,
+                fontFamily: t.eyebrowFont,
+                fontSize: isB ? 10.5 : 11, fontWeight: isB ? 600 : 400,
+                letterSpacing: isB ? '0.26em' : '0.24em',
+                textTransform: 'uppercase', cursor: 'pointer',
+              }}>Preview</button>
+          )}
           <button
             type="button"
             onClick={() => handleSave(editing ? form.status : 'Active')}
@@ -297,31 +332,11 @@ export default function AddListing() {
           {/* Photography */}
           <Eyebrow color={t.accent}>Photography</Eyebrow>
           <div style={{ marginTop: 18 }}>
-            <div style={{ position: 'relative' }}>
-              <Photo label="HERO PHOTOGRAPHY · DRAG TO REPLACE" tone={form.tone} height={280} />
-              <div style={{
-                position: 'absolute', top: 14, right: 14, padding: '6px 12px',
-                background: isB ? '#fff' : 'rgba(251,249,245,0.95)',
-                fontFamily: t.eyebrowFont,
-                fontSize: isB ? 9.5 : 10, fontWeight: isB ? 600 : 400,
-                letterSpacing: isB ? '0.26em' : '0.22em',
-                textTransform: 'uppercase',
-                color: isB ? t.palette.emerald : t.fgPage,
-              }}>Hero · 4267 × 2845</div>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginTop: 8 }}>
-              <Photo label="02" tone="warm" height={90} />
-              <Photo label="03" tone="bone" height={90} />
-              <Photo label="04" tone="cool" height={90} />
-              <div style={{
-                height: 90, background: t.bgPanel, border: `1px dashed ${t.line}`,
-                display: 'grid', placeItems: 'center',
-                fontFamily: t.eyebrowFont,
-                fontSize: isB ? 10.5 : 11, fontWeight: isB ? 600 : 400,
-                letterSpacing: isB ? '0.26em' : '0.22em',
-                textTransform: 'uppercase', color: t.fgFaint, cursor: 'pointer',
-              }}>+ Add</div>
-            </div>
+            <PhotoUploader
+              value={form.photos || []}
+              onChange={(next) => setForm(f => ({ ...f, photos: next }))}
+              listingId={editing ? routeId : null}
+            />
           </div>
 
           {/* Property details */}
@@ -399,7 +414,12 @@ export default function AddListing() {
             marginTop: 18, padding: 18, background: t.bgPanel, border: `1px solid ${t.line}`,
           }}>
             <div style={{ position: 'relative' }}>
-              <Photo label={(form.name || '').toUpperCase()} tone={form.tone} height={180} />
+              <Photo
+                label={(form.name || '').toUpperCase()}
+                tone={form.tone}
+                height={180}
+                src={form.photos?.[0]?.url}
+              />
               <div style={{
                 position: 'absolute', top: 10, left: 10, padding: '4px 9px',
                 background: isB ? '#fff' : 'rgba(251,249,245,0.95)',
@@ -449,6 +469,18 @@ export default function AddListing() {
           .tw-add-pair-2   { grid-template-columns: 1fr !important; }
         }
       `}</style>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title={`Delete "${form?.name || 'this listing'}"?`}
+        message="This removes the listing from the public site and from the studio. It cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Keep"
+        danger
+        busy={submitting}
+        onConfirm={performDelete}
+        onCancel={() => !submitting && setConfirmDelete(false)}
+      />
     </AdminShell>
   );
 }

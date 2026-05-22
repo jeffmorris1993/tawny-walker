@@ -1,10 +1,10 @@
-import { Link, useParams, Navigate } from 'react-router-dom';
+import { Link, useParams, useLocation, Navigate } from 'react-router-dom';
 import { useTheme } from '../theme/DirectionContext';
 import Photo, { PHOTOS } from '../components/Photo';
 import TopNav from '../components/TopNav';
 import SiteFooter from '../components/SiteFooter';
 import StatusChip from '../components/StatusChip';
-import { useListing, useRelatedListings } from '../lib/queries';
+import { useListing, useRelatedListings, usePreviewOverride } from '../lib/queries';
 
 // The detail page is the same content rendered in two visual directions.
 // Section order: breadcrumb → hero → head (name, address, tagline subtitle,
@@ -379,33 +379,42 @@ const GALLERY_PHOTOS = [
 ];
 
 function Gallery({ L }) {
-  // Gallery loads either DB-supplied photos (when present) or the studio
-  // catalogue as a fallback so a freshly-added listing without a photo set
+  // Gallery prefers admin-uploaded photos (L.photos = [{ path, url }, ...]),
+  // then any L.gallery photos persisted alongside the listing, falling back
+  // to the studio catalogue so a freshly-added listing without a photo set
   // still renders a respectable detail page.
-  const photos = (L.gallery && Array.isArray(L.gallery.photos) && L.gallery.photos.length > 0)
+  const uploaded = Array.isArray(L.photos)
+    ? L.photos.map(p => (typeof p === 'string' ? p : p?.url)).filter(Boolean)
+    : [];
+  const galleryPhotos = (L.gallery && Array.isArray(L.gallery.photos) && L.gallery.photos.length > 0)
     ? L.gallery.photos
-    : GALLERY_PHOTOS;
+    : null;
+  const source = uploaded.length > 0 ? uploaded : (galleryPhotos || GALLERY_PHOTOS);
   const tones = (L.gallery && Array.isArray(L.gallery.a) && L.gallery.a.length >= 8)
     ? L.gallery.a
     : ['warm', 'bone', 'cool', 'dusk', 'cool', 'warm', 'dusk', 'cool'];
 
+  // Number of tiles to render: at least 6 (so the section never looks
+  // sparse), at most 12, but pinned to the actual upload count when uploads
+  // exist so we don't repeat photos unnecessarily.
+  const tileCount = uploaded.length > 0
+    ? Math.min(uploaded.length, 12)
+    : 8;
+  const tiles = Array.from({ length: tileCount }, (_, i) => ({
+    src: source[i % source.length],
+    tone: tones[i % tones.length],
+  }));
+
   return (
     <div style={{ padding: 'clamp(40px, 6vw, 80px) clamp(20px, 4.4vw, 64px) clamp(40px, 6vw, 80px)' }}>
-      <div className="tw-gallery-row tw-gallery-1" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 16 }}>
-        <Photo label="" tone={tones[0]} height={'clamp(280px, 36vw, 520px)'} src={photos[0]} />
-        <div style={{ display: 'grid', gridTemplateRows: '1fr 1fr', gap: 16 }}>
-          <Photo label="" tone={tones[1]} height={'clamp(130px, 17.5vw, 252px)'} src={photos[1]} />
-          <Photo label="" tone={tones[2]} height={'clamp(130px, 17.5vw, 252px)'} src={photos[2]} />
-        </div>
-      </div>
-      <div className="tw-gallery-row tw-gallery-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 16 }}>
-        <Photo label="" tone={tones[3]} height={'clamp(180px, 22vw, 320px)'} src={photos[3]} />
-        <Photo label="" tone={tones[4]} height={'clamp(180px, 22vw, 320px)'} src={photos[4]} />
-        <Photo label="" tone={tones[5]} height={'clamp(180px, 22vw, 320px)'} src={photos[5]} />
-      </div>
-      <div className="tw-gallery-row tw-gallery-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1.5fr', gap: 16, marginTop: 16 }}>
-        <Photo label="" tone={tones[6]} height={'clamp(220px, 29vw, 420px)'} src={photos[6]} />
-        <Photo label="" tone={tones[7]} height={'clamp(220px, 29vw, 420px)'} src={photos[7]} />
+      <div className="tw-gallery-grid" style={{
+        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16,
+      }}>
+        {tiles.map((tile, i) => (
+          <div key={i} style={{ aspectRatio: '3 / 2' }}>
+            <Photo label="" tone={tile.tone} height="100%" src={tile.src} />
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -486,9 +495,7 @@ function DetailStyles() {
       }
       @media (max-width: 600px) {
         .tw-detail-related  { grid-template-columns: 1fr !important; }
-        .tw-gallery-1, .tw-gallery-2, .tw-gallery-3 {
-          grid-template-columns: 1fr !important;
-        }
+        .tw-gallery-grid { grid-template-columns: 1fr 1fr !important; }
         /* Breadcrumb path wraps awkwardly with long names — hide on phones
            and lean on the "Return to Listings" link for back nav. */
         .tw-detail-crumb { display: none !important; }
@@ -509,7 +516,12 @@ function DetailStyles() {
 export default function ListingDetail() {
   const t = useTheme();
   const { id } = useParams();
+  const { pathname } = useLocation();
+  const isPreview = pathname.startsWith('/studio/preview');
   const { data: dbListing, loading } = useListing(id);
+  // Only consulted on the studio preview route — the editor mirrors the form
+  // to localStorage so this tab updates live as the user types.
+  const override = usePreviewOverride(isPreview ? id : null);
 
   if (loading) {
     return (
@@ -521,7 +533,9 @@ export default function ListingDetail() {
 
   if (!dbListing) return <Navigate to="/listings" replace />;
 
+  // Merge admin's in-progress edits over the DB row on the preview route.
   // The admin's "Short description" maps to the public tagline subtitle.
-  const L = { ...dbListing, tagline: dbListing.tagline || dbListing.blurb || null };
+  const merged = isPreview && override ? { ...dbListing, ...override } : dbListing;
+  const L = { ...merged, tagline: merged.tagline || merged.blurb || null };
   return t.key === 'B' ? <ListingDetailB L={L} /> : <ListingDetailA L={L} />;
 }

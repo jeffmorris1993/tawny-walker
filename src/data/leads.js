@@ -16,6 +16,7 @@ export const DRAFT_LISTING = {
   status: 'Draft',
   description: '',
   tone: 'warm',
+  photos: [],
 };
 
 // Sidebar nav config — labels are direction-aware via theme.adminNav.

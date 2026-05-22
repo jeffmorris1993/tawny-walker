@@ -75,6 +75,7 @@ export default function App() {
           <Route path="/admin/listings" element={<RequireAdmin><ListingsManager /></RequireAdmin>} />
           <Route path="/admin/listings/add" element={<RequireAdmin><AddListing /></RequireAdmin>} />
           <Route path="/admin/listings/:id/edit" element={<RequireAdmin><AddListing /></RequireAdmin>} />
+          <Route path="/studio/preview/:id" element={<RequireAdmin><ListingDetail /></RequireAdmin>} />
         </Routes>
         <PublicChrome />
       </BrowserRouter>

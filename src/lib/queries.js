@@ -33,6 +33,12 @@ function noClient() {
 // DB rows use snake_case + a `img` text key (matches PHOTOS map). UI expects
 // `img` to be the resolved photo URL/asset.
 function rowToListing(row) {
+  const photos = Array.isArray(row.photos) ? row.photos : [];
+  // Prefer the admin-uploaded hero (first photo) so every card/hero/thumb
+  // reflects what was set in the studio. Fall back to the legacy `img` key
+  // (which maps into the bundled PHOTOS catalogue) when no upload exists.
+  const uploadedHero = photos[0]?.url || null;
+  const fallbackImg = row.img && PHOTOS[row.img] ? PHOTOS[row.img] : row.img || null;
   return {
     id: row.id,
     addr: row.addr,
@@ -44,8 +50,9 @@ function rowToListing(row) {
     tone: row.tone,
     tag: row.tag,
     blurb: row.blurb,
-    img: row.img && PHOTOS[row.img] ? PHOTOS[row.img] : row.img || null,
+    img: uploadedHero || fallbackImg,
     imgKey: row.img,
+    photos,
     beds: row.beds,
     baths: row.baths,
     sqft: row.sqft,
@@ -130,6 +137,37 @@ export function useListings() {
 
   useEffect(() => { refresh(); }, [refresh]);
   return { data: data || [], loading, error, refresh };
+}
+
+// Reads the studio's in-progress edit blob for a listing. Used by the
+// preview route so admin tweaks render live without saving to the DB. The
+// editor writes/clears this key; we just observe it.
+export function usePreviewOverride(id) {
+  const [override, setOverride] = useState(null);
+
+  useEffect(() => {
+    if (!id || typeof window === 'undefined') {
+      setOverride(null);
+      return undefined;
+    }
+    const key = `tw.preview.${id}`;
+    const read = () => {
+      try {
+        const raw = localStorage.getItem(key);
+        setOverride(raw ? JSON.parse(raw) : null);
+      } catch {
+        setOverride(null);
+      }
+    };
+    read();
+    function onStorage(e) {
+      if (e.key === key) read();
+    }
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, [id]);
+
+  return override;
 }
 
 export function useListing(id) {
@@ -287,6 +325,7 @@ export async function createListing(input) {
     baths: input.baths || null,
     sqft: input.sqft || null,
     lot: input.lot || null,
+    photos: Array.isArray(input.photos) ? input.photos : [],
     sort_order: input.sort_order || 200,
   };
   if (noClient()) return { data: null, error: { message: 'Supabase not configured' } };
@@ -318,6 +357,7 @@ export async function updateListing(id, input) {
     baths: input.baths ?? null,
     sqft: input.sqft ?? null,
     lot: input.lot ?? null,
+    photos: Array.isArray(input.photos) ? input.photos : [],
   };
   if (noClient()) return { data: null, error: { message: 'Supabase not configured' } };
   const { data, error } = await supabase.from('listings').update(payload).eq('id', id).select().single();
@@ -655,26 +695,26 @@ export async function signIn(email, password) {
   const demoPassword = import.meta.env.VITE_ADMIN_PASSWORD;
   if (demoEmail && demoPassword) {
     if (email === demoEmail && password === demoPassword) {
-      sessionStorage.setItem('tw.admin', '1');
+      localStorage.setItem('tw.admin', '1');
       return { error: null };
     }
     return { error: { message: 'Incorrect email or password.' } };
   }
   if (noClient()) return { error: { message: 'Supabase not configured' } };
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (!error) sessionStorage.setItem('tw.admin', '1');
+  if (!error) localStorage.setItem('tw.admin', '1');
   return { error };
 }
 
 export async function signOut() {
-  sessionStorage.removeItem('tw.admin');
+  localStorage.removeItem('tw.admin');
   if (supabase) await supabase.auth.signOut();
 }
 
 export function useIsAdmin() {
   const [admin, setAdmin] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return sessionStorage.getItem('tw.admin') === '1';
+    return localStorage.getItem('tw.admin') === '1';
   });
 
   useEffect(() => {
@@ -684,7 +724,7 @@ export function useIsAdmin() {
       if (alive && data.session) setAdmin(true);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setAdmin(!!session || sessionStorage.getItem('tw.admin') === '1');
+      setAdmin(!!session || localStorage.getItem('tw.admin') === '1');
     });
     return () => { alive = false; sub.subscription.unsubscribe(); };
   }, []);

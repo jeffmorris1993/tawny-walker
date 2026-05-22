@@ -33,8 +33,9 @@ export default function AdminShell({ children }) {
 
   return (
     <div className="tw-admin-root" style={{
-      minHeight: '100vh', background: t.bgPage,
+      height: '100dvh', background: t.bgPage,
       fontFamily: t.fonts.body, color: t.fgPage, display: 'flex',
+      overflow: 'hidden',
     }}>
       {/* sidebar */}
       <aside className="tw-admin-sidebar" style={{
@@ -43,6 +44,7 @@ export default function AdminShell({ children }) {
         borderRight: `1px solid ${isB ? 'transparent' : t.line}`,
         padding: '32px 24px',
         display: 'flex', flexDirection: 'column',
+        overflowY: 'auto',
       }}>
         <Link to="/" style={{ textDecoration: 'none' }}>
           <Wordmark size={18} light={isB} sub={false} color={a.sidebarFg} />
@@ -119,7 +121,8 @@ export default function AdminShell({ children }) {
 
       <main className="tw-admin-main" style={{
         flex: 1, padding: 'clamp(24px, 3.5vw, 40px) clamp(24px, 4vw, 56px) 64px',
-        minWidth: 0,
+        minWidth: 0, minHeight: 0,
+        overflowY: 'auto',
       }}>
         {children}
       </main>
@@ -135,7 +138,9 @@ export default function AdminShell({ children }) {
             border-right: none !important;
             border-bottom: 1px solid ${a.sidebarDivider} !important;
             gap: 16px !important;
-            overflow-x: auto;
+            overflow-x: auto !important;
+            overflow-y: visible !important;
+            flex-shrink: 0;
           }
           .tw-admin-sidebar > a:first-child { flex-shrink: 0; }
           .tw-admin-sidebar > div:nth-child(2) { display: none !important; }
