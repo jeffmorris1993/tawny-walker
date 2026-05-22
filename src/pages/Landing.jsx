@@ -3,6 +3,9 @@ import { useTheme, useDirection } from '../theme/DirectionContext';
 import Photo, { PHOTOS } from '../components/Photo';
 
 const HERO_VIDEO_SRC = '/videos/hero.mp4';
+// Still frame shown until the video has enough data to play, so the hero
+// doesn't read as a black gap on first paint.
+const HERO_VIDEO_POSTER = '/videos/hero-poster.jpg';
 
 const HERO_VIDEO_BG_COLORS = {
   emerald: '#0B3D2E',
@@ -38,6 +41,7 @@ function HeroVideoSection() {
         }}>
           <video
             src={HERO_VIDEO_SRC}
+            poster={HERO_VIDEO_POSTER}
             autoPlay loop muted playsInline preload="auto"
             aria-label="Hero — Tawny Walker"
             style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'scale(1.18)', transformOrigin: 'center' }}
