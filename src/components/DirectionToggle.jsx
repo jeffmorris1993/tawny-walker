@@ -1,5 +1,8 @@
+import { useEffect, useState } from 'react';
 import { useDirection } from '../theme/DirectionContext';
 import { THEMES, DIRECTION_KEYS } from '../theme/themes';
+
+const HIDDEN_KEY = 'tw.toggle.hidden';
 
 const HERO_MEDIA_OPTIONS = [
   { key: 'image', label: 'Image' },
@@ -56,6 +59,41 @@ function ToggleGroup({ label, children }) {
 export default function DirectionToggle() {
   const { direction, setDirection, heroMedia, setHeroMedia, heroVideoBg, setHeroVideoBg } = useDirection();
 
+  const [hidden, setHidden] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem(HIDDEN_KEY) === '1';
+  });
+
+  useEffect(() => {
+    try {
+      if (hidden) localStorage.setItem(HIDDEN_KEY, '1');
+      else localStorage.removeItem(HIDDEN_KEY);
+    } catch { /* quota / private mode */ }
+  }, [hidden]);
+
+  if (hidden) {
+    return (
+      <button
+        type="button"
+        onClick={() => setHidden(false)}
+        aria-label="Show direction controls"
+        title="Show direction controls"
+        style={{
+          position: 'fixed', right: 20, bottom: 20, zIndex: 100,
+          padding: '8px 12px',
+          background: '#1B1B1A', color: '#FBF9F5',
+          border: '1px solid #1B1B1A', cursor: 'pointer',
+          boxShadow: '0 14px 30px -16px rgba(0,0,0,0.32)',
+          fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+          fontSize: 10.5, letterSpacing: '0.26em', textTransform: 'uppercase',
+          fontWeight: 600,
+        }}
+      >
+        Direction · {direction}
+      </button>
+    );
+  }
+
   return (
     <div className="tw-direction-toggle" style={{
       position: 'fixed', right: 20, bottom: 20, zIndex: 100,
@@ -106,8 +144,22 @@ export default function DirectionToggle() {
           ))}
         </ToggleGroup>
       )}
+      <button
+        type="button"
+        onClick={() => setHidden(true)}
+        aria-label="Hide direction controls"
+        title="Hide"
+        className="tw-toggle-hide"
+        style={{
+          padding: '0 12px', border: 0, background: 'transparent',
+          color: '#9A968D', cursor: 'pointer',
+          fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+          fontSize: 16, lineHeight: 1, fontWeight: 400,
+        }}
+      >×</button>
       <style>{`
         .tw-toggle-group + .tw-toggle-group { border-left: 1px solid #E3DDD0; }
+        .tw-toggle-hide { border-left: 1px solid #E3DDD0; }
         @media (max-width: 600px) {
           .tw-direction-toggle {
             right: 12px; bottom: 12px;
@@ -116,6 +168,7 @@ export default function DirectionToggle() {
           }
           .tw-toggle-group { width: 100%; }
           .tw-toggle-group + .tw-toggle-group { border-left: 0; border-top: 1px solid #E3DDD0; }
+          .tw-toggle-hide { border-left: 0; border-top: 1px solid #E3DDD0; padding: 6px 12px !important; }
           .tw-toggle-label { display: none !important; }
           .tw-toggle-sub   { display: none !important; }
           .tw-toggle-btn   { flex: 1 1 0; padding: 9px 8px !important; font-size: 10.5px !important; letter-spacing: 0.22em !important; }
