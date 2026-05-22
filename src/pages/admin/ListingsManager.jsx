@@ -166,7 +166,7 @@ export default function ListingsManager() {
                     color: isB ? t.palette.emerald : t.fgPage,
                   }}>{l.price}</span>
                   <StatusChip status={l.status} />
-                  <span style={{ fontSize: 11, color: t.fgFaint, textAlign: 'right' }}>{l.listedAt || 'Mar 22'}</span>
+                  <span style={{ fontSize: 11, color: t.fgFaint, textAlign: 'right' }}>{l.listedAt || '—'}</span>
                   <span style={{
                     textAlign: 'right',
                     fontFamily: t.eyebrowFont,
