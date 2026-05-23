@@ -22,6 +22,10 @@ export default function PhotoUploader({ value = [], onChange, listingId }) {
   const [uploading, setUploading] = useState(0);   // count of in-flight uploads
   const [uploadError, setUploadError] = useState(null);
   const [dragIndex, setDragIndex] = useState(null);
+  // Per-URL flag flipped to true once the <img> finishes loading. Drives
+  // a shimmer overlay so the tile reads as a skeleton until the photo
+  // is paintable.
+  const [loadedMap, setLoadedMap] = useState({});
 
   function pickFiles() {
     fileInputRef.current?.click();
@@ -119,34 +123,50 @@ export default function PhotoUploader({ value = [], onChange, listingId }) {
       <div className="tw-photo-grid" style={{
         display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10,
       }}>
-        {(value || []).map((p, i) => (
-          <div
-            key={p.path || p.url || i}
-            draggable
-            onDragStart={() => onDragStart(i)}
-            onDragOver={onDragOver}
-            onDrop={() => onDropOn(i)}
-            style={{
-              position: 'relative', aspectRatio: '3 / 2',
-              background: t.bgPanel, border: `1px solid ${t.line}`,
-              overflow: 'hidden', cursor: 'grab',
-              opacity: dragIndex === i ? 0.6 : 1,
-            }}
-          >
-            <img
-              src={p.url}
-              alt={i === 0 ? 'Hero' : `Photo ${i + 1}`}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
-            {i === 0 && <div style={labelStyle}>Hero · drag to reorder</div>}
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); removeAt(i); }}
-              aria-label={`Remove photo ${i + 1}`}
-              style={{ ...removeBtnStyle, top: 8, right: 8, width: 24, height: 24, fontSize: 15 }}
-            >×</button>
-          </div>
-        ))}
+        {(value || []).map((p, i) => {
+          const loaded = !!loadedMap[p.url];
+          return (
+            <div
+              key={p.path || p.url || i}
+              draggable
+              onDragStart={() => onDragStart(i)}
+              onDragOver={onDragOver}
+              onDrop={() => onDropOn(i)}
+              style={{
+                position: 'relative', aspectRatio: '3 / 2',
+                background: t.bgPanel, border: `1px solid ${t.line}`,
+                overflow: 'hidden', cursor: 'grab',
+                opacity: dragIndex === i ? 0.6 : 1,
+              }}
+            >
+              {!loaded && (
+                <div
+                  className="tw-photo-skel"
+                  aria-hidden
+                  style={{ position: 'absolute', inset: 0 }}
+                />
+              )}
+              <img
+                src={p.url}
+                alt={i === 0 ? 'Hero' : `Photo ${i + 1}`}
+                onLoad={() => setLoadedMap(m => ({ ...m, [p.url]: true }))}
+                onError={() => setLoadedMap(m => ({ ...m, [p.url]: true }))}
+                style={{
+                  width: '100%', height: '100%', objectFit: 'cover', display: 'block',
+                  opacity: loaded ? 1 : 0,
+                  transition: 'opacity 0.2s ease',
+                }}
+              />
+              {i === 0 && loaded && <div style={labelStyle}>Hero · drag to reorder</div>}
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); removeAt(i); }}
+                aria-label={`Remove photo ${i + 1}`}
+                style={{ ...removeBtnStyle, top: 8, right: 8, width: 24, height: 24, fontSize: 15 }}
+              >×</button>
+            </div>
+          );
+        })}
 
         <button
           type="button"
@@ -167,6 +187,15 @@ export default function PhotoUploader({ value = [], onChange, listingId }) {
       <style>{`
         @media (max-width: 600px) {
           .tw-photo-grid { grid-template-columns: repeat(2, 1fr) !important; }
+        }
+        @keyframes tw-photo-shimmer {
+          0%   { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        .tw-photo-skel {
+          background: linear-gradient(90deg, #ECE6D8 0%, #F4EFE2 50%, #ECE6D8 100%);
+          background-size: 200% 100%;
+          animation: tw-photo-shimmer 1.4s ease-in-out infinite;
         }
       `}</style>
 

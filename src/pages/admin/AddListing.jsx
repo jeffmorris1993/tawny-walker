@@ -88,6 +88,7 @@ export default function AddListing() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(false);
 
   useEffect(() => {
     // Seed the form once the existing listing has been fetched. Safe to setState
@@ -143,12 +144,6 @@ export default function AddListing() {
   }
 
   const set = (k) => (v) => setForm(f => ({ ...f, [k]: v }));
-  const cycleStatus = () => {
-    setForm(f => {
-      const idx = STATUS_CYCLE.indexOf(f.status);
-      return { ...f, status: STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length] };
-    });
-  };
 
   function validate() {
     const next = {};
@@ -325,7 +320,8 @@ export default function AddListing() {
       </div>
 
       <div className="tw-add-grid" style={{
-        display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 56, marginTop: 40,
+        display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(260px, 1fr)',
+        gap: 56, marginTop: 40,
       }}>
         {/* Form */}
         <div>
@@ -356,7 +352,7 @@ export default function AddListing() {
               </div>
               <div className="tw-add-pair-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                 <FormInput label="Asking price" value={form.price} onChange={set('price')} error={errors.price} />
-                <div>
+                <div style={{ position: 'relative' }}>
                   <div style={{
                     fontFamily: t.eyebrowFont,
                     fontSize: 10, fontWeight: isB ? 600 : 400,
@@ -366,7 +362,9 @@ export default function AddListing() {
                   }}>Status</div>
                   <button
                     type="button"
-                    onClick={cycleStatus}
+                    onClick={() => setStatusOpen(o => !o)}
+                    aria-haspopup="listbox"
+                    aria-expanded={statusOpen}
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                       gap: 8, background: 'transparent',
@@ -376,8 +374,55 @@ export default function AddListing() {
                       color: isB ? t.palette.emerald : t.fgPage, lineHeight: 1.3,
                     }}>
                     <span>{t.statusLabels[form.status] || form.status}</span>
-                    <span style={{ color: isB ? t.palette.emerald : t.fgFaint, fontSize: 13 }}>▾</span>
+                    <span style={{
+                      color: isB ? t.palette.emerald : t.fgFaint, fontSize: 13,
+                      transform: statusOpen ? 'rotate(180deg)' : 'none',
+                      transition: 'transform 0.15s',
+                    }}>▾</span>
                   </button>
+                  {statusOpen && (
+                    <>
+                      <div
+                        onClick={() => setStatusOpen(false)}
+                        style={{ position: 'fixed', inset: 0, zIndex: 60 }}
+                        aria-hidden
+                      />
+                      <ul
+                        role="listbox"
+                        style={{
+                          position: 'absolute', zIndex: 61,
+                          top: 'calc(100% + 6px)', left: 0, right: 0,
+                          margin: 0, padding: 6, listStyle: 'none',
+                          background: t.bgPage, border: `1px solid ${t.line}`,
+                          boxShadow: '0 14px 30px -16px rgba(0,0,0,0.3)',
+                        }}
+                      >
+                        {STATUS_CYCLE.map(s => {
+                          const selected = s === form.status;
+                          return (
+                            <li
+                              key={s}
+                              role="option"
+                              aria-selected={selected}
+                              onClick={() => { set('status')(s); setStatusOpen(false); }}
+                              style={{
+                                padding: '10px 12px', cursor: 'pointer',
+                                fontFamily: t.fonts.body, fontSize: 13,
+                                color: selected ? (isB ? t.palette.emerald : t.fgPage) : t.fgMuted,
+                                background: selected ? t.bgPanel : 'transparent',
+                                display: 'flex', alignItems: 'center', gap: 10,
+                              }}
+                              onMouseEnter={e => { if (!selected) e.currentTarget.style.background = t.bgPanel; }}
+                              onMouseLeave={e => { if (!selected) e.currentTarget.style.background = 'transparent'; }}
+                            >
+                              <StatusChip status={s} />
+                              <span>{t.statusLabels[s] || s}</span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -408,10 +453,11 @@ export default function AddListing() {
         </div>
 
         {/* Live preview */}
-        <aside>
+        <aside style={{ minWidth: 0 }}>
           <Eyebrow>Index card · live preview</Eyebrow>
           <div style={{
             marginTop: 18, padding: 18, background: t.bgPanel, border: `1px solid ${t.line}`,
+            maxWidth: 360,
           }}>
             <div style={{ position: 'relative' }}>
               <Photo
@@ -438,7 +484,8 @@ export default function AddListing() {
               </div>
               <div style={{
                 marginTop: 10, paddingTop: 10, borderTop: `1px solid ${t.line}`,
-                display: 'flex', justifyContent: 'space-between',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+                flexWrap: 'wrap', gap: 8,
               }}>
                 <span style={{
                   fontFamily: t.fonts.display, fontSize: 16,
@@ -449,6 +496,7 @@ export default function AddListing() {
                   fontSize: isB ? 9 : 9, fontWeight: isB ? 600 : 400,
                   letterSpacing: isB ? '0.22em' : '0.18em',
                   textTransform: 'uppercase', color: t.fgFaint,
+                  whiteSpace: 'nowrap',
                 }}>{form.beds || '—'} BD · {form.baths || '—'} BA</span>
               </div>
             </div>
@@ -458,8 +506,8 @@ export default function AddListing() {
       </div>
 
       <style>{`
-        @media (max-width: 900px) {
-          .tw-add-grid     { grid-template-columns: 1fr !important; }
+        @media (max-width: 1100px) {
+          .tw-add-grid     { grid-template-columns: 1fr !important; gap: 32px !important; }
           .tw-add-header   { align-items: flex-start !important; }
           .tw-add-actions  { width: 100% !important; }
         }

@@ -209,7 +209,10 @@ export function useListing(id) {
 // text price down to a numeric, so server-side ordering works across pages.
 export function usePagedListings({
   statusEquals,
+  statusIn,
   statusNotIn,
+  locContains,
+  query,
   page = 1,
   pageSize = 12,
   sort = { column: 'sort_order', ascending: true },
@@ -220,8 +223,11 @@ export function usePagedListings({
 
   // Stable string keys for the filter/sort — avoids re-fetching when the
   // caller creates a new array/object literal each render.
+  const inKey    = (statusIn    || []).slice().sort().join(',');
   const notInKey = (statusNotIn || []).join(',');
+  const locKey   = (locContains || []).slice().sort().join('|');
   const sortKey  = `${sort.column}:${sort.ascending ? 'asc' : 'desc'}`;
+  const q        = (query || '').trim();
 
   useEffect(() => {
     let alive = true;
@@ -234,7 +240,7 @@ export function usePagedListings({
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
-      let q = supabase
+      let req = supabase
         .from('listings')
         .select('*', { count: 'exact' })
         .order(sort.column, { ascending: sort.ascending, nullsFirst: false })
@@ -242,12 +248,24 @@ export function usePagedListings({
         // keep a deterministic order across pages.
         .order('id', { ascending: true })
         .range(from, to);
-      if (statusEquals) q = q.eq('status', statusEquals);
+      if (statusEquals) req = req.eq('status', statusEquals);
+      if (statusIn?.length) req = req.in('status', statusIn);
       if (statusNotIn?.length) {
         const list = statusNotIn.map(s => `"${s}"`).join(',');
-        q = q.not('status', 'in', `(${list})`);
+        req = req.not('status', 'in', `(${list})`);
       }
-      const { data: rows, count, error } = await q;
+      if (locContains?.length) {
+        // ilike OR — matches any neighborhood substring in the listing's loc.
+        const ors = locContains.map(n => `loc.ilike.*${escapeOrToken(n)}*`).join(',');
+        req = req.or(ors);
+      }
+      if (q) {
+        const safe = escapeOrToken(q);
+        req = req.or(
+          `addr.ilike.*${safe}*,street.ilike.*${safe}*,loc.ilike.*${safe}*,tag.ilike.*${safe}*`
+        );
+      }
+      const { data: rows, count, error } = await req;
       if (!alive) return;
       if (error) {
         console.error('[tw] paged listings fetch failed', error);
@@ -261,43 +279,61 @@ export function usePagedListings({
     }
     load();
     return () => { alive = false; };
-  }, [statusEquals, notInKey, page, pageSize, sortKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [statusEquals, inKey, notInKey, locKey, q, page, pageSize, sortKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
   return { data, total, pageCount, loading };
 }
 
-// One-shot counts query — selects only the `status` column so the filter
-// bar can show accurate per-bucket totals without loading every full row.
+// PostgREST `or` parsing treats `,` and `)` specially. Strip them out of the
+// user-supplied substring so a query like "Foo, Inc" can't break the filter.
+function escapeOrToken(s) {
+  return String(s).replace(/[,()*]/g, ' ').trim();
+}
+
+// One-shot facet count query — pulls only the status + loc columns so the
+// filter bar shows accurate per-bucket totals without loading every full row.
+// Returns:
+//   counts      = { All, Active, Pending, Sold, Draft }
+//   locCounts   = { 'Birmingham, MI': n, … }   keyed by raw loc value
 export function useListingCounts() {
-  const [counts, setCounts] = useState({ All: 0, Active: 0, Pending: 0, Sold: 0, Draft: 0 });
+  const empty = { All: 0, Active: 0, Pending: 0, Sold: 0, Draft: 0 };
+  const [counts, setCounts] = useState(empty);
+  const [locCounts, setLocCounts] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let alive = true;
     async function load() {
       if (noClient()) {
-        if (alive) { setCounts({ All: 0, Active: 0, Pending: 0, Sold: 0, Draft: 0 }); setLoading(false); }
+        if (alive) { setCounts(empty); setLocCounts({}); setLoading(false); }
         return;
       }
       setLoading(true);
-      const { data: rows, error } = await supabase.from('listings').select('status');
+      const { data: rows, error } = await supabase.from('listings').select('status, loc');
       if (!alive) return;
       if (error || !rows) {
         if (error) console.error('[tw] listing counts fetch failed', error);
-        setCounts({ All: 0, Active: 0, Pending: 0, Sold: 0, Draft: 0 });
+        setCounts(empty);
+        setLocCounts({});
       } else {
-        const next = { All: rows.length, Active: 0, Pending: 0, Sold: 0, Draft: 0 };
-        for (const r of rows) next[r.status] = (next[r.status] || 0) + 1;
+        const next = { ...empty, All: rows.length };
+        const locNext = {};
+        for (const r of rows) {
+          next[r.status] = (next[r.status] || 0) + 1;
+          if (r.loc) locNext[r.loc] = (locNext[r.loc] || 0) + 1;
+        }
         setCounts(next);
+        setLocCounts(locNext);
       }
       setLoading(false);
     }
     load();
     return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { counts, loading };
+  return { counts, locCounts, loading };
 }
 
 export function useRelatedListings(currentId, limit = 3) {
@@ -394,11 +430,35 @@ const LEAD_SORT_COLUMN = {
   status: 'status_rank',
   date:   'created_at',
   type:   'role',
+  name:   'first_name',
 };
+
+// Unfiltered total — used by the inbox helper text ("2 matches in 9 leads").
+export function useLeadTotal() {
+  const [total, setTotal] = useState(0);
+
+  useEffect(() => {
+    let alive = true;
+    async function load() {
+      if (noClient()) return;
+      const { count, error } = await supabase
+        .from('leads')
+        .select('id', { count: 'exact', head: true });
+      if (!alive) return;
+      if (error) console.error('[tw] lead total fetch failed', error);
+      else setTotal(count ?? 0);
+    }
+    load();
+    return () => { alive = false; };
+  }, []);
+
+  return total;
+}
 
 export function usePagedLeads({
   roleIn = [],
   statusIn = [],
+  query,
   page = 1,
   pageSize = 12,
   sort = 'status',
@@ -410,6 +470,7 @@ export function usePagedLeads({
 
   const rolesKey = (roleIn || []).slice().sort().join(',');
   const statusesKey = (statusIn || []).slice().sort().join(',');
+  const q = (query || '').trim();
 
   useEffect(() => {
     let alive = true;
@@ -423,16 +484,22 @@ export function usePagedLeads({
       const to = from + pageSize - 1;
 
       const column = LEAD_SORT_COLUMN[sort] || 'created_at';
-      let q = supabase
+      let req = supabase
         .from('leads')
         .select('*', { count: 'exact' })
         .order(column, { ascending: sortDir === 'asc', nullsFirst: false })
         // Stable secondary order so equal primary values keep their slot.
         .order('id', { ascending: true })
         .range(from, to);
-      if (roleIn?.length)   q = q.in('role',   roleIn);
-      if (statusIn?.length) q = q.in('status', statusIn);
-      const { data: rows, count, error } = await q;
+      if (roleIn?.length)   req = req.in('role',   roleIn);
+      if (statusIn?.length) req = req.in('status', statusIn);
+      if (q) {
+        const safe = escapeOrToken(q);
+        req = req.or(
+          `first_name.ilike.*${safe}*,last_name.ilike.*${safe}*,email.ilike.*${safe}*,summary.ilike.*${safe}*`
+        );
+      }
+      const { data: rows, count, error } = await req;
       if (!alive) return;
       if (error) {
         console.error('[tw] paged leads fetch failed', error);
@@ -446,7 +513,7 @@ export function usePagedLeads({
     }
     load();
     return () => { alive = false; };
-  }, [rolesKey, statusesKey, page, pageSize, sort, sortDir]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [rolesKey, statusesKey, q, page, pageSize, sort, sortDir]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
   return { data, total, pageCount, loading };
