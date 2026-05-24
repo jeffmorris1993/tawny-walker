@@ -297,7 +297,7 @@ function escapeOrToken(s) {
 //   counts      = { All, Active, Pending, Sold, Draft }
 //   locCounts   = { 'Birmingham, MI': n, … }   keyed by raw loc value
 export function useListingCounts() {
-  const empty = { All: 0, Active: 0, Pending: 0, Sold: 0, Draft: 0 };
+  const empty = { All: 0, 'Coming Soon': 0, Active: 0, Pending: 0, Sold: 0, Draft: 0 };
   const [counts, setCounts] = useState(empty);
   const [locCounts, setLocCounts] = useState({});
   const [loading, setLoading] = useState(true);

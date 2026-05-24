@@ -51,7 +51,7 @@ function FormInput({ label, value, onChange, placeholder, dropdown, error }) {
   );
 }
 
-const STATUS_CYCLE = ['Draft', 'Active', 'Pending', 'Sold'];
+const STATUS_CYCLE = ['Draft', 'Coming Soon', 'Active', 'Pending', 'Sold'];
 
 // Map a fetched listing (DB or mock shape) into the local form shape used
 // by the composer.

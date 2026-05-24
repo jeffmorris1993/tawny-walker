@@ -29,4 +29,4 @@ export const ADMIN_NAV_KEYS = ['Leads', 'Listings'];
 export const LEAD_STATUS_SEQUENCE = ['New', 'Contacted', 'Active', 'Closed', 'Cold'];
 
 // Status filter rows for ListingsManager. Labels resolve via theme.statusLabels.
-export const LISTING_FILTERS = ['All', 'Active', 'Pending', 'Sold', 'Draft'];
+export const LISTING_FILTERS = ['All', 'Coming Soon', 'Active', 'Pending', 'Sold', 'Draft'];

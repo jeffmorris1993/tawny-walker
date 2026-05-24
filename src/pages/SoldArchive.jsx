@@ -43,7 +43,7 @@ function ArchiveA() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 24 }}>
           <div>
             <h1 style={{ fontFamily: t.fonts.display, fontWeight: 300, fontSize: 'clamp(52px, 6.7vw, 96px)', letterSpacing: '-0.022em', margin: 0, lineHeight: 0.95 }}>
-              Sold <em style={{ fontStyle: 'italic' }}>listings</em>.
+              <em style={{ fontStyle: 'italic' }}>Sold</em>.
             </h1>
           </div>
           <p style={{ maxWidth: 380, textAlign: 'right', fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 19, color: t.fgMuted, lineHeight: 1.45, margin: 0 }}>
@@ -97,7 +97,7 @@ function ArchiveB() {
           fontSize: 'clamp(52px, 7vw, 96px)', letterSpacing: '-0.024em',
           margin: 0, lineHeight: 0.95, color: t.palette.emerald,
         }}>
-          Sold <em style={{ fontStyle: 'italic' }}>listings.</em>
+          <em style={{ fontStyle: 'italic' }}>Sold.</em>
         </h1>
         <p style={{
           fontFamily: t.fonts.display, fontStyle: 'italic',

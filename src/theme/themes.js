@@ -99,10 +99,10 @@ export const THEMES = {
     eyebrowSize: 11,
     headlineWeight: 400,             // Cormorant 400 reads beautifully large
     statusLabels: {
-      Active: 'Active', Pending: 'Pending', Sold: 'Sold',
+      'Coming Soon': 'Coming Soon', Active: 'Active', Pending: 'Pending', Sold: 'Sold',
     },
     statusDots: {
-      Active: A_PALETTE.green, Pending: A_PALETTE.amber, Sold: A_PALETTE.ink2,
+      'Coming Soon': A_PALETTE.bronze, Active: A_PALETTE.green, Pending: A_PALETTE.amber, Sold: A_PALETTE.ink2,
     },
     // Lead lifecycle uses its own labels/dots so it doesn't collide with
     // the listing statuses (which share keys like "Active" in some maps).
@@ -191,10 +191,10 @@ export const THEMES = {
     eyebrowSize: 10.5,
     headlineWeight: 400,
     statusLabels: {
-      Active: 'Available', Pending: 'In Contract', Sold: 'Closed',
+      'Coming Soon': 'Coming Soon', Active: 'Active', Pending: 'Pending', Sold: 'Sold',
     },
     statusDots: {
-      Active: B_PALETTE.moss, Pending: B_PALETTE.gold, Sold: B_PALETTE.ink3,
+      'Coming Soon': B_PALETTE.goldSoft, Active: B_PALETTE.moss, Pending: B_PALETTE.gold, Sold: B_PALETTE.ink3,
     },
     leadStatusLabels: {
       New: 'New', Contacted: 'Contacted', Active: 'Active',

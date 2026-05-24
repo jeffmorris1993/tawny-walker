@@ -37,7 +37,7 @@ export const ROLES = {
           'Primary residence', 'Secondary residence', 'Investment property',
         ]},
       ]},
-      { type: 'dropdown', multi: true, label: 'Neighborhoods of interest', options: ['Birmingham', 'Bloomfield Hills', 'Royal Oak', 'Ferndale', 'Novi', 'Northville', 'West Bloomfield', 'Farmington Hills', 'Grosse Pointe', 'Other'] },
+      { type: 'dropdown', multi: true, label: 'Neighborhoods of interest', options: ['Birmingham', 'Bloomfield Hills', 'Beverly Hills', 'Royal Oak', 'Troy', 'Novi', 'Northville', 'West Bloomfield', 'Grosse Pointe', 'Other'] },
       { type: 'budget', label: 'Comfortable price range', min: '$50K', max: '$5M', center: 0.4 },
       { type: 'pair', cols: [
         { label: 'Time frame to buy', dropdown: true, options: [
@@ -144,6 +144,11 @@ export const ROLES = {
       ]},
       { type: 'pair', cols: [
         { label: 'Brokerage / org', placeholder: 'e.g. Coastal & Magnolia, NYC' },
+      ]},
+      { title: 'Social (optional)', cols: [
+        { label: 'Instagram', placeholder: '@handle or full URL' },
+        { label: 'Facebook',  placeholder: 'facebook.com/yourpage' },
+        { label: 'LinkedIn',  placeholder: 'linkedin.com/in/yourname' },
       ]},
     ],
   },

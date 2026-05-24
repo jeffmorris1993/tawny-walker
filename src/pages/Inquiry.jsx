@@ -829,8 +829,16 @@ function RoleSection({ s, form, setForm, errors }) {
   if (s.type === 'dropdown') {
     if (s.multi) {
       const selected = form.chips[s.label] || [];
+      const otherKey = `${s.label} — other`;
+      const otherValue = form.fields[otherKey] || '';
+      const hasOther = selected.includes('Other');
       const setSelected = (next) => {
-        setForm(f => ({ ...f, chips: { ...f.chips, [s.label]: next } }));
+        setForm(f => {
+          const nextChips  = { ...f.chips,  [s.label]: next };
+          const nextFields = { ...f.fields };
+          if (!next.includes('Other')) nextFields[otherKey] = '';
+          return { ...f, chips: nextChips, fields: nextFields };
+        });
       };
       return (
         <div style={{ marginBottom: 26 }}>
@@ -841,6 +849,16 @@ function RoleSection({ s, form, setForm, errors }) {
             options={s.options}
             placeholder="Select…"
           />
+          {hasOther && (
+            <div style={{ marginTop: 14 }}>
+              <FormLabel>Other — please specify</FormLabel>
+              <TextField
+                value={otherValue}
+                onChange={setField(otherKey)}
+                placeholder="Type the neighborhood, city, or area…"
+              />
+            </div>
+          )}
         </div>
       );
     }

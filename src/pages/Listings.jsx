@@ -14,8 +14,17 @@ import { usePagedListings, useListingCounts } from '../lib/queries';
 // Each listing card links into its detail page.
 const linkStyle = { textDecoration: 'none', color: 'inherit', display: 'block' };
 
-const PUBLIC_FILTERS = ['All', 'Active', 'Pending'];
+const PUBLIC_FILTERS = ['All', 'Coming Soon', 'Active', 'Pending'];
 const PAGE_SIZE = 12;
+
+// Stage-aware empty state — speaks to the filter the visitor is on rather
+// than the generic "no results".
+const EMPTY_COPY = {
+  All:           'No listings to show at the moment.',
+  'Coming Soon': 'No previews to share just yet.',
+  Active:        'No active listings to show at the moment.',
+  Pending:       'No listings under contract right now.',
+};
 
 // Public listings excludes sold properties entirely — those live in the
 // Sold Archive page. The filter bar only exposes All / Active / Pending.
@@ -39,8 +48,10 @@ function usePublicListings() {
   // accurate even though the page itself only loads PAGE_SIZE rows.
   const active = rawCounts.Active || 0;
   const pending = rawCounts.Pending || 0;
+  const coming = rawCounts['Coming Soon'] || 0;
   const counts = {
-    All: active + pending,
+    All: coming + active + pending,
+    'Coming Soon': coming,
     Active: active,
     Pending: pending,
   };
@@ -110,7 +121,7 @@ function ListingsA() {
           <p style={{
             textAlign: 'center', padding: '64px 0',
             fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 18, color: t.fgMuted,
-          }}>No listings match this view.</p>
+          }}>{EMPTY_COPY[filter] || EMPTY_COPY.All}</p>
         )}
         <PaginationBar page={page} pageCount={pageCount} onChange={goToPage} />
         <SkeletonStyles />
@@ -265,7 +276,7 @@ function ListingsB() {
           <p style={{
             textAlign: 'center', padding: '64px 0',
             fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 18, color: t.fgMuted,
-          }}>No listings match this view.</p>
+          }}>{EMPTY_COPY[filter] || EMPTY_COPY.All}</p>
         )}
         <PaginationBar page={page} pageCount={pageCount} onChange={goToPage} />
         <SkeletonStyles />

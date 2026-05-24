@@ -15,10 +15,11 @@ const PAGE_SIZE = 12;
 // Pending / Sold / Draft. Labels resolve through theme.statusLabels so
 // Direction B can swap copy without touching this file.
 const STATUS_FACETS = [
-  { key: 'Active',  dot: '#3E6B52' },
-  { key: 'Pending', dot: '#B59568' },
-  { key: 'Sold',    dot: '#8A877E' },
-  { key: 'Draft',   dot: '#C7C2B6' },
+  { key: 'Coming Soon', dot: '#D4B888' },
+  { key: 'Active',      dot: '#3E6B52' },
+  { key: 'Pending',     dot: '#B59568' },
+  { key: 'Sold',        dot: '#8A877E' },
+  { key: 'Draft',       dot: '#C7C2B6' },
 ];
 
 // Tawny's service area, in the order she gave (Metro Detroit → West
@@ -29,11 +30,11 @@ const NEIGHBORHOOD_FACETS = [
   { key: 'metro',             label: 'Metro Detroit',     match: 'Metro Detroit',     dot: '#3B3B38' },
   { key: 'birmingham',        label: 'Birmingham',        match: 'Birmingham',        dot: '#C9A266' },
   { key: 'bloomfield',        label: 'Bloomfield Hills',  match: 'Bloomfield Hills',  dot: '#0E3A2C' },
+  { key: 'beverly',           label: 'Beverly Hills',     match: 'Beverly Hills',     dot: '#7A4F6E' },
   { key: 'royal-oak',         label: 'Royal Oak',         match: 'Royal Oak',         dot: '#A86C4E' },
-  { key: 'ferndale',          label: 'Ferndale',          match: 'Ferndale',          dot: '#4A5B6E' },
+  { key: 'troy',              label: 'Troy',              match: 'Troy',              dot: '#4A5B6E' },
   { key: 'novi',              label: 'Novi',              match: 'Novi',              dot: '#B8633F' },
   { key: 'northville',        label: 'Northville',        match: 'Northville',        dot: '#86825F' },
-  { key: 'farmington-hills',  label: 'Farmington Hills',  match: 'Farmington Hills',  dot: '#7A7368' },
   { key: 'west-bloomfield',   label: 'West Bloomfield',   match: 'West Bloomfield',   dot: '#6E8B7A' },
 ];
 
@@ -72,10 +73,11 @@ export default function ListingsManager() {
 
   const { counts: rawCounts, locCounts } = useListingCounts();
   const counts = {
-    Active:  rawCounts.Active  || 0,
-    Pending: rawCounts.Pending || 0,
-    Sold:    rawCounts.Sold    || 0,
-    Draft:   rawCounts.Draft   || 0,
+    'Coming Soon': rawCounts['Coming Soon'] || 0,
+    Active:        rawCounts.Active  || 0,
+    Pending:       rawCounts.Pending || 0,
+    Sold:          rawCounts.Sold    || 0,
+    Draft:         rawCounts.Draft   || 0,
   };
 
   // Sum per-neighborhood counts via case-insensitive substring match against

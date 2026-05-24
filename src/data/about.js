@@ -36,10 +36,10 @@ export const DISCIPLINES = [
 // Service area — anchor markets + secondary representation.
 export const ANCHORS = ['Birmingham', 'Bloomfield Hills'];
 export const ALSO_REPRESENTING = [
+  'Beverly Hills',
   'Royal Oak',
-  'Ferndale',
+  'Troy',
   'Novi',
   'Northville',
-  'Farmington Hills',
   'West Bloomfield',
 ];

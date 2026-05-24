@@ -4,7 +4,8 @@ import { STUDIO } from '../data/listings';
 import Wordmark from './Wordmark';
 
 const INSTAGRAM_URL = 'https://www.instagram.com/tawny2walker/';
-const LINKEDIN_URL = 'https://www.linkedin.com/in/tawnythieuwalker/';
+const FACEBOOK_URL  = 'https://www.facebook.com/TawnyThieuWalker';
+const LINKEDIN_URL  = 'https://www.linkedin.com/in/tawnythieuwalker/';
 
 export default function SiteFooter() {
   const t = useTheme();
@@ -27,10 +28,11 @@ export default function SiteFooter() {
     },
     { h: 'Explore', items: [
       { label: 'Active Listings', to: '/listings' },
-      { label: 'Sold Listings', to: '/listings/sold' },
+      { label: 'Sold', to: '/listings/sold' },
     ] },
     { h: isB ? 'Follow' : 'Connect', items: [
       { label: 'Instagram', href: INSTAGRAM_URL },
+      { label: 'Facebook', href: FACEBOOK_URL },
       { label: 'LinkedIn', href: LINKEDIN_URL },
     ] },
   ];
