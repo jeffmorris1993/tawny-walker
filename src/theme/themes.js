@@ -1,23 +1,7 @@
-// Direction themes — the single source of truth for both visual languages.
-// Direction A: TAWNY & CO. (warm bone/bronze · Cormorant Garamond + Helvetica Neue)
-// Direction B: TAWNY & CO. (deep emerald/gold · Playfair Display + Inter)
-
-export const A_PALETTE = {
-  paper: '#F6F2EA',
-  bone: '#FBF9F5',
-  white: '#FFFFFF',
-  ink: '#1B1B1A',
-  ink2: '#5B5852',
-  ink3: '#9A968D',
-  ink4: '#C8C3B6',
-  line: '#E3DDD0',
-  lineSoft: '#EDE8DC',
-  bronze: '#6B5A3E',
-  bronzeSoft: '#A8946E',
-  green: '#4A6B4F',
-  amber: '#9C7A3C',
-  rose: '#8C4A4A',
-};
+// Direction theme — the single source of truth for the production look.
+// Direction B: TAWNY & CO. (deep emerald/gold · Playfair Display + Inter).
+// The legacy "warm bone/bronze" Direction A palette was retired when the
+// studio committed to the emerald direction.
 
 export const B_PALETTE = {
   emerald: '#0B3D2E',
@@ -36,20 +20,9 @@ export const B_PALETTE = {
   lineSoft: '#EFF1EC',
 };
 
-// Photo gradient palettes — both directions ship complete sets so listings can
-// keep their `tone` keys and resolve to whichever direction is active.
-const A_PHOTO_PALETTES = {
-  warm: ['#C7B999', '#A89674', '#7A6A4E'],
-  cool: ['#9FA8AD', '#6F7B83', '#4A555E'],
-  dusk: ['#A48D74', '#7A6856', '#3D332A'],
-  night: ['#3B3A36', '#26251F', '#15140F'],
-  bone: ['#E5DDC9', '#CFC4A8', '#A89A78'],
-  sage: ['#B0B4A2', '#888C76', '#5A5E4E'],
-};
-
+// Photo gradient palettes — used as a tone-key lookup so each listing can
+// supply a tone (warm, dusk, sage, etc.) and resolve to the right gradient.
 const B_PHOTO_PALETTES = {
-  // Direction B uses greener boutique palettes. We map A's tone keys onto
-  // direction-B equivalents so shared listing data renders correctly in both.
   warm: ['#A89E84', '#6E6952', '#3D3A2E'],   // olive
   cool: ['#EDE7D9', '#C9C0AE', '#8C8472'],   // marble
   dusk: ['#2F5A48', '#1A3D30', '#0B221B'],   // forest
@@ -67,98 +40,6 @@ const B_PHOTO_PALETTES = {
 };
 
 export const THEMES = {
-  A: {
-    key: 'A',
-    name: 'Warm Editorial',
-    sub: 'Bone & Bronze · Cormorant',
-    palette: A_PALETTE,
-    photoPalettes: A_PHOTO_PALETTES,
-    photoLabelFont: '"JetBrains Mono", "Geist Mono", ui-monospace, monospace',
-    fonts: {
-      display: '"Cormorant Garamond", serif',
-      body: '"Helvetica Neue", Helvetica, Arial, sans-serif',
-      accent: '"JetBrains Mono", "Geist Mono", ui-monospace, monospace',
-    },
-    bgPage: A_PALETTE.bone,
-    bgPanel: A_PALETTE.paper,
-    bgDark: A_PALETTE.ink,
-    fgPage: A_PALETTE.ink,
-    fgMuted: A_PALETTE.ink2,
-    fgFaint: A_PALETTE.ink3,
-    line: A_PALETTE.line,
-    lineSoft: A_PALETTE.lineSoft,
-    accent: A_PALETTE.bronze,        // editorial label color
-    accentSoft: A_PALETTE.bronzeSoft,
-    primary: A_PALETTE.ink,          // primary button bg
-    primaryFg: A_PALETTE.bone,
-    secondary: 'transparent',
-    secondaryBorder: A_PALETTE.ink,
-    eyebrowFont: '"Helvetica Neue", Helvetica, Arial, sans-serif',
-    eyebrowWeight: 400,
-    eyebrowSpacing: '0.28em',
-    eyebrowSize: 11,
-    headlineWeight: 400,             // Cormorant 400 reads beautifully large
-    statusLabels: {
-      'Coming Soon': 'Coming Soon', Active: 'Active', Pending: 'Pending', Sold: 'Sold',
-    },
-    statusDots: {
-      'Coming Soon': A_PALETTE.bronze, Active: A_PALETTE.green, Pending: A_PALETTE.amber, Sold: A_PALETTE.ink2,
-    },
-    // Lead lifecycle uses its own labels/dots so it doesn't collide with
-    // the listing statuses (which share keys like "Active" in some maps).
-    leadStatusLabels: {
-      New: 'New', Contacted: 'Contacted', Active: 'Active',
-      Closed: 'Closed', Cold: 'Cold',
-    },
-    leadStatusDots: {
-      New: A_PALETTE.bronze, Contacted: A_PALETTE.ink3,
-      Active: A_PALETTE.green, Closed: A_PALETTE.ink2,
-      Cold: A_PALETTE.ink4,
-    },
-    navItems: ['Listings', 'About'],
-    indexNoun: 'Listings',           // "Current listings"
-    indexNounSingular: 'Listing',
-    listingNoun: 'listings',
-    ctaPrimary: 'Start Your Inquiry',
-    ctaSecondary: 'View Current Listings',
-    ctaNav: 'Begin Inquiry',
-    wordmark: {
-      // Both directions share the "TAWNY & CO." mark, but A uses Cormorant for
-      // all three parts while B mixes Playfair (TAWNY/CO.) with Cormorant italic (&).
-      family: '"Cormorant Garamond", serif',
-      ampersandFamily: '"Cormorant Garamond", serif',
-    },
-    rule: false,                     // B uses a centered '&' rule; A does not
-    // Admin / studio chrome
-    admin: {
-      sidebarBg: A_PALETTE.paper,
-      sidebarFg: A_PALETTE.ink,
-      sidebarMuted: A_PALETTE.ink3,
-      sidebarAccent: A_PALETTE.bronze,
-      sidebarSubLabel: A_PALETTE.ink3,
-      sidebarBorder: A_PALETTE.line,
-      sidebarActiveBg: A_PALETTE.bone,
-      sidebarActiveBorder: A_PALETTE.line,
-      sidebarBadge: A_PALETTE.ink3,
-      sidebarDivider: A_PALETTE.line,
-      avatarBg: A_PALETTE.ink,
-      avatarFg: A_PALETTE.bone,
-      navLabels: { Leads: 'Leads', Listings: 'Listings' },
-      indexNavKey: 'Listings',
-      indexHeadline: 'Listings',
-      addCta: '+ Add a Listing',
-      composeHeadline: 'listing',
-      attachedNoun: 'listing',
-      attachedNounPlural: 'listings',
-      // Segmented status changer (LeadDetail header)
-      statusChangerBg: A_PALETTE.paper,
-      statusChangerBorder: A_PALETTE.line,
-      statusChangerActiveBg: A_PALETTE.ink,
-      statusChangerActiveFg: A_PALETTE.bone,
-      statusChangerIdleFg: A_PALETTE.ink2,
-    },
-  },
-
   B: {
     key: 'B',
     name: 'Emerald Couture',
@@ -246,4 +127,4 @@ export const THEMES = {
   },
 };
 
-export const DIRECTION_KEYS = ['A', 'B'];
+export const DIRECTION_KEYS = ['B'];

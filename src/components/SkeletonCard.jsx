@@ -3,10 +3,7 @@ import { useTheme } from '../theme/DirectionContext';
 // Animated shimmer placeholders that mimic the real listing cards so the
 // grid doesn't shift size or position while data is fetching.
 
-const SHIMMER = {
-  light: 'linear-gradient(90deg, #ECE6D8 0%, #F4EFE2 50%, #ECE6D8 100%)',
-  emerald: 'linear-gradient(90deg, #DDE6E0 0%, #ECEEE9 50%, #DDE6E0 100%)',
-};
+const SHIMMER = 'linear-gradient(90deg, #DDE6E0 0%, #ECEEE9 50%, #DDE6E0 100%)';
 
 function Bar({ width, height, color }) {
   return (
@@ -22,33 +19,9 @@ function Bar({ width, height, color }) {
   );
 }
 
-export function SkeletonCardA() {
-  const t = useTheme();
-  const color = SHIMMER.light;
-  return (
-    <div style={{ display: 'block' }}>
-      <Bar width="100%" height={280} color={color} />
-      <div style={{ marginTop: 20 }}>
-        <Bar width="70%" height={18} color={color} />
-        <div style={{ height: 8 }} />
-        <Bar width="50%" height={13} color={color} />
-        <div style={{ height: 4 }} />
-        <Bar width="35%" height={13} color={color} />
-      </div>
-      <div style={{
-        marginTop: 14, paddingTop: 14, borderTop: `1px solid ${t.line}`,
-        display: 'flex', justifyContent: 'space-between',
-      }}>
-        <Bar width={84} height={18} color={color} />
-        <Bar width={70} height={10} color={color} />
-      </div>
-    </div>
-  );
-}
-
 export function SkeletonCardB() {
   const t = useTheme();
-  const color = SHIMMER.emerald;
+  const color = SHIMMER;
   return (
     <div style={{ background: '#fff', border: `1px solid ${t.line}` }}>
       <Bar width="100%" height={260} color={color} />

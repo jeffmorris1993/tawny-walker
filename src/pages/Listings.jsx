@@ -8,7 +8,7 @@ import StatusChip from '../components/StatusChip';
 import Button from '../components/Button';
 import Rule from '../components/Rule';
 import PaginationBar from '../components/PaginationBar';
-import { SkeletonCardA, SkeletonCardB, SkeletonStyles } from '../components/SkeletonCard';
+import { SkeletonCardB, SkeletonStyles } from '../components/SkeletonCard';
 import { usePagedListings, useListingCounts } from '../lib/queries';
 
 // Each listing card links into its detail page.
@@ -77,102 +77,6 @@ function usePublicListings() {
   };
 }
 
-// ─── DIRECTION A ────────────────────────────────────────────────────────────
-function ListingsA() {
-  const t = useTheme();
-  const { filter, setFilter, page, setPage, listings, pageCount, counts, soldCount, loading, priceAsc, togglePriceSort } = usePublicListings();
-  const filterRef = useRef(null);
-
-  function goToPage(p) {
-    setPage(p);
-    if (filterRef.current) {
-      filterRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }
-
-  return (
-    <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
-      <TopNav active="Listings" />
-
-      <div style={{ padding: 'clamp(48px, 6.1vw, 88px) clamp(24px, 4.4vw, 64px) clamp(32px, 3.9vw, 56px)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 24 }}>
-          <div>
-            <h1 style={{ fontFamily: t.fonts.display, fontWeight: 300, fontSize: 'clamp(52px, 6.7vw, 96px)', letterSpacing: '-0.022em', margin: 0, lineHeight: 0.95 }}>
-              Current <em style={{ fontStyle: 'italic' }}>{t.listingNoun}</em>.
-            </h1>
-          </div>
-          <p style={{ maxWidth: 380, textAlign: 'right', fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 19, color: t.fgMuted, lineHeight: 1.45, margin: 0 }}>
-            {counts.All} properties currently represented by Tawny, a fraction of the Michigan luxury market, chosen with intent.
-          </p>
-        </div>
-
-        <div ref={filterRef} style={{ scrollMarginTop: 24 }}>
-          <FilterBarA filter={filter} setFilter={setFilter} counts={counts} priceAsc={priceAsc} togglePriceSort={togglePriceSort} />
-        </div>
-      </div>
-
-      <div style={{ padding: '0 clamp(24px, 4.4vw, 64px) clamp(64px, 8.3vw, 120px)' }}>
-        <UniformGrid>
-          {loading
-            ? Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonCardA key={`s-${i}`} />)
-            : listings.map(l => <ListingCardStdA key={l.id} listing={l} />)}
-        </UniformGrid>
-        {!loading && listings.length === 0 && (
-          <p style={{
-            textAlign: 'center', padding: '64px 0',
-            fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 18, color: t.fgMuted,
-          }}>{EMPTY_COPY[filter] || EMPTY_COPY.All}</p>
-        )}
-        <PaginationBar page={page} pageCount={pageCount} onChange={goToPage} />
-        <SkeletonStyles />
-      </div>
-
-      <div id="archive" style={{ padding: '96px clamp(24px, 4.4vw, 64px)', borderTop: `1px solid ${t.line}`, background: t.bgPanel, textAlign: 'center' }}>
-        <h2 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(40px, 4.4vw, 64px)', margin: '0 0 28px', letterSpacing: '-0.018em' }}>
-          {soldCount} <em style={{ fontStyle: 'italic' }}>sold</em> listings.
-        </h2>
-        <Button to="/listings/sold" variant="secondary">View All</Button>
-      </div>
-
-      <SiteFooter />
-      <ListingsGridStyles />
-    </div>
-  );
-}
-
-function FilterBarA({ filter, setFilter, counts, priceAsc, togglePriceSort }) {
-  const t = useTheme();
-  return (
-    <div className="tw-filter-bar" style={{ marginTop: 72, paddingTop: 28, paddingBottom: 12, borderTop: `1px solid ${t.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-      <div className="tw-filter-tabs" style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
-        {PUBLIC_FILTERS.map(f => (
-          <span key={f} onClick={() => setFilter(f)} className="tw-filter-chip" style={{
-            fontSize: 11.5, letterSpacing: '0.24em', textTransform: 'uppercase',
-            color: filter === f ? t.palette.ink : t.fgFaint,
-            borderBottom: filter === f ? `1px solid ${t.palette.ink}` : '1px solid transparent',
-            paddingBottom: 6, cursor: 'pointer', whiteSpace: 'nowrap',
-          }}>{t.statusLabels[f] || f} ({counts[f] ?? 0})</span>
-        ))}
-      </div>
-      <div className="tw-filter-sort" style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
-        <span className="tw-sort-label" style={{ fontSize: 11, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.fgFaint }}>Sort</span>
-        <button
-          type="button"
-          onClick={togglePriceSort}
-          aria-label={`Sort by price ${priceAsc ? 'ascending' : 'descending'}`}
-          className="tw-filter-chip tw-sort-btn"
-          style={{
-            background: 'transparent', border: 'none', padding: '0 0 4px',
-            fontSize: 11.5, letterSpacing: '0.22em', textTransform: 'uppercase',
-            color: t.palette.ink, borderBottom: `1px solid ${t.palette.ink}`,
-            cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
-          }}
-        >By Price {priceAsc ? '↑' : '↓'}</button>
-      </div>
-    </div>
-  );
-}
-
 // Card-line specs render as Beds · Baths · Sq Ft on every viewport. Lot
 // acreage is dropped to keep the card tidy. Falls back to building the
 // string from individual columns when `listing.specs` isn't set.
@@ -200,33 +104,6 @@ function UniformGrid({ children, variant = 'a' }) {
   );
 }
 
-function ListingCardStdA({ listing }) {
-  const t = useTheme();
-  const muted = listing.status === 'Sold';
-  return (
-    <Link to={`/listings/${listing.id}`} style={linkStyle}>
-      <div style={{ position: 'relative' }}>
-        <Photo label="" tone={listing.tone} height={280} src={listing.img} />
-        <div style={{ position: 'absolute', top: 14, left: 14, padding: '5px 10px', background: 'rgba(251,249,245,0.95)' }}>
-          <StatusChip status={listing.status} />
-        </div>
-      </div>
-      <div style={{ marginTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
-        <div>
-          <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 26, letterSpacing: '-0.012em', margin: 0 }}>{listing.addr}</h3>
-          <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 16, color: t.fgMuted, marginTop: 2 }}>{listing.street}</div>
-          <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 14, color: t.fgFaint }}>{listing.loc}</div>
-        </div>
-      </div>
-      <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${t.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-        <span style={{ fontFamily: t.fonts.display, fontSize: 22, color: muted ? t.fgFaint : t.fgPage }}>{listing.price}</span>
-        <span style={{ fontSize: 9.5, letterSpacing: '0.18em', textTransform: 'uppercase', color: t.fgFaint }}>{cardSpecs(listing)}</span>
-      </div>
-    </Link>
-  );
-}
-
-// ─── DIRECTION B ────────────────────────────────────────────────────────────
 function ListingsB() {
   const t = useTheme();
   const { filter, setFilter, page, setPage, listings, pageCount, counts, soldCount, loading, priceAsc, togglePriceSort } = usePublicListings();
@@ -397,8 +274,7 @@ function ListingsGridStyles() {
 }
 
 export default function Listings() {
-  const t = useTheme();
-  return t.key === 'B' ? <ListingsB /> : <ListingsA />;
+  return <ListingsB />;
 }
 
 // Exports the uniform grid + card components so the Sold Listings page can
@@ -406,7 +282,6 @@ export default function Listings() {
 export {
   ListingsGridStyles,
   UniformGrid,
-  ListingCardStdA,
   ListingCardStdB,
   PAGE_SIZE,
 };

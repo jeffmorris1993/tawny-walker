@@ -4,12 +4,12 @@ import TopNav from '../components/TopNav';
 import SiteFooter from '../components/SiteFooter';
 import Rule from '../components/Rule';
 import PaginationBar from '../components/PaginationBar';
-import { SkeletonCardA, SkeletonCardB, SkeletonStyles } from '../components/SkeletonCard';
+import { SkeletonCardB, SkeletonStyles } from '../components/SkeletonCard';
 import { usePagedListings } from '../lib/queries';
 import {
   ListingsGridStyles,
   UniformGrid,
-  ListingCardStdA, ListingCardStdB,
+  ListingCardStdB,
   PAGE_SIZE,
 } from './Listings';
 
@@ -21,58 +21,6 @@ function useSoldPage() {
     pageSize: PAGE_SIZE,
   });
   return { page, setPage, listings: data, total, pageCount, loading };
-}
-
-function ArchiveA() {
-  const t = useTheme();
-  const { page, setPage, listings, total, pageCount, loading } = useSoldPage();
-  const gridRef = useRef(null);
-
-  function goToPage(p) {
-    setPage(p);
-    if (gridRef.current) {
-      gridRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }
-
-  return (
-    <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
-      <TopNav active="Listings" />
-
-      <div style={{ padding: 'clamp(48px, 6.1vw, 88px) clamp(24px, 4.4vw, 64px) clamp(32px, 3.9vw, 56px)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 24 }}>
-          <div>
-            <h1 style={{ fontFamily: t.fonts.display, fontWeight: 300, fontSize: 'clamp(52px, 6.7vw, 96px)', letterSpacing: '-0.022em', margin: 0, lineHeight: 0.95 }}>
-              <em style={{ fontStyle: 'italic' }}>Sold</em>.
-            </h1>
-          </div>
-          <p style={{ maxWidth: 380, textAlign: 'right', fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 19, color: t.fgMuted, lineHeight: 1.45, margin: 0 }}>
-            A selection of recent placements, {total} in total.
-          </p>
-        </div>
-        <div style={{ marginTop: 72, paddingTop: 28, borderTop: `1px solid ${t.line}` }} />
-      </div>
-
-      <div ref={gridRef} style={{ padding: '0 clamp(24px, 4.4vw, 64px) clamp(64px, 8.3vw, 120px)', scrollMarginTop: 24 }}>
-        <UniformGrid>
-          {loading
-            ? Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonCardA key={`s-${i}`} />)
-            : listings.map(l => <ListingCardStdA key={l.id} listing={l} />)}
-        </UniformGrid>
-        {!loading && listings.length === 0 && (
-          <p style={{
-            textAlign: 'center', padding: '64px 0',
-            fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 18, color: t.fgMuted,
-          }}>No closed placements yet.</p>
-        )}
-        <PaginationBar page={page} pageCount={pageCount} onChange={goToPage} />
-        <SkeletonStyles />
-      </div>
-
-      <SiteFooter />
-      <ListingsGridStyles />
-    </div>
-  );
 }
 
 function ArchiveB() {
@@ -133,6 +81,5 @@ function ArchiveB() {
 }
 
 export default function SoldArchive() {
-  const t = useTheme();
-  return t.key === 'B' ? <ArchiveB /> : <ArchiveA />;
+  return <ArchiveB />;
 }

@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { DirectionProvider } from './theme/DirectionContext';
-import DirectionToggle from './components/DirectionToggle';
 import Landing from './pages/Landing';
 import Listings from './pages/Listings';
 import SoldArchive from './pages/SoldArchive';
@@ -19,13 +18,6 @@ function RequireAdmin({ children }) {
   const isAdmin = useIsAdmin();
   if (!isAdmin) return <Navigate to="/admin/login" replace />;
   return children;
-}
-
-// The A/B toggle now appears on admin too, since the studio chrome re-skins
-// per direction. Hide only if we ever route to something explicitly chromeless.
-function PublicChrome() {
-  useLocation();
-  return <DirectionToggle />;
 }
 
 // Scroll to the hash target after every navigation event (React Router doesn't
@@ -77,7 +69,6 @@ export default function App() {
           <Route path="/admin/listings/:id/edit" element={<RequireAdmin><AddListing /></RequireAdmin>} />
           <Route path="/studio/preview/:id" element={<RequireAdmin><ListingDetail /></RequireAdmin>} />
         </Routes>
-        <PublicChrome />
       </BrowserRouter>
     </DirectionProvider>
   );
