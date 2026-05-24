@@ -32,17 +32,23 @@ export default function StudioLog({ leadId, leadCreatedAt, leadWhen, bumpKey = 0
   }), [leadCreatedAt, leadWhen]);
 
   const items = useMemo(() => {
-    const ev = events.map(e => ({
-      id: e.id,
-      kind: e.kind,                         // 'note' | 'status'
-      headline: e.kind === 'status'
-        ? `Status: ${e.previous_value || '—'} → ${e.next_value}`
-        : 'Studio note edited — TW',
-      when: formatStamp(e.created_at),
-      timestamp: e.created_at,
-      previous: e.previous_value,
-      next: e.next_value,
-    }));
+    const ev = events.map(e => {
+      // Snapshot taken when the event was written; pre-actor events fall
+      // back to a neutral "Studio" so the headline still reads.
+      const who = e.actor_name && e.actor_name.trim() ? e.actor_name : 'Studio';
+      return {
+        id: e.id,
+        kind: e.kind,                         // 'note' | 'status'
+        headline: e.kind === 'status'
+          ? `Status: ${e.previous_value || '—'} → ${e.next_value} · ${who}`
+          : `Studio note edited — ${who}`,
+        when: formatStamp(e.created_at),
+        timestamp: e.created_at,
+        previous: e.previous_value,
+        next: e.next_value,
+        actor: who,
+      };
+    });
     // Newest events first; intake always sits at the bottom as the
     // historical anchor.
     return [...ev, intakeItem];

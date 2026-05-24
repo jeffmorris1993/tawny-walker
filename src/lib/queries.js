@@ -763,15 +763,30 @@ export function useLeadEvents(leadId, { pageSize = 15, bumpKey = 0 } = {}) {
   /* eslint-enable react-hooks/set-state-in-effect */
 }
 
+// Snapshot of who is making this write, used to stamp lead_events.
+// Reads the current Supabase session; returns null on the actor pieces
+// if no one is signed in (write would have been blocked by RLS anyway).
+async function currentActor() {
+  if (!supabase) return { actor_id: null, actor_name: null };
+  const { data } = await supabase.auth.getUser();
+  const u = data?.user;
+  return {
+    actor_id:   u?.id || null,
+    actor_name: userDisplayName(u),
+  };
+}
+
 export async function updateLeadStatus(id, status, previousStatus) {
   if (noClient()) return { error: { message: 'Supabase not configured' } };
   const { error } = await supabase.from('leads').update({ status }).eq('id', id);
   if (!error) invalidateLeadTotal();
   if (!error && previousStatus !== status) {
+    const actor = await currentActor();
     await supabase.from('lead_events').insert({
       lead_id: id, kind: 'status',
       previous_value: previousStatus || null,
       next_value: status,
+      ...actor,
     });
   }
   return { error };
@@ -784,10 +799,12 @@ export async function updateLeadNote(id, studioNote, previousNote) {
     .update({ studio_note: studioNote, studio_note_saved_at: new Date().toISOString() })
     .eq('id', id);
   if (!error) {
+    const actor = await currentActor();
     await supabase.from('lead_events').insert({
       lead_id: id, kind: 'note',
       previous_value: previousNote || null,
       next_value: studioNote || null,
+      ...actor,
     });
   }
   return { error };
