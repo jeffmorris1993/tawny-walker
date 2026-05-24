@@ -4,6 +4,7 @@ import { useTheme } from '../theme/DirectionContext';
 import { ROLES, ROLE_KEYS } from '../data/inquiryRoles';
 import { submitInquiry } from '../lib/queries';
 import { required, isEmail, isPhone } from '../lib/validation';
+import { parseMoney, formatMoney, clampMoney, clampMoneyString } from '../lib/money';
 import Photo from '../components/Photo';
 import TopNav from '../components/TopNav';
 import SiteFooter from '../components/SiteFooter';
@@ -118,58 +119,29 @@ function buildInitial(role) {
   return { fields, chips, notes, budget };
 }
 
-// ─── Money parsing / formatting for the budget slider ───────────────────────
-// Accepts shapes like '$50K', '$1.42M', '$8K/mo'. Returns { value, suffix }.
-function parseMoney(s) {
-  const str = String(s).trim();
-  const suffixMatch = str.match(/\/[a-z]+$/i);
-  const suffix = suffixMatch ? suffixMatch[0] : '';
-  const body = (suffix ? str.slice(0, -suffix.length) : str)
-    .replace(/[$,\s]/g, '')
-    .trim();
-  let multiplier = 1;
-  let numeric = body;
-  if (/M$/i.test(body)) { multiplier = 1_000_000; numeric = body.slice(0, -1); }
-  else if (/K$/i.test(body)) { multiplier = 1_000; numeric = body.slice(0, -1); }
-  const value = parseFloat(numeric) * multiplier;
-  return { value: isFinite(value) ? value : 0, suffix };
-}
-
-function formatMoney(value, suffix = '') {
-  if (!isFinite(value)) return '—';
-  let display;
-  if (value >= 1_000_000) {
-    const m = value / 1_000_000;
-    display = `$${m >= 10 ? Math.round(m) : m.toFixed(2).replace(/\.?0+$/, '')}M`;
-  } else if (value >= 1_000) {
-    display = `$${Math.round(value / 1_000)}K`;
-  } else {
-    display = `$${Math.round(value)}`;
-  }
-  return suffix ? display + suffix : display;
-}
-
-function validate(role, form) {
-  const errors = {};
-  // Find the actual contact fields the form is rendering, then enforce
-  // "at least one of Email or Phone" plus format checks on whichever is
-  // present.
-  let hasName = false;
-  let hasEmail = false;
-  let hasPhone = false;
+// Inspect a role's sections and return the labels we treat as the
+// universal contact fields. Returned shape stays stable so per-field and
+// full-form validation can share the same lookup.
+function findContactLabels(role) {
   let nameLabel = null;
   let emailLabel = null;
   let phoneLabel = null;
   for (const s of role.sections) {
     if (!s.cols) continue;
     for (const c of s.cols) {
-      if (NAME_LABELS.has(c.label))   { hasName = true;  nameLabel = c.label; }
-      if (EMAIL_LABELS.has(c.label))  { hasEmail = true; emailLabel = c.label; }
-      if (PHONE_LABELS.has(c.label))  { hasPhone = true; phoneLabel = c.label; }
+      if (NAME_LABELS.has(c.label))  nameLabel  = c.label;
+      if (EMAIL_LABELS.has(c.label)) emailLabel = c.label;
+      if (PHONE_LABELS.has(c.label)) phoneLabel = c.label;
     }
   }
+  return { nameLabel, emailLabel, phoneLabel };
+}
 
-  if (hasName) {
+function validate(role, form) {
+  const errors = {};
+  const { nameLabel, emailLabel, phoneLabel } = findContactLabels(role);
+
+  if (nameLabel) {
     const err = required(form.fields[nameLabel], 'Name');
     if (err) errors[nameLabel] = err;
   }
@@ -178,9 +150,8 @@ function validate(role, form) {
   const phoneVal = phoneLabel ? form.fields[phoneLabel] : '';
   const hasAnyContact = (emailVal && emailVal.trim()) || (phoneVal && phoneVal.trim());
 
-  if (hasEmail || hasPhone) {
+  if (emailLabel || phoneLabel) {
     if (!hasAnyContact) {
-      // Surface the rule on both fields so the user sees it next to either.
       if (emailLabel) errors[emailLabel] = 'Enter an email or phone (one is required).';
       if (phoneLabel) errors[phoneLabel] = 'Enter an email or phone (one is required).';
     } else {
@@ -195,6 +166,26 @@ function validate(role, form) {
     }
   }
   return errors;
+}
+
+// Same rules as validate(), but scoped to a single field — runs on blur
+// so the user sees the message as soon as they leave the input instead of
+// waiting for the submit.
+function validateField(role, form, label) {
+  const { nameLabel, emailLabel, phoneLabel } = findContactLabels(role);
+  if (label === nameLabel) {
+    return required(form.fields[nameLabel], 'Name');
+  }
+  if (label === emailLabel || label === phoneLabel) {
+    const emailVal = emailLabel ? form.fields[emailLabel] : '';
+    const phoneVal = phoneLabel ? form.fields[phoneLabel] : '';
+    const hasAnyContact = (emailVal && emailVal.trim()) || (phoneVal && phoneVal.trim());
+    if (!hasAnyContact) return 'Enter an email or phone (one is required).';
+    if (label === emailLabel && emailVal && emailVal.trim()) return isEmail(emailVal);
+    if (label === phoneLabel && phoneVal && phoneVal.trim()) return isPhone(phoneVal);
+    return null;
+  }
+  return null;
 }
 
 // ─── Form pieces ────────────────────────────────────────────────────────────
@@ -212,7 +203,7 @@ function FormLabel({ children, error }) {
   );
 }
 
-function InputField({ label, value, onChange, placeholder, dropdown, options, error, required: req }) {
+function InputField({ label, value, onChange, onBlur, placeholder, dropdown, options, error, required: req }) {
   const skin = useInquirySkin();
   const t = skin.t;
   const isSelect = Array.isArray(options) && options.length > 0;
@@ -233,6 +224,7 @@ function InputField({ label, value, onChange, placeholder, dropdown, options, er
         <TextField
           value={value}
           onChange={onChange}
+          onBlur={onBlur}
           placeholder={placeholder}
           dropdown={dropdown}
           error={error}
@@ -247,7 +239,7 @@ function InputField({ label, value, onChange, placeholder, dropdown, options, er
   );
 }
 
-function TextField({ value, onChange, placeholder, dropdown, error }) {
+function TextField({ value, onChange, onBlur, placeholder, dropdown, error }) {
   const skin = useInquirySkin();
   const t = skin.t;
   const filled = value && String(value).length > 0;
@@ -261,6 +253,7 @@ function TextField({ value, onChange, placeholder, dropdown, error }) {
         type="text"
         value={value || ''}
         onChange={e => onChange && onChange(e.target.value)}
+        onBlur={e => onBlur && onBlur(e.target.value)}
         placeholder={placeholder || ''}
         style={{
           flex: 1, minWidth: 0,
@@ -478,23 +471,26 @@ function BudgetRange({ label, min, max, range, onChange }) {
 
   function commitLow(str) {
     const parsed = parseMoney(str);
-    if (!isFinite(parsed.value) || parsed.value < 0) {
+    if (!isFinite(parsed.value)) {
       setLowInput(formatMoney(lowVal, suffix));
       return;
     }
+    // Clamp negative typing to 0 and cap fat-fingered amounts at $999M.
+    const next = clampMoney(parsed.value);
     // Keep ordering, but let the user push the band wider in either
     // direction (typed numbers may exceed the slider min/max).
-    const high = parsed.value > highVal ? parsed.value : highVal;
-    onChange({ low: parsed.value, high });
+    const high = next > highVal ? next : highVal;
+    onChange({ low: next, high });
   }
   function commitHigh(str) {
     const parsed = parseMoney(str);
-    if (!isFinite(parsed.value) || parsed.value < 0) {
+    if (!isFinite(parsed.value)) {
       setHighInput(formatMoney(highVal, suffix));
       return;
     }
-    const low = parsed.value < lowVal ? parsed.value : lowVal;
-    onChange({ low, high: parsed.value });
+    const next = clampMoney(parsed.value);
+    const low = next < lowVal ? next : lowVal;
+    onChange({ low, high: next });
   }
 
   const trackRef = useRef(null);
@@ -548,46 +544,87 @@ function BudgetRange({ label, min, max, range, onChange }) {
     startDrag(which)(e);
   }
 
-  const valueInputStyle = {
-    width: '5.6em', minWidth: 0,
-    background: 'transparent', border: 0, outline: 'none',
-    padding: 0,
-    fontFamily: t.fonts.display, fontSize: 28,
-    color: skin.valueColor,
-    textAlign: 'inherit',
-  };
+  // Each input has its own focus state so we can show/hide the hint text
+  // and color the underline accordingly.
+  const [lowFocused,  setLowFocused]  = useState(false);
+  const [highFocused, setHighFocused] = useState(false);
 
   return (
     <div style={{ marginBottom: 32 }}>
       <FormLabel>{label}</FormLabel>
-      <div style={{
-        display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
-        marginTop: 14, gap: 12, flexWrap: 'wrap',
+      {/* Three-column grid on wide screens (min · "to" · max). Drops to one
+          column with the "to" sitting between the two stacked values on
+          phones so the dollar amounts never wrap awkwardly. */}
+      <div className="tw-budget-row" style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr auto 1fr',
+        gap: 14,
+        alignItems: 'end',
+        marginTop: 14,
       }}>
-        <input
-          type="text"
-          inputMode="decimal"
+        <BudgetValueInput
+          ariaLabel={`${label} — minimum`}
+          align="left"
+          focused={lowFocused}
           value={lowInput}
-          onChange={e => setLowInput(e.target.value)}
-          onFocus={() => { lowFocusedRef.current = true; }}
-          onBlur={(e) => { lowFocusedRef.current = false; commitLow(e.target.value); }}
-          onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-          aria-label={`${label} — minimum`}
-          style={valueInputStyle}
+          // Strip minus signs and refuse keystrokes that would push the
+          // parsed value past MONEY_MAX — so typing extra zeros into a
+          // value already at the cap just doesn't take.
+          onChange={(v) => setLowInput(clampMoneyString(String(v), lowInput))}
+          onFocus={() => {
+            // Swap the formatted display for a raw number while the user
+            // edits — they shouldn't have to clear "$1.04M" before typing.
+            lowFocusedRef.current = true;
+            setLowFocused(true);
+            setLowInput(lowVal > 0 ? String(Math.round(lowVal)) : '');
+          }}
+          onBlur={(e) => {
+            lowFocusedRef.current = false;
+            setLowFocused(false);
+            commitLow(e.target.value);
+          }}
+          skin={skin}
+          t={t}
+          hint="Tap to type"
         />
-        <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 14, color: t.fgFaint }}>to</span>
-        <input
-          type="text"
-          inputMode="decimal"
+        <span className="tw-budget-to" style={{
+          fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 14,
+          color: t.fgFaint, paddingBottom: 12, justifySelf: 'center',
+        }}>to</span>
+        <BudgetValueInput
+          ariaLabel={`${label} — maximum`}
+          align="right"
+          focused={highFocused}
           value={highInput}
-          onChange={e => setHighInput(e.target.value)}
-          onFocus={() => { highFocusedRef.current = true; }}
-          onBlur={(e) => { highFocusedRef.current = false; commitHigh(e.target.value); }}
-          onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-          aria-label={`${label} — maximum`}
-          style={{ ...valueInputStyle, textAlign: 'right' }}
+          onChange={(v) => setHighInput(clampMoneyString(String(v), highInput))}
+          onFocus={() => {
+            highFocusedRef.current = true;
+            setHighFocused(true);
+            setHighInput(highVal > 0 ? String(Math.round(highVal)) : '');
+          }}
+          onBlur={(e) => {
+            highFocusedRef.current = false;
+            setHighFocused(false);
+            commitHigh(e.target.value);
+          }}
+          skin={skin}
+          t={t}
+          hint="Tap to type"
         />
       </div>
+      <style>{`
+        @media (max-width: 540px) {
+          .tw-budget-row {
+            grid-template-columns: 1fr !important;
+            gap: 6px !important;
+            text-align: center !important;
+          }
+          .tw-budget-row > .tw-budget-to {
+            justify-self: center !important;
+            padding-bottom: 0 !important;
+          }
+        }
+      `}</style>
       <div
         ref={trackRef}
         onPointerDown={onTrackPointerDown}
@@ -642,6 +679,47 @@ function BudgetRange({ label, min, max, range, onChange }) {
   );
 }
 
+// One of the two big editable amounts above the budget slider. Visually
+// reads as a hairline-underlined input (signals "type to edit") with an
+// italic hint that disappears once the field is focused.
+function BudgetValueInput({
+  ariaLabel, align, focused, value, onChange, onFocus, onBlur, skin, t, hint,
+}) {
+  return (
+    <div style={{ minWidth: 0, textAlign: align }}>
+      <input
+        type="text"
+        inputMode="numeric"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+        aria-label={ariaLabel}
+        style={{
+          width: '100%', minWidth: 0,
+          background: 'transparent', outline: 'none',
+          padding: '4px 0',
+          border: 'none',
+          borderBottom: `1px solid ${focused ? skin.sliderEnd : t.line}`,
+          fontFamily: t.fonts.display, fontSize: 'clamp(22px, 4vw, 28px)',
+          color: skin.valueColor,
+          textAlign: align,
+          transition: 'border-color 0.15s',
+        }}
+      />
+      <div style={{
+        marginTop: 4,
+        fontFamily: t.fonts.display, fontStyle: 'italic',
+        fontSize: 11, color: t.fgFaint,
+        opacity: focused ? 0 : 1,
+        transition: 'opacity 0.15s',
+        textAlign: align,
+      }}>{hint}</div>
+    </div>
+  );
+}
+
 function Thumb({ pct, color, onPointerDown }) {
   return (
     <button
@@ -661,7 +739,7 @@ function Thumb({ pct, color, onPointerDown }) {
   );
 }
 
-function RoleSection({ s, form, setForm, errors }) {
+function RoleSection({ s, form, setForm, errors, onFieldBlur }) {
   const skin = useInquirySkin();
   const t = skin.t;
 
@@ -694,6 +772,7 @@ function RoleSection({ s, form, setForm, errors }) {
               key={i} {...c}
               value={form.fields[c.label] || ''}
               onChange={setField(c.label)}
+              onBlur={onFieldBlur ? (v) => onFieldBlur(c.label, v) : undefined}
               required={NAME_LABELS.has(c.label) || CONTACT_LABELS.has(c.label)}
               error={errors[c.label]}
             />
@@ -711,6 +790,7 @@ function RoleSection({ s, form, setForm, errors }) {
             key={i} {...c}
             value={form.fields[c.label] || ''}
             onChange={setField(c.label)}
+            onBlur={onFieldBlur ? (v) => onFieldBlur(c.label, v) : undefined}
             required={NAME_LABELS.has(c.label) || CONTACT_LABELS.has(c.label)}
             error={errors[c.label]}
           />
@@ -842,13 +922,13 @@ function RoleSection({ s, form, setForm, errors }) {
   return null;
 }
 
-function RoleForm({ role, form, setForm, errors, submitting, submitError, onSubmit }) {
+function RoleForm({ role, form, setForm, errors, submitting, submitError, onSubmit, onFieldBlur }) {
   const skin = useInquirySkin();
   const t = skin.t;
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} style={{ marginTop: 48 }} noValidate>
       {role.sections.map((s, i) => (
-        <RoleSection key={i} s={s} form={form} setForm={setForm} errors={errors} />
+        <RoleSection key={i} s={s} form={form} setForm={setForm} errors={errors} onFieldBlur={onFieldBlur} />
       ))}
 
       <div style={{
@@ -1216,6 +1296,18 @@ export function InquiryWidget({ syncUrl = false, showHeading = true }) {
           submitting={status === 'submitting'}
           submitError={submitError}
           onSubmit={handleSubmit}
+          onFieldBlur={(label, nextValue) => {
+            // Re-derive the form snapshot with the blurred value applied,
+            // since the change + blur run back-to-back and React may not
+            // have re-rendered with the latest value yet.
+            const snapshot = { ...form, fields: { ...form.fields, [label]: nextValue } };
+            const err = validateField(selected, snapshot, label);
+            setErrors(prev => {
+              const next = { ...prev };
+              if (err) next[label] = err; else delete next[label];
+              return next;
+            });
+          }}
         />
       )}
 

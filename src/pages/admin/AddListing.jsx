@@ -10,10 +10,23 @@ import PhotoUploader from '../../components/admin/PhotoUploader';
 import { DRAFT_LISTING } from '../../data/leads';
 import { createListing, updateListing, deleteListing, useListing } from '../../lib/queries';
 import { required } from '../../lib/validation';
+import { parseMoney, formatMoney, clampMoney, clampMoneyString } from '../../lib/money';
 
-function FormInput({ label, value, onChange, placeholder, dropdown, error }) {
+// Single text input. Setting `money` switches on auto-format-on-blur:
+// the user can type a raw number (10400) and the field commits "$10.4K"
+// once focus leaves. Setting `onBlur` is how the parent runs per-field
+// validation as soon as the user leaves the input.
+function FormInput({ label, value, onChange, placeholder, dropdown, error, money, onBlur }) {
   const t = useTheme();
   const errorColor = '#B5341F';
+  // Local input string so the user can type freely (digits, commas, "$1.5M")
+  // before we re-format. Synced from `value` whenever the field isn't
+  // actively being edited.
+  const [draft, setDraft] = useState(value || '');
+  const [editing, setEditing] = useState(false);
+  useEffect(() => {
+    if (!editing) setDraft(value || '');
+  }, [value, editing]);
   return (
     <div>
       <div style={{
@@ -31,8 +44,40 @@ function FormInput({ label, value, onChange, placeholder, dropdown, error }) {
       }}>
         <input
           type="text"
-          value={value || ''}
-          onChange={e => onChange && onChange(e.target.value)}
+          inputMode={money ? 'numeric' : undefined}
+          value={draft}
+          onChange={e => {
+            // For money fields: strip minus signs and refuse keystrokes
+            // that would push the parsed value past the $999M cap, so the
+            // user can't even type a value the clamp would reject.
+            const raw = money ? clampMoneyString(e.target.value, draft) : e.target.value;
+            setDraft(raw);
+            // Push raw text up for non-money fields; money fields commit
+            // their formatted value on blur instead.
+            if (!money && onChange) onChange(raw);
+          }}
+          onFocus={() => {
+            setEditing(true);
+            // Money fields swap to the raw numeric while editing — easier to
+            // type "1200000" than to position a cursor inside "$1.2M".
+            if (money) {
+              const parsed = parseMoney(draft);
+              setDraft(parsed.value > 0 ? String(Math.round(parsed.value)) : '');
+            }
+          }}
+          onBlur={(e) => {
+            setEditing(false);
+            let next = e.target.value;
+            if (money) {
+              const parsed = parseMoney(next);
+              // Clamp negatives to 0 and amounts above $999M down to $999M.
+              const clamped = clampMoney(parsed.value);
+              next = clamped > 0 ? formatMoney(clamped, parsed.suffix) : '';
+              setDraft(next);
+              onChange?.(next);
+            }
+            onBlur?.(next);
+          }}
           placeholder={placeholder}
           style={{
             flex: 1, minWidth: 0,
@@ -146,6 +191,31 @@ export default function AddListing() {
   }
 
   const set = (k) => (v) => setForm(f => ({ ...f, [k]: v }));
+
+  // Per-field validation runs on blur as soon as the user leaves a field
+  // they've touched — so they don't have to hit "Publish" before learning
+  // a required field was missed.
+  function fieldError(field, value) {
+    switch (field) {
+      case 'name':    return required(value, 'Listing name');
+      case 'address': return required(value, 'Address');
+      case 'city':    return required(value, 'City');
+      case 'price':   return required(value, 'Price');
+      default:        return null;
+    }
+  }
+  function validateOnBlur(field) {
+    return (nextValue) => {
+      // Use the value the input committed (post-format for money fields).
+      const valueForCheck = nextValue !== undefined ? nextValue : form?.[field];
+      const err = fieldError(field, valueForCheck);
+      setErrors(prev => {
+        const next = { ...prev };
+        if (err) next[field] = err; else delete next[field];
+        return next;
+      });
+    };
+  }
 
   function validate() {
     const next = {};
@@ -341,10 +411,10 @@ export default function AddListing() {
           <div style={{ marginTop: 40 }}>
             <Eyebrow color={t.accent}>Property details</Eyebrow>
             <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <FormInput label="Listing name (editorial)" value={form.name} onChange={set('name')} error={errors.name} />
+              <FormInput label="Listing name (editorial)" value={form.name} onChange={set('name')} error={errors.name} onBlur={validateOnBlur('name')} />
               <div className="tw-add-pair-2-1" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 20 }}>
-                <FormInput label="Address" value={form.address} onChange={set('address')} error={errors.address} />
-                <FormInput label="City, State" value={form.city} onChange={set('city')} error={errors.city} />
+                <FormInput label="Address" value={form.address} onChange={set('address')} error={errors.address} onBlur={validateOnBlur('address')} />
+                <FormInput label="City, State" value={form.city} onChange={set('city')} error={errors.city} onBlur={validateOnBlur('city')} />
               </div>
               <div className="tw-add-pair-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
                 <FormInput label="Beds" value={form.beds} onChange={set('beds')} />
@@ -353,7 +423,15 @@ export default function AddListing() {
                 <FormInput label="Lot" value={form.lot} onChange={set('lot')} />
               </div>
               <div className="tw-add-pair-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                <FormInput label="Asking price" value={form.price} onChange={set('price')} error={errors.price} />
+                <FormInput
+                  label="Asking price"
+                  value={form.price}
+                  onChange={set('price')}
+                  error={errors.price}
+                  onBlur={validateOnBlur('price')}
+                  money
+                  placeholder="e.g. 1200000"
+                />
                 <div style={{ position: 'relative' }}>
                   <div style={{
                     fontFamily: t.eyebrowFont,
