@@ -11,6 +11,7 @@ import PaginationBar from '../components/PaginationBar';
 import { SkeletonCardB, SkeletonStyles } from '../components/SkeletonCard';
 import { usePagedListings, useListingCounts } from '../lib/queries';
 import { dashIfBlank } from '../lib/format';
+import SEO from '../components/SEO';
 
 // Each listing card links into its detail page.
 const linkStyle = { textDecoration: 'none', color: 'inherit', display: 'block' };
@@ -119,6 +120,11 @@ function ListingsB() {
 
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
+      <SEO
+        title="Current Listings"
+        description="Active and upcoming residences represented by Tawny Walker across Birmingham, Bloomfield Hills, and the wider Metro Detroit area."
+        path="/listings"
+      />
       <TopNav active="Listings" />
 
       <div style={{ padding: 'clamp(56px, 7vw, 96px) clamp(24px, 5vw, 72px) clamp(32px, 4vw, 56px)', textAlign: 'center' }}>

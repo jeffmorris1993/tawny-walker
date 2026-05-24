@@ -6,6 +6,8 @@ import SiteFooter from '../components/SiteFooter';
 import StatusChip from '../components/StatusChip';
 import { useListing, useRelatedListings, usePreviewOverride } from '../lib/queries';
 import { dashIfBlank } from '../lib/format';
+import { parseMoney } from '../lib/money';
+import SEO from '../components/SEO';
 
 // The detail page is the same content rendered in two visual directions.
 // Section order: breadcrumb → hero → head (name, address, tagline subtitle,
@@ -16,13 +18,57 @@ function splitName(name) {
   return [parts[0], parts.slice(1).join(' ')];
 }
 
-function ListingDetailB({ L }) {
+function ListingDetailB({ L, noindex = false }) {
   const t = useTheme();
   const related = useRelatedListings(L.id);
   const emerald = t.palette.emerald;
 
+  const heroImage = (L.photos && L.photos[0]?.url) || L.img;
+  const priceValue = parseMoney(L.price).value || undefined;
+  const description = L.tagline || L.blurb
+    || `${L.addr || 'Residence'}${L.street ? ` at ${L.street}` : ''}${L.loc ? `, ${L.loc}` : ''}.`;
+  // RealEstateListing structured data — what Google + AI tools read to
+  // understand the listing without rendering JS.
+  const listingJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'RealEstateListing',
+    name: L.addr,
+    description,
+    url: `/listings/${L.id}`,
+    image: heroImage ? [heroImage] : undefined,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: L.street || undefined,
+      addressLocality: L.loc || undefined,
+      addressRegion: 'MI',
+      addressCountry: 'US',
+    },
+    offers: priceValue ? {
+      '@type': 'Offer',
+      price: priceValue,
+      priceCurrency: 'USD',
+      availability: L.status === 'Sold'
+        ? 'https://schema.org/SoldOut'
+        : 'https://schema.org/InStock',
+    } : undefined,
+    numberOfRooms: L.beds || undefined,
+    numberOfBathroomsTotal: L.baths || undefined,
+    floorSize: L.sqft
+      ? { '@type': 'QuantitativeValue', value: String(L.sqft).replace(/[^\d]/g, '') || undefined, unitCode: 'FTK' }
+      : undefined,
+    datePosted: L.listedAt || undefined,
+  };
+
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
+      <SEO
+        title={L.addr || 'Listing'}
+        description={description}
+        path={`/listings/${L.id}`}
+        image={heroImage}
+        jsonLd={noindex ? undefined : listingJsonLd}
+        noindex={noindex}
+      />
       <TopNav active="Listings" />
 
       {/* breadcrumb */}
@@ -387,5 +433,5 @@ export default function ListingDetail() {
   // The admin's "Short description" maps to the public tagline subtitle.
   const merged = isPreview && override ? { ...dbListing, ...override } : dbListing;
   const L = { ...merged, tagline: merged.tagline || merged.blurb || null };
-  return <ListingDetailB L={L} />;
+  return <ListingDetailB L={L} noindex={isPreview} />;
 }

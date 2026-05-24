@@ -6,6 +6,7 @@ import Rule from '../components/Rule';
 import PaginationBar from '../components/PaginationBar';
 import { SkeletonCardB, SkeletonStyles } from '../components/SkeletonCard';
 import { usePagedListings } from '../lib/queries';
+import SEO from '../components/SEO';
 import {
   ListingsGridStyles,
   UniformGrid,
@@ -37,6 +38,11 @@ function ArchiveB() {
 
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
+      <SEO
+        title="Sold"
+        description="Recent sold placements by Tawny Walker across Birmingham, Bloomfield Hills, and the wider Metro Detroit area."
+        path="/listings/sold"
+      />
       <TopNav active="Listings" />
 
       <div style={{ padding: 'clamp(56px, 7vw, 96px) clamp(24px, 5vw, 72px) clamp(32px, 4vw, 56px)', textAlign: 'center' }}>

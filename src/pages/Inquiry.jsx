@@ -9,6 +9,7 @@ import Photo from '../components/Photo';
 import TopNav from '../components/TopNav';
 import SiteFooter from '../components/SiteFooter';
 import Eyebrow from '../components/Eyebrow';
+import SEO from '../components/SEO';
 
 // The unified inquiry: one dropdown reveals one of four role-specific forms.
 // Same schema, same state machine across directions A and B.
@@ -1389,6 +1390,11 @@ export default function Inquiry() {
 
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage, minHeight: '100vh' }}>
+      <SEO
+        title="Begin Your Inquiry"
+        description="Reach out to Tawny Walker — choose Buyer, Seller, Investor, or Agent/Broker and share what you're after."
+        path="/inquiry"
+      />
       <TopNav active="" />
 
       <div className="tw-inquiry-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.15fr' }}>

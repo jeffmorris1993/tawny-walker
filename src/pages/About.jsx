@@ -5,6 +5,7 @@ import SiteFooter from '../components/SiteFooter';
 import Eyebrow from '../components/Eyebrow';
 import Button from '../components/Button';
 import Rule from '../components/Rule';
+import SEO from '../components/SEO';
 import { STUDIO } from '../data/listings';
 import { ABOUT_PARAGRAPHS, CREDIBILITY, DISCIPLINES, ANCHORS, ALSO_REPRESENTING } from '../data/about';
 
@@ -15,6 +16,21 @@ function AboutB() {
   const emerald = t.palette.emerald;
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
+      <SEO
+        title="About Tawny Walker"
+        description="Tawny Walker is a Michigan real estate professional recognized for an elevated aesthetic and a strategic, design-driven approach to representing buyers, sellers, and investors."
+        path="/about"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Person',
+          name: 'Tawny Walker',
+          jobTitle: 'Real Estate Agent',
+          worksFor: { '@type': 'Organization', name: STUDIO.brokeredBy },
+          telephone: STUDIO.phone,
+          email: STUDIO.email,
+          areaServed: 'Metro Detroit, MI',
+        }}
+      />
       <TopNav active="About" />
 
       {/* MASTHEAD — centered */}

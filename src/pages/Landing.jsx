@@ -97,6 +97,7 @@ import Eyebrow from '../components/Eyebrow';
 import StatusChip from '../components/StatusChip';
 import Button from '../components/Button';
 import Rule from '../components/Rule';
+import SEO from '../components/SEO';
 import { PILLARS, STUDIO } from '../data/listings';
 import { useFeaturedListings, useListingTotal } from '../lib/queries';
 import { InquiryWidget } from './Inquiry';
@@ -111,6 +112,22 @@ function LandingB() {
   const totalListings = useListingTotal();
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
+      <SEO
+        title="Real estate, reimagined"
+        description="Tawny Walker — design-driven real estate and renovation across Birmingham, Bloomfield Hills, and the wider Metro Detroit area."
+        path="/"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'RealEstateAgent',
+          name: 'Tawny Walker',
+          alternateName: 'Tawny & Co.',
+          description: 'Michigan real estate professional recognized for an elevated aesthetic and a strategic, design-driven approach to the work.',
+          areaServed: ['Birmingham, MI', 'Bloomfield Hills, MI', 'Beverly Hills, MI', 'Royal Oak, MI', 'Troy, MI', 'Novi, MI', 'Northville, MI', 'West Bloomfield, MI', 'Metro Detroit, MI'],
+          telephone: STUDIO.phone,
+          email: STUDIO.email,
+          memberOf: { '@type': 'Organization', name: STUDIO.brokeredBy },
+        }}
+      />
       {/* HERO */}
       <HeroVideoSection />
 
