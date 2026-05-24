@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../theme/DirectionContext';
 import Wordmark from './Wordmark';
 import { ADMIN_NAV_KEYS } from '../data/leads';
-import { signOut } from '../lib/queries';
+import { signOut, useCurrentUser, userDisplayName, userInitials } from '../lib/queries';
 
 const NAV_PATHS = {
   Leads: '/admin',
@@ -17,6 +17,10 @@ export default function AdminShell({ children }) {
   const navigate = useNavigate();
 
   const activeKey = pathname.startsWith('/admin/listings') ? 'Listings' : 'Leads';
+
+  const user = useCurrentUser();
+  const displayName = userDisplayName(user);
+  const initials = userInitials(user);
 
   async function handleSignOut() {
     await signOut();
@@ -80,9 +84,12 @@ export default function AdminShell({ children }) {
               display: 'grid', placeItems: 'center', flexShrink: 0,
               fontFamily: t.fonts.display, fontStyle: 'italic',
               fontSize: 15, fontWeight: 500,
-            }}>TW</div>
+            }}>{initials}</div>
             <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontSize: 12, color: a.sidebarFg }}>Tawny Walker</div>
+              <div style={{
+                fontSize: 12, color: a.sidebarFg,
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>{displayName}</div>
               <button
                 type="button"
                 onClick={handleSignOut}

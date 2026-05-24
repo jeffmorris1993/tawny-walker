@@ -939,3 +939,56 @@ export function useIsAdmin() {
 
   return admin;
 }
+
+// Returns the live Supabase auth user (or null). Re-renders on
+// auth state changes so the sidebar / chrome update if the user signs in
+// or out from another tab.
+export function useCurrentUser() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    if (!supabase) return undefined;
+    let alive = true;
+    supabase.auth.getUser().then(({ data }) => {
+      if (alive) setUser(data?.user || null);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (alive) setUser(session?.user || null);
+    });
+    return () => { alive = false; sub.subscription.unsubscribe(); };
+  }, []);
+
+  return user;
+}
+
+// Pull a friendly display name from a Supabase auth user. Tries the
+// user_metadata fields first (set when the account was created in the
+// dashboard or via signUp options.data), then falls back to the local
+// part of the email, then a generic "Studio".
+export function userDisplayName(user) {
+  if (!user) return 'Studio';
+  const meta = user.user_metadata || {};
+  const explicit = meta.full_name || meta.name || meta.display_name;
+  if (explicit && String(explicit).trim()) return String(explicit).trim();
+  const email = user.email || '';
+  if (email.includes('@')) {
+    const local = email.split('@')[0];
+    // Title-case the local part so "jeff.morris" → "Jeff Morris".
+    return local
+      .split(/[._-]+/)
+      .filter(Boolean)
+      .map(p => p[0].toUpperCase() + p.slice(1).toLowerCase())
+      .join(' ');
+  }
+  return 'Studio';
+}
+
+// Two-letter initials for the avatar circle. "Tawny Walker" → "TW",
+// "Jeff" → "JE", "ana@x.com" → "AN".
+export function userInitials(user) {
+  const name = userDisplayName(user);
+  const parts = name.split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return 'S';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
