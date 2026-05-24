@@ -14,7 +14,7 @@ const ROLES = [
   { key: 'Buyer',    label: 'Buyer' },
   { key: 'Seller',   label: 'Seller' },
   { key: 'Investor', label: 'Investor' },
-  { key: 'Agent',    label: 'Agent / Renter' },
+  { key: 'Agent',    label: 'Agent / Broker' },
 ];
 
 const STATUSES = [

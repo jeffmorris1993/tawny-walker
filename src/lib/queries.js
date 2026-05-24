@@ -671,8 +671,8 @@ export async function detachListing(leadId, listingId) {
 // Each public-form submission inserts straight into `leads`. The intake JSON
 // on the lead captures the full Q/A breakdown; mandate_notes captures the
 // free-text fields. No separate audit table.
-export async function submitInquiry({ role, name, contact, payload, message }) {
-  const leadInsert = inquiryToLead({ role, name, contact, payload, message });
+export async function submitInquiry({ role, name, email, phone, contact, payload, message }) {
+  const leadInsert = inquiryToLead({ role, name, email, phone, contact, payload, message });
   if (noClient()) return { data: null, error: { message: 'Supabase not configured' } };
   const { data, error } = await supabase
     .from('leads')
@@ -687,13 +687,19 @@ const ROLE_CAP = { buyer: 'Buyer', seller: 'Seller', investor: 'Investor', agent
 const ROLE_TONE = { buyer: 'warm', seller: 'bone', investor: 'dusk', agent: 'sage' };
 
 // Pull common fields out of a form payload to populate a `leads` row.
-function inquiryToLead({ role, name, contact, payload, message }) {
+function inquiryToLead({ role, name, email, phone, contact, payload, message }) {
   const [firstName, ...rest] = String(name || '').trim().split(/\s+/);
   const lastName = rest.join(' ') || null;
 
-  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact || '');
-  const email = isEmail ? contact : null;
-  const phone = isEmail ? null : contact || null;
+  // Prefer explicit email/phone (current form). Fall back to a legacy
+  // single "contact" string if a caller is still on the old signature.
+  let emailVal = (email || '').trim() || null;
+  let phoneVal = (phone || '').trim() || null;
+  if (!emailVal && !phoneVal && contact) {
+    const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact);
+    emailVal = looksLikeEmail ? contact : null;
+    phoneVal = looksLikeEmail ? null    : contact;
+  }
 
   const fields = (payload && payload.fields) || {};
   const chips = (payload && payload.chips) || {};
@@ -724,7 +730,7 @@ function inquiryToLead({ role, name, contact, payload, message }) {
   const intake = [];
   for (const [q, a] of Object.entries(fields)) {
     if (!a) continue;
-    if (q === 'Name' || q === 'Best contact') continue;
+    if (q === 'Name' || q === 'Email' || q === 'Phone' || q === 'Best contact') continue;
     intake.push({ q, a });
   }
   for (const [q, arr] of Object.entries(chips)) {
@@ -738,8 +744,8 @@ function inquiryToLead({ role, name, contact, payload, message }) {
   return {
     first_name: firstName || 'Unknown',
     last_name: lastName,
-    email,
-    phone,
+    email: emailVal,
+    phone: phoneVal,
     role: ROLE_CAP[role] || 'Buyer',
     entity,
     city,

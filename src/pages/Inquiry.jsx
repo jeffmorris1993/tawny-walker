@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useTheme } from '../theme/DirectionContext';
 import { ROLES, ROLE_KEYS } from '../data/inquiryRoles';
 import { submitInquiry } from '../lib/queries';
-import { required, isEmailOrPhone, firstError } from '../lib/validation';
+import { required, isEmail, isPhone } from '../lib/validation';
 import Photo from '../components/Photo';
 import TopNav from '../components/TopNav';
 import SiteFooter from '../components/SiteFooter';
@@ -82,9 +82,11 @@ function useInquirySkin() {
 }
 
 // ─── Form state helpers ─────────────────────────────────────────────────────
-// Identify the two universal contact fields by label.
-const NAME_LABELS = new Set(['Name']);
-const CONTACT_LABELS = new Set(['Best contact']);
+// Identify the universal contact fields by label.
+const NAME_LABELS    = new Set(['Name']);
+const EMAIL_LABELS   = new Set(['Email']);
+const PHONE_LABELS   = new Set(['Phone']);
+const CONTACT_LABELS = new Set([...EMAIL_LABELS, ...PHONE_LABELS]);
 
 function buildInitial(role) {
   // Every field starts empty; the schema's placeholder strings provide hints.
@@ -103,8 +105,16 @@ function buildInitial(role) {
     }
     if (s.type === 'note') notes[s.label] = '';
     if (s.type === 'budget') {
-      // Seed with the middle 50% of the range; the user drags from there.
-      budget[s.label] = { low: 0.2, high: 0.8 };
+      // Seed with the middle 60% of the range, in absolute dollars (so the
+      // user can later type values outside the slider's min/max without us
+      // losing the actual number).
+      const minVal = parseMoney(s.min).value;
+      const maxVal = parseMoney(s.max).value;
+      const span = Math.max(0, maxVal - minVal);
+      budget[s.label] = {
+        low:  minVal + span * 0.2,
+        high: minVal + span * 0.8,
+      };
     }
   }
   return { fields, chips, notes, budget };
@@ -143,18 +153,46 @@ function formatMoney(value, suffix = '') {
 
 function validate(role, form) {
   const errors = {};
+  // Find the actual contact fields the form is rendering, then enforce
+  // "at least one of Email or Phone" plus format checks on whichever is
+  // present.
+  let hasName = false;
+  let hasEmail = false;
+  let hasPhone = false;
+  let nameLabel = null;
+  let emailLabel = null;
+  let phoneLabel = null;
   for (const s of role.sections) {
     if (!s.cols) continue;
     for (const c of s.cols) {
-      if (NAME_LABELS.has(c.label)) {
-        const err = required(form.fields[c.label], 'Name');
-        if (err) errors[c.label] = err;
-      } else if (CONTACT_LABELS.has(c.label)) {
-        const err = firstError(
-          required(form.fields[c.label], 'Best contact'),
-          isEmailOrPhone(form.fields[c.label]),
-        );
-        if (err) errors[c.label] = err;
+      if (NAME_LABELS.has(c.label))   { hasName = true;  nameLabel = c.label; }
+      if (EMAIL_LABELS.has(c.label))  { hasEmail = true; emailLabel = c.label; }
+      if (PHONE_LABELS.has(c.label))  { hasPhone = true; phoneLabel = c.label; }
+    }
+  }
+
+  if (hasName) {
+    const err = required(form.fields[nameLabel], 'Name');
+    if (err) errors[nameLabel] = err;
+  }
+
+  const emailVal = emailLabel ? form.fields[emailLabel] : '';
+  const phoneVal = phoneLabel ? form.fields[phoneLabel] : '';
+  const hasAnyContact = (emailVal && emailVal.trim()) || (phoneVal && phoneVal.trim());
+
+  if (hasEmail || hasPhone) {
+    if (!hasAnyContact) {
+      // Surface the rule on both fields so the user sees it next to either.
+      if (emailLabel) errors[emailLabel] = 'Enter an email or phone (one is required).';
+      if (phoneLabel) errors[phoneLabel] = 'Enter an email or phone (one is required).';
+    } else {
+      if (emailVal && emailVal.trim()) {
+        const err = isEmail(emailVal);
+        if (err) errors[emailLabel] = err;
+      }
+      if (phoneVal && phoneVal.trim()) {
+        const err = isPhone(phoneVal);
+        if (err) errors[phoneLabel] = err;
       }
     }
   }
@@ -522,9 +560,50 @@ function BudgetRange({ label, min, max, range, onChange }) {
   const t = skin.t;
   const minParsed = parseMoney(min);
   const maxParsed = parseMoney(max);
-  const lowVal = minParsed.value + (maxParsed.value - minParsed.value) * range.low;
-  const highVal = minParsed.value + (maxParsed.value - minParsed.value) * range.high;
   const suffix = minParsed.suffix;
+  const span = Math.max(1, maxParsed.value - minParsed.value);
+
+  const lowVal  = Number.isFinite(range.low)  ? range.low  : minParsed.value;
+  const highVal = Number.isFinite(range.high) ? range.high : maxParsed.value;
+
+  // Thumb position is the dollar value mapped into [0, 1] of the visible
+  // track; if the typed value is outside the slider's range the thumb just
+  // sits at the edge while the typed number stays in state.
+  const lowPct  = Math.max(0, Math.min(1, (lowVal  - minParsed.value) / span));
+  const highPct = Math.max(0, Math.min(1, (highVal - minParsed.value) / span));
+
+  // Local input strings so the user can type freely (commas, "$1.5M", etc.)
+  // before committing to a parsed value.
+  const [lowInput,  setLowInput]  = useState(formatMoney(lowVal,  suffix));
+  const [highInput, setHighInput] = useState(formatMoney(highVal, suffix));
+  const lowFocusedRef  = useRef(false);
+  const highFocusedRef = useRef(false);
+
+  useEffect(() => {
+    if (!lowFocusedRef.current)  setLowInput(formatMoney(lowVal,  suffix));
+    if (!highFocusedRef.current) setHighInput(formatMoney(highVal, suffix));
+  }, [lowVal, highVal, suffix]);
+
+  function commitLow(str) {
+    const parsed = parseMoney(str);
+    if (!isFinite(parsed.value) || parsed.value < 0) {
+      setLowInput(formatMoney(lowVal, suffix));
+      return;
+    }
+    // Keep ordering, but let the user push the band wider in either
+    // direction (typed numbers may exceed the slider min/max).
+    const high = parsed.value > highVal ? parsed.value : highVal;
+    onChange({ low: parsed.value, high });
+  }
+  function commitHigh(str) {
+    const parsed = parseMoney(str);
+    if (!isFinite(parsed.value) || parsed.value < 0) {
+      setHighInput(formatMoney(highVal, suffix));
+      return;
+    }
+    const low = parsed.value < lowVal ? parsed.value : lowVal;
+    onChange({ low, high: parsed.value });
+  }
 
   const trackRef = useRef(null);
   const draggingRef = useRef(null); // 'low' | 'high' | null
@@ -535,6 +614,9 @@ function BudgetRange({ label, min, max, range, onChange }) {
     const raw = (clientX - rect.left) / rect.width;
     return Math.min(1, Math.max(0, raw));
   }
+  function valueFromPct(pct) {
+    return minParsed.value + pct * span;
+  }
 
   function startDrag(which) {
     return (e) => {
@@ -543,10 +625,11 @@ function BudgetRange({ label, min, max, range, onChange }) {
       const move = (ev) => {
         if (!draggingRef.current) return;
         const pct = pctFromClientX(ev.clientX);
+        const val = valueFromPct(pct);
         if (draggingRef.current === 'low') {
-          onChange({ low: Math.min(pct, range.high - 0.02), high: range.high });
+          onChange({ low: Math.min(val, highVal - span * 0.02), high: highVal });
         } else {
-          onChange({ low: range.low, high: Math.max(pct, range.low + 0.02) });
+          onChange({ low: lowVal, high: Math.max(val, lowVal + span * 0.02) });
         }
       };
       const stop = () => {
@@ -561,17 +644,26 @@ function BudgetRange({ label, min, max, range, onChange }) {
 
   function onTrackPointerDown(e) {
     const pct = pctFromClientX(e.clientX);
-    // Snap whichever thumb is closer.
-    const distLow = Math.abs(pct - range.low);
-    const distHigh = Math.abs(pct - range.high);
+    const distLow  = Math.abs(pct - lowPct);
+    const distHigh = Math.abs(pct - highPct);
     const which = distLow <= distHigh ? 'low' : 'high';
+    const val = valueFromPct(pct);
     if (which === 'low') {
-      onChange({ low: Math.min(pct, range.high - 0.02), high: range.high });
+      onChange({ low: Math.min(val, highVal - span * 0.02), high: highVal });
     } else {
-      onChange({ low: range.low, high: Math.max(pct, range.low + 0.02) });
+      onChange({ low: lowVal, high: Math.max(val, lowVal + span * 0.02) });
     }
     startDrag(which)(e);
   }
+
+  const valueInputStyle = {
+    width: '5.6em', minWidth: 0,
+    background: 'transparent', border: 0, outline: 'none',
+    padding: 0,
+    fontFamily: t.fonts.display, fontSize: 28,
+    color: skin.valueColor,
+    textAlign: 'inherit',
+  };
 
   return (
     <div style={{ marginBottom: 32 }}>
@@ -580,13 +672,29 @@ function BudgetRange({ label, min, max, range, onChange }) {
         display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
         marginTop: 14, gap: 12, flexWrap: 'wrap',
       }}>
-        <span style={{ fontFamily: t.fonts.display, fontSize: 28, color: skin.valueColor }}>
-          {formatMoney(lowVal, suffix)}
-        </span>
+        <input
+          type="text"
+          inputMode="decimal"
+          value={lowInput}
+          onChange={e => setLowInput(e.target.value)}
+          onFocus={() => { lowFocusedRef.current = true; }}
+          onBlur={(e) => { lowFocusedRef.current = false; commitLow(e.target.value); }}
+          onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+          aria-label={`${label} — minimum`}
+          style={valueInputStyle}
+        />
         <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 14, color: t.fgFaint }}>to</span>
-        <span style={{ fontFamily: t.fonts.display, fontSize: 28, color: skin.valueColor }}>
-          {formatMoney(highVal, suffix)}
-        </span>
+        <input
+          type="text"
+          inputMode="decimal"
+          value={highInput}
+          onChange={e => setHighInput(e.target.value)}
+          onFocus={() => { highFocusedRef.current = true; }}
+          onBlur={(e) => { highFocusedRef.current = false; commitHigh(e.target.value); }}
+          onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur(); }}
+          aria-label={`${label} — maximum`}
+          style={{ ...valueInputStyle, textAlign: 'right' }}
+        />
       </div>
       <div
         ref={trackRef}
@@ -609,20 +717,20 @@ function BudgetRange({ label, min, max, range, onChange }) {
         <div style={{
           position: 'absolute', top: '50%', transform: 'translateY(-50%)',
           height: 4, borderRadius: 2,
-          left: `${range.low * 100}%`,
-          right: `${(1 - range.high) * 100}%`,
+          left: `${lowPct * 100}%`,
+          right: `${(1 - highPct) * 100}%`,
           background: skin.sliderEnd,
           pointerEvents: 'none',
         }} />
         {/* low thumb */}
         <Thumb
-          pct={range.low}
+          pct={lowPct}
           onPointerDown={startDrag('low')}
           color={skin.sliderEnd}
         />
         {/* high thumb */}
         <Thumb
-          pct={range.high}
+          pct={highPct}
           onPointerDown={startDrag('high')}
           color={skin.sliderEnd}
         />
@@ -682,12 +790,13 @@ function RoleSection({ s, form, setForm, errors }) {
   };
 
   if (s.title && s.cols) {
+    const gridCols = `repeat(${Math.max(1, s.cols.length)}, 1fr)`;
     return (
       <div style={{ marginBottom: 28 }}>
         <div style={{ marginBottom: 16, paddingBottom: 10, borderBottom: `1px solid ${t.line}` }}>
           <Eyebrow color={t.accent}>{s.title}</Eyebrow>
         </div>
-        <div className="tw-form-pair" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32 }}>
+        <div className="tw-form-pair" style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 32 }}>
           {s.cols.map((c, i) => (
             <InputField
               key={i} {...c}
@@ -702,13 +811,15 @@ function RoleSection({ s, form, setForm, errors }) {
     );
   }
   if (s.type === 'pair') {
+    const gridCols = `repeat(${Math.max(1, s.cols.length)}, 1fr)`;
     return (
-      <div className="tw-form-pair" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 32, marginBottom: 24 }}>
+      <div className="tw-form-pair" style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 32, marginBottom: 24 }}>
         {s.cols.map((c, i) => (
           <InputField
             key={i} {...c}
             value={form.fields[c.label] || ''}
             onChange={setField(c.label)}
+            required={NAME_LABELS.has(c.label) || CONTACT_LABELS.has(c.label)}
             error={errors[c.label]}
           />
         ))}
@@ -1102,26 +1213,25 @@ export function InquiryWidget({ syncUrl = false, showHeading = true }) {
     setSubmitError(null);
     setStatus('submitting');
 
-    // Find the two universal fields.
+    // Find the universal contact fields.
     let name = '';
-    let contact = '';
+    let email = '';
+    let phone = '';
     for (const [k, v] of Object.entries(form.fields)) {
-      if (NAME_LABELS.has(k)) name = v;
-      else if (CONTACT_LABELS.has(k)) contact = v;
+      if (NAME_LABELS.has(k))   name = v;
+      if (EMAIL_LABELS.has(k))  email = v;
+      if (PHONE_LABELS.has(k))  phone = v;
     }
-    // Resolve budget percentages back to real dollar amounts for the payload.
+    // Budget state is already in absolute dollars; just round and label.
     const budgets = {};
     for (const s of selected.sections) {
       if (s.type !== 'budget') continue;
-      const range = form.budget[s.label] || { low: 0, high: 1 };
-      const minP = parseMoney(s.min);
-      const maxP = parseMoney(s.max);
-      const lowVal = minP.value + (maxP.value - minP.value) * range.low;
-      const highVal = minP.value + (maxP.value - minP.value) * range.high;
+      const range = form.budget[s.label] || { low: 0, high: 0 };
+      const suffix = parseMoney(s.min).suffix;
       budgets[s.label] = {
-        low: Math.round(lowVal),
-        high: Math.round(highVal),
-        display: `${formatMoney(lowVal, minP.suffix)} – ${formatMoney(highVal, minP.suffix)}`,
+        low:  Math.round(range.low  || 0),
+        high: Math.round(range.high || 0),
+        display: `${formatMoney(range.low, suffix)} – ${formatMoney(range.high, suffix)}`,
       };
     }
     // Build a payload that captures every section's collected data.
@@ -1136,7 +1246,7 @@ export function InquiryWidget({ syncUrl = false, showHeading = true }) {
     const message = Object.values(form.notes).filter(Boolean).join('\n\n').trim() || null;
 
     const { error } = await submitInquiry({
-      role: selectedKey, name, contact, payload, message,
+      role: selectedKey, name, email, phone, payload, message,
     });
 
     if (error) {
