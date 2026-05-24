@@ -791,14 +791,12 @@ export async function detachListing(leadId, listingId) {
 export async function submitInquiry({ role, name, email, phone, contact, payload, message }) {
   const leadInsert = inquiryToLead({ role, name, email, phone, contact, payload, message });
   if (noClient()) return { data: null, error: { message: 'Supabase not configured' } };
-  const { data, error } = await supabase
-    .from('leads')
-    .insert(leadInsert)
-    .select()
-    .single();
+  // Don't chain .select() — anon has INSERT but no SELECT on leads, so
+  // a RETURNING * round-trip would fail RLS. We only need success/error.
+  const { error } = await supabase.from('leads').insert(leadInsert);
   if (error) console.error('[tw] lead insert failed', error);
   if (!error) invalidateLeadTotal();
-  return { data, error };
+  return { data: null, error };
 }
 
 const ROLE_CAP = { buyer: 'Buyer', seller: 'Seller', investor: 'Investor', agent: 'Agent' };
@@ -868,6 +866,9 @@ function inquiryToLead({ role, name, email, phone, contact, payload, message }) 
   }
   const mandateNotes = Object.values(notes).filter(Boolean).join('\n\n') || null;
 
+  // Public RLS grants anon INSERT only on the columns below. `status`,
+  // `stars`, `studio_note`, and `referred_by` are studio-only fields and
+  // fall back to their DB defaults (status='New', stars=0, others null).
   return {
     first_name: firstName || 'Unknown',
     last_name: lastName,
@@ -876,13 +877,9 @@ function inquiryToLead({ role, name, email, phone, contact, payload, message }) 
     role: ROLE_CAP[role] || 'Buyer',
     entity,
     city,
-    referred_by: null,
-    status: 'New',
     tone: ROLE_TONE[role] || 'warm',
-    stars: 0,
     summary,
     mandate_notes: mandateNotes,
-    studio_note: null,
     intake,
   };
 }

@@ -13,6 +13,11 @@ import { supabase } from '../../lib/supabase';
 //   listingId string?    used in the storage path; falls back to `_drafts`
 //                        for unsaved listings so uploads don't collide.
 const BUCKET = 'listing-photos';
+// Client-side guardrails — match the Supabase Storage bucket settings
+// (10 MB cap + image MIME whitelist) so a too-big or wrong-type file
+// fails locally with a friendly message instead of round-tripping.
+const MAX_BYTES = 10 * 1024 * 1024;
+const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif']);
 
 export default function PhotoUploader({ value = [], onChange, listingId }) {
   const t = useTheme();
@@ -44,6 +49,17 @@ export default function PhotoUploader({ value = [], onChange, listingId }) {
     // counter elevated (which would freeze the "Uploading…" CTA).
     try {
       for (const file of files) {
+        // Reject before the network round-trip: oversized or wrong-type
+        // files surface a friendly error in the UI instead of waiting on a
+        // server reject.
+        if (file.size > MAX_BYTES) {
+          setUploadError('Photos must be 10 MB or smaller.');
+          continue;
+        }
+        if (!ALLOWED_TYPES.has(file.type)) {
+          setUploadError('JPEG, PNG, WebP, or AVIF only.');
+          continue;
+        }
         // Path: listing-photos/{listingId}/{timestamp}-{slug}.{ext}
         const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
         const slug = file.name.replace(/\.[^.]+$/, '').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 40) || 'photo';

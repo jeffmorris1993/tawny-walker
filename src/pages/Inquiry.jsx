@@ -252,6 +252,10 @@ function TextField({ value, onChange, onBlur, placeholder, dropdown, error }) {
       <input
         type="text"
         value={value || ''}
+        // 200 is the RLS-enforced ceiling for every text-typed lead field
+        // (email/phone/name/entity/city) — keeping the browser cap matched
+        // so we never let the user type a value the server will reject.
+        maxLength={200}
         onChange={e => onChange && onChange(e.target.value)}
         onBlur={e => onBlur && onBlur(e.target.value)}
         placeholder={placeholder || ''}
@@ -904,6 +908,8 @@ function RoleSection({ s, form, setForm, errors, onFieldBlur }) {
         <textarea
           value={form.notes[s.label] ?? ''}
           onChange={e => setNote(s.label)(e.target.value)}
+          // Match the 4000-char cap enforced on `mandate_notes` by RLS.
+          maxLength={4000}
           placeholder={s.placeholder || "Add anything you'd like Tawny to know…"}
           rows={3}
           style={{
@@ -922,11 +928,31 @@ function RoleSection({ s, form, setForm, errors, onFieldBlur }) {
   return null;
 }
 
-function RoleForm({ role, form, setForm, errors, submitting, submitError, onSubmit, onFieldBlur }) {
+function RoleForm({ role, form, setForm, errors, submitting, submitError, onSubmit, onFieldBlur, honeypot, setHoneypot }) {
   const skin = useInquirySkin();
   const t = skin.t;
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} style={{ marginTop: 48 }} noValidate>
+      {/* Honeypot — invisible to humans, irresistible to bots. The label
+          + name + autocomplete='organization' all hint "fill me in" to a
+          scraper that fingerprints by attribute. Never display:none, since
+          some bots skip those. */}
+      <div aria-hidden="true" style={{
+        position: 'absolute', left: '-10000px', top: 'auto',
+        width: 1, height: 1, overflow: 'hidden',
+      }}>
+        <label>
+          Company name (leave blank)
+          <input
+            type="text"
+            name="company"
+            tabIndex={-1}
+            autoComplete="organization"
+            value={honeypot}
+            onChange={e => setHoneypot(e.target.value)}
+          />
+        </label>
+      </div>
       {role.sections.map((s, i) => (
         <RoleSection key={i} s={s} form={form} setForm={setForm} errors={errors} onFieldBlur={onFieldBlur} />
       ))}
@@ -1184,16 +1210,40 @@ export function InquiryWidget({ syncUrl = false, showHeading = true }) {
   const [status, setStatus] = useState('idle'); // 'idle' | 'submitting' | 'success' | 'error'
   const [submitError, setSubmitError] = useState(null);
 
+  // Spam guards — a hidden honeypot field bots gladly fill in, plus a
+  // minimum time-to-submit (humans don't load and submit a multi-field
+  // editorial form in under 2.5s).
+  const [honeypot, setHoneypot] = useState('');
+  const formMountedAtRef = useRef(0);
+  const MIN_SUBMIT_MS = 2500;
+
   // Reset form whenever the role changes.
   useEffect(() => {
     setForm(initialForm);
     setErrors({});
     setStatus('idle');
     setSubmitError(null);
+    setHoneypot('');
+    formMountedAtRef.current = Date.now();
   }, [initialForm]);
 
   async function handleSubmit() {
     if (!selected || !form) return;
+    // Bot check #1: honeypot field. Real users never see it; bots
+    // happily fill every input. Silent "success" so we don't telegraph
+    // the trap.
+    if (honeypot && honeypot.trim()) {
+      setStatus('success');
+      return;
+    }
+    // Bot check #2: time-gate. Anything submitted faster than a human
+    // possibly could complete the form is treated as a bot. Same silent
+    // pseudo-success so scrapers can't tune their timing against us.
+    const elapsed = Date.now() - formMountedAtRef.current;
+    if (elapsed < MIN_SUBMIT_MS) {
+      setStatus('success');
+      return;
+    }
     const errs = validate(selected, form);
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
@@ -1296,6 +1346,8 @@ export function InquiryWidget({ syncUrl = false, showHeading = true }) {
           submitting={status === 'submitting'}
           submitError={submitError}
           onSubmit={handleSubmit}
+          honeypot={honeypot}
+          setHoneypot={setHoneypot}
           onFieldBlur={(label, nextValue) => {
             // Re-derive the form snapshot with the blurred value applied,
             // since the change + blur run back-to-back and React may not

@@ -85,8 +85,9 @@ function useLoginForm() {
     const { error } = await signIn(email, password);
     setSubmitting(false);
     if (error) {
-      const baseMsg = error.message || 'Sign in failed.';
-      setSubmitError(error.code ? `${baseMsg} [${error.code}]` : baseMsg);
+      // Generic message so we don't differentiate "no such user" from
+      // "wrong password" — both expose the same single-line copy.
+      setSubmitError('Sign in failed — check your email and password.');
       return;
     }
     navigate('/admin');
