@@ -13,6 +13,7 @@ import FacetRow from '../../components/admin/FacetRow';
 import ShimmerBar from '../../components/admin/ShimmerBar';
 import { highlight } from '../../lib/highlight';
 import useDebouncedValue from '../../lib/useDebouncedValue';
+import { dashIfBlank } from '../../lib/format';
 import { usePagedListings, useListingCounts } from '../../lib/queries';
 
 const PAGE_SIZE = 12;
@@ -32,6 +33,11 @@ const STATUS_FACETS = [
 // Bloomfield). Each entry maps to the substring the DB `loc` field is
 // matched against; a value like "Birmingham, MI" or "Bloomfield Hills"
 // counts the same way regardless of whether the state suffix was typed.
+// Tawny's named service areas. Each entry maps to the substring the DB
+// `loc` field is matched against; a value like "Birmingham, MI" counts
+// the same way regardless of whether the state suffix was typed. The
+// special 'other' facet at the end captures anything that doesn't match
+// one of the named areas.
 const NEIGHBORHOOD_FACETS = [
   { key: 'metro',             label: 'Metro Detroit',     match: 'Metro Detroit',     dot: '#3B3B38' },
   { key: 'birmingham',        label: 'Birmingham',        match: 'Birmingham',        dot: '#C9A266' },
@@ -42,7 +48,13 @@ const NEIGHBORHOOD_FACETS = [
   { key: 'novi',              label: 'Novi',              match: 'Novi',              dot: '#B8633F' },
   { key: 'northville',        label: 'Northville',        match: 'Northville',        dot: '#86825F' },
   { key: 'west-bloomfield',   label: 'West Bloomfield',   match: 'West Bloomfield',   dot: '#6E8B7A' },
+  { key: 'other',             label: 'Other',             match: null,                dot: '#A89E84' },
 ];
+// Substrings used to define what "Other" means — anything not matching
+// any of these falls into the Other bucket.
+const KNOWN_AREA_MATCHES = NEIGHBORHOOD_FACETS
+  .filter(n => n.match)
+  .map(n => n.match);
 
 // Sortable columns → DB sort_order key + default direction on first click.
 const SORT_COLUMNS = {
@@ -75,31 +87,41 @@ export default function ListingsManager() {
     Draft:         rawCounts.Draft   || 0,
   };
 
-  // Sum per-neighborhood counts via case-insensitive substring match against
+  // Sum per-area counts via case-insensitive substring match against
   // the seeded loc strings. Same logic the DB query uses for filtering.
+  // The 'other' bucket is total minus everything that matches a named area.
   const hoodCounts = useMemo(() => {
     const out = {};
+    let namedTotal = 0;
     for (const facet of NEIGHBORHOOD_FACETS) {
+      if (!facet.match) continue;
       let n = 0;
       const needle = facet.match.toLowerCase();
       for (const [loc, c] of Object.entries(locCounts)) {
         if (loc.toLowerCase().includes(needle)) n += c;
       }
       out[facet.key] = n;
+      namedTotal += n;
     }
+    out.other = Math.max(0, (rawCounts.All || 0) - namedTotal);
     return out;
-  }, [locCounts]);
+  }, [locCounts, rawCounts.All]);
 
   const statusIn = Array.from(statusSel);
+  // Split the area selection into named substrings and the 'other'
+  // sentinel. The query hook OR's the named substrings together; if
+  // 'other' is on, an additional NOT-IN-ALL-KNOWN clause is OR-ed in.
   const locContains = Array.from(hoodSel)
     .map(k => NEIGHBORHOOD_FACETS.find(f => f.key === k)?.match)
     .filter(Boolean);
+  const includeOther = hoodSel.has('other');
 
   const sortMeta = SORT_COLUMNS[sort.key];
 
   const { data: paged, total, pageCount, loading } = usePagedListings({
     statusIn: statusIn.length ? statusIn : undefined,
     locContains: locContains.length ? locContains : undefined,
+    locNotInAll: includeOther ? KNOWN_AREA_MATCHES : undefined,
     query: debouncedQuery || undefined,
     page,
     pageSize: PAGE_SIZE,
@@ -195,7 +217,7 @@ export default function ListingsManager() {
         onClear={() => setQuery('')}
       />
 
-      {/* Facet block — Status + Neighborhood pill rows. Multi-select per row;
+      {/* Facet block — Status + Area pill rows. Multi-select per row;
           single "clear all filters" link only visible when something is on. */}
       <div style={{
         position: 'relative',
@@ -217,7 +239,7 @@ export default function ListingsManager() {
           showCounts
         />
         <FacetRow
-          label="Neighborhood"
+          label="Area"
           facets={NEIGHBORHOOD_FACETS.map(n => ({
             key: n.key,
             label: n.label,
@@ -291,18 +313,24 @@ export default function ListingsManager() {
                       fontFamily: t.fonts.display, fontSize: 19,
                       color: t.palette.emerald,
                       whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                    }}>{highlight(l.addr, debouncedQuery, 'tw-listing-mark')}</div>
+                    }}>{highlight(dashIfBlank(l.addr), debouncedQuery, 'tw-listing-mark')}</div>
                     <div style={{ fontSize: 11, color: t.fgFaint }}>
-                      {highlight(l.street, debouncedQuery, 'tw-listing-mark')}{l.street && l.loc ? ', ' : ''}{highlight(l.loc, debouncedQuery, 'tw-listing-mark')}
+                      {l.street || l.loc
+                        ? <>
+                            {highlight(l.street, debouncedQuery, 'tw-listing-mark')}
+                            {l.street && l.loc ? ', ' : ''}
+                            {highlight(l.loc, debouncedQuery, 'tw-listing-mark')}
+                          </>
+                        : '—'}
                     </div>
                   </div>
-                  <span style={{ fontSize: 11, color: t.fgMuted, letterSpacing: '0.04em' }}>{l.specs}</span>
+                  <span style={{ fontSize: 11, color: t.fgMuted, letterSpacing: '0.04em' }}>{dashIfBlank(l.specs)}</span>
                   <span style={{
                     fontFamily: t.fonts.display, fontSize: 18, textAlign: 'right',
                     color: t.palette.emerald,
-                  }}>{l.price}</span>
+                  }}>{dashIfBlank(l.price)}</span>
                   <StatusChip status={l.status} />
-                  <span style={{ fontSize: 11, color: t.fgFaint, textAlign: 'right' }}>{l.listedAt || '—'}</span>
+                  <span style={{ fontSize: 11, color: t.fgFaint, textAlign: 'right' }}>{dashIfBlank(l.listedAt)}</span>
                   <span style={{
                     textAlign: 'right',
                     fontFamily: t.eyebrowFont,

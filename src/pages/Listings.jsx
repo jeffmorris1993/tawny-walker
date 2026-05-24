@@ -10,6 +10,7 @@ import Rule from '../components/Rule';
 import PaginationBar from '../components/PaginationBar';
 import { SkeletonCardB, SkeletonStyles } from '../components/SkeletonCard';
 import { usePagedListings, useListingCounts } from '../lib/queries';
+import { dashIfBlank } from '../lib/format';
 
 // Each listing card links into its detail page.
 const linkStyle = { textDecoration: 'none', color: 'inherit', display: 'block' };
@@ -224,12 +225,12 @@ function ListingCardStdB({ listing }) {
         </div>
       </div>
       <div style={{ padding: '20px 24px 24px' }}>
-        <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 26, letterSpacing: '-0.012em', color: t.palette.emerald, margin: 0, lineHeight: 1.05 }}>{listing.addr}</h3>
-        <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 15, color: t.fgMuted, marginTop: 4 }}>{listing.street}</div>
-        <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 13.5, color: t.fgFaint }}>{listing.loc}</div>
+        <h3 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 26, letterSpacing: '-0.012em', color: t.palette.emerald, margin: 0, lineHeight: 1.05 }}>{dashIfBlank(listing.addr)}</h3>
+        <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 15, color: t.fgMuted, marginTop: 4 }}>{dashIfBlank(listing.street)}</div>
+        <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 13.5, color: t.fgFaint }}>{dashIfBlank(listing.loc)}</div>
         <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${t.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-          <span style={{ fontFamily: t.fonts.display, fontSize: 22, color: muted ? t.fgFaint : t.palette.emerald, fontWeight: 400 }}>{listing.price}</span>
-          <span style={{ fontFamily: t.eyebrowFont, fontSize: 9, fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.fgFaint }}>{cardSpecs(listing)}</span>
+          <span style={{ fontFamily: t.fonts.display, fontSize: 22, color: muted ? t.fgFaint : t.palette.emerald, fontWeight: 400 }}>{dashIfBlank(listing.price)}</span>
+          <span style={{ fontFamily: t.eyebrowFont, fontSize: 9, fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.fgFaint }}>{dashIfBlank(cardSpecs(listing))}</span>
         </div>
       </div>
     </Link>

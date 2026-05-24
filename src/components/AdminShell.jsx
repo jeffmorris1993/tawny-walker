@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../theme/DirectionContext';
 import Wordmark from './Wordmark';
 import { ADMIN_NAV_KEYS } from '../data/leads';
-import { signOut, useLeadTotal, useListingTotal } from '../lib/queries';
+import { signOut } from '../lib/queries';
 
 const NAV_PATHS = {
   Leads: '/admin',
@@ -17,16 +17,6 @@ export default function AdminShell({ children }) {
   const navigate = useNavigate();
 
   const activeKey = pathname.startsWith('/admin/listings') ? 'Listings' : 'Leads';
-
-  // Count-only round-trips (HEAD requests) — no row payload. Avoids
-  // re-pulling both tables on every admin navigation just for the sidebar
-  // badges.
-  const leadTotal = useLeadTotal();
-  const listingTotal = useListingTotal();
-  const navCounts = {
-    Leads: leadTotal || null,
-    Listings: listingTotal || null,
-  };
 
   async function handleSignOut() {
     await signOut();
@@ -65,26 +55,17 @@ export default function AdminShell({ children }) {
           {ADMIN_NAV_KEYS.map(key => {
             const isActive = key === activeKey;
             const label = a.navLabels[key] || key;
-            const count = navCounts[key];
             const path = NAV_PATHS[key] || '#';
             return (
               <Link key={key} to={path} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  display: 'flex', alignItems: 'center',
                   padding: '12px 14px',
                   background: isActive ? a.sidebarActiveBg : 'transparent',
                   border: `1px solid ${isActive ? a.sidebarActiveBorder : 'transparent'}`,
                   transition: 'background 0.15s',
                 }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ fontSize: 13, color: a.sidebarFg }}>{label}</span>
-                  </span>
-                  {count && (
-                    <span style={{
-                      fontFamily: t.fonts.display, fontStyle: 'italic',
-                      fontSize: 14, color: a.sidebarBadge,
-                    }}>{count}</span>
-                  )}
+                  <span style={{ fontSize: 13, color: a.sidebarFg }}>{label}</span>
                 </div>
               </Link>
             );

@@ -15,13 +15,21 @@ export default function FacetRow({ label, facets, selected, onToggle, showCounts
   const t = useTheme();
   return (
     <div style={{
-      display: 'grid', gridTemplateColumns: '96px 1fr', gap: 18, alignItems: 'center',
+      display: 'grid', gridTemplateColumns: '96px 1fr', gap: 18,
+      // Top-align so the label sits next to the FIRST chip row even when
+      // chips wrap onto multiple lines (center-aligning here lands the
+      // label between the wrapped rows, which reads as "Status" hovering
+      // between Status chips and the next row's chips).
+      alignItems: 'start',
     }}>
       <span style={{
         fontFamily: t.eyebrowFont,
         fontSize: 10, fontWeight: 600,
         letterSpacing: '0.32em',
         textTransform: 'uppercase', color: t.fgFaint,
+        // Drop the label down so it aligns with the chip text rather than
+        // the top edge of the chip border.
+        paddingTop: 11,
       }}>{label}</span>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
         {facets.map(f => {

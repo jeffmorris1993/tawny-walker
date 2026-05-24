@@ -5,6 +5,7 @@ import TopNav from '../components/TopNav';
 import SiteFooter from '../components/SiteFooter';
 import StatusChip from '../components/StatusChip';
 import { useListing, useRelatedListings, usePreviewOverride } from '../lib/queries';
+import { dashIfBlank } from '../lib/format';
 
 // The detail page is the same content rendered in two visual directions.
 // Section order: breadcrumb → hero → head (name, address, tagline subtitle,
@@ -65,12 +66,12 @@ function ListingDetailB({ L }) {
             </h1>
             <div style={{ marginTop: 18, display: 'flex', alignItems: 'baseline', gap: 18, flexWrap: 'wrap' }}>
               <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 'clamp(18px, 1.8vw, 24px)', color: t.fgMuted }}>
-                {L.street}
+                {dashIfBlank(L.street)}
               </span>
               <span style={{
                 fontFamily: t.eyebrowFont, fontSize: 10.5, fontWeight: 600,
                 letterSpacing: '0.26em', textTransform: 'uppercase', color: t.fgFaint,
-              }}>{L.loc}</span>
+              }}>{dashIfBlank(L.loc)}</span>
             </div>
             {L.tagline && (
               <p style={{
@@ -90,7 +91,7 @@ function ListingDetailB({ L }) {
               fontFamily: t.fonts.display, fontWeight: 400,
               fontSize: 'clamp(40px, 4.8vw, 64px)', color: emerald,
               marginTop: 4, letterSpacing: '-0.01em',
-            }}>{L.price}</div>
+            }}>{dashIfBlank(L.price)}</div>
             <div style={{
               display: 'flex', justifyContent: 'flex-end', gap: 14, marginTop: 14,
               alignItems: 'center', flexWrap: 'wrap',
@@ -176,11 +177,16 @@ function ListingDetailB({ L }) {
 // ─── Shared building blocks ─────────────────────────────────────────────────
 function SpecRow({ L }) {
   const t = useTheme();
+  // Run each through dashIfBlank so empty-string fields from the editor
+  // render the same em-dash as missing values, rather than a blank slot.
+  const interior = typeof L.sqft === 'string' && L.sqft.trim()
+    ? `${L.sqft} sf`
+    : (typeof L.sqft === 'number' ? L.sqft : null);
   const items = [
-    { l: 'Bedrooms', v: L.beds },
-    { l: 'Baths',    v: L.baths },
-    { l: 'Interior', v: typeof L.sqft === 'string' ? `${L.sqft} sf` : L.sqft },
-    { l: 'Lot',      v: L.lot },
+    { l: 'Bedrooms', v: dashIfBlank(L.beds) },
+    { l: 'Baths',    v: dashIfBlank(L.baths) },
+    { l: 'Interior', v: dashIfBlank(interior) },
+    { l: 'Lot',      v: dashIfBlank(L.lot) },
   ];
   return (
     <div className="tw-detail-specs" style={{
@@ -205,7 +211,7 @@ function SpecRow({ L }) {
             fontSize: 'clamp(22px, 2.6vw, 36px)',
             color: t.palette.emerald,
             marginTop: 6, letterSpacing: '-0.01em',
-          }}>{s.v ?? '—'}</div>
+          }}>{s.v}</div>
         </div>
       ))}
     </div>

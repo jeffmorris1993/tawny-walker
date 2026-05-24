@@ -197,6 +197,11 @@ export function usePagedListings({
   statusIn,
   statusNotIn,
   locContains,
+  // When set, OR an additional clause: rows whose `loc` does NOT match any
+  // of these substrings. Used by the "Other" area facet — combined with
+  // locContains via OR so the row qualifies if it matches a selected named
+  // area OR sits in none of the known areas.
+  locNotInAll,
   query,
   page = 1,
   pageSize = 12,
@@ -212,6 +217,7 @@ export function usePagedListings({
   const inKey    = (statusIn    || []).slice().sort().join(',');
   const notInKey = (statusNotIn || []).join(',');
   const locKey   = (locContains || []).slice().sort().join('|');
+  const otherKey = (locNotInAll || []).slice().sort().join('|');
   const sortKey  = `${sort.column}:${sort.ascending ? 'asc' : 'desc'}`;
   const q        = (query || '').trim();
 
@@ -241,10 +247,22 @@ export function usePagedListings({
         const list = statusNotIn.map(s => `"${s}"`).join(',');
         req = req.not('status', 'in', `(${list})`);
       }
-      if (locContains?.length) {
-        // ilike OR — matches any neighborhood substring in the listing's loc.
-        const ors = locContains.map(n => `loc.ilike.*${escapeOrToken(n)}*`).join(',');
-        req = req.or(ors);
+      // Area filter: combine selected named areas (loc ilike substring) with
+      // an optional "everything else" clause built as `and(not.ilike,...)`.
+      // Both pieces are joined inside a single .or() so a row qualifies if
+      // it matches any selected area OR sits outside every known area.
+      if (locContains?.length || locNotInAll?.length) {
+        const clauses = [];
+        for (const n of (locContains || [])) {
+          clauses.push(`loc.ilike.*${escapeOrToken(n)}*`);
+        }
+        if (locNotInAll?.length) {
+          const negs = locNotInAll
+            .map(n => `loc.not.ilike.*${escapeOrToken(n)}*`)
+            .join(',');
+          clauses.push(`and(${negs})`);
+        }
+        req = req.or(clauses.join(','));
       }
       if (q) {
         const safe = escapeOrToken(q);
@@ -267,7 +285,7 @@ export function usePagedListings({
     }
     load();
     return () => { alive = false; };
-  }, [statusEquals, inKey, notInKey, locKey, q, page, pageSize, sortKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [statusEquals, inKey, notInKey, locKey, otherKey, q, page, pageSize, sortKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
   return { data, total, pageCount, loading };

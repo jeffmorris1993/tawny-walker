@@ -378,7 +378,16 @@ export default function AddListing() {
           )}
           <button
             type="button"
-            onClick={() => handleSave(editing ? form.status : 'Active')}
+            onClick={() => {
+              // Respect the studio's chosen status. New listings default
+              // to Active if the user hasn't picked anything else (a fresh
+              // draft starts at 'Draft' — bumping it to Active feels like
+              // the right outcome when they hit "Publish to Index").
+              const target = editing
+                ? form.status
+                : (form.status && form.status !== 'Draft' ? form.status : 'Active');
+              handleSave(target);
+            }}
             disabled={submitting}
             style={{
               padding: '14px 22px', background: primaryBg, color: primaryFg, border: 'none',
