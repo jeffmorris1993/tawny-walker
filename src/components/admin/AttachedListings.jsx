@@ -11,7 +11,6 @@ import Photo from '../Photo';
 // still rendered so the design reads correctly in screenshots.
 export default function AttachedListings({ attached = [], onRemove, onAttach }) {
   const t = useTheme();
-  const isB = t.key === 'B';
   const noun = t.admin.attachedNoun;
 
   const resolve = (a) => ({
@@ -49,14 +48,14 @@ export default function AttachedListings({ attached = [], onRemove, onAttach }) 
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
                   fontFamily: t.fonts.display, fontSize: 17,
-                  color: isB ? t.palette.emerald : t.fgPage,
+                  color: t.palette.emerald,
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}>{name}</div>
                 <div style={{
                   fontFamily: t.eyebrowFont,
-                  fontSize: isB ? 9.5 : 10,
-                  fontWeight: isB ? 600 : 400,
-                  letterSpacing: isB ? '0.22em' : '0.2em',
+                  fontSize: 9.5,
+                  fontWeight: 600,
+                  letterSpacing: '0.22em',
                   textTransform: 'uppercase', color: t.fgFaint,
                 }}>Shared with lead · {a.sharedAt}</div>
               </div>
@@ -78,14 +77,14 @@ export default function AttachedListings({ attached = [], onRemove, onAttach }) 
         style={{
           marginTop: 14, padding: '14px 16px', width: '100%',
           border: `1px dashed ${t.line}`,
-          background: isB ? t.bgPanel : t.bgPage,
+          background: t.bgPanel,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
           fontFamily: t.eyebrowFont,
-          fontSize: isB ? 10 : 10.5,
-          fontWeight: isB ? 600 : 400,
-          letterSpacing: isB ? '0.24em' : '0.24em',
+          fontSize: 10,
+          fontWeight: 600,
+          letterSpacing: '0.24em',
           textTransform: 'uppercase',
-          color: isB ? t.palette.emerald : t.fgPage,
+          color: t.palette.emerald,
           cursor: 'pointer',
         }}
       >
@@ -97,9 +96,9 @@ export default function AttachedListings({ attached = [], onRemove, onAttach }) 
       </button>
       <div style={{
         fontFamily: t.eyebrowFont,
-        fontSize: isB ? 9.5 : 10,
-        fontWeight: isB ? 500 : 400,
-        letterSpacing: isB ? '0.22em' : '0.2em',
+        fontSize: 9.5,
+        fontWeight: 500,
+        letterSpacing: '0.22em',
         textTransform: 'uppercase',
         color: t.fgFaint, marginTop: 10, textAlign: 'center',
       }}>Opens your {t.admin.attachedNounPlural} index · pick one</div>

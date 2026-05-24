@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../../theme/DirectionContext';
 import Photo from '../../components/Photo';
@@ -7,6 +7,12 @@ import StatusChip from '../../components/StatusChip';
 import AdminShell from '../../components/AdminShell';
 import PaginationBar from '../../components/PaginationBar';
 import { SkeletonStyles } from '../../components/SkeletonCard';
+import SearchBar from '../../components/admin/SearchBar';
+import SortHeader from '../../components/admin/SortHeader';
+import FacetRow from '../../components/admin/FacetRow';
+import ShimmerBar from '../../components/admin/ShimmerBar';
+import { highlight } from '../../lib/highlight';
+import useDebouncedValue from '../../lib/useDebouncedValue';
 import { usePagedListings, useListingCounts } from '../../lib/queries';
 
 const PAGE_SIZE = 12;
@@ -48,7 +54,6 @@ const SORT_COLUMNS = {
 
 export default function ListingsManager() {
   const t = useTheme();
-  const isB = t.key === 'B';
   const filterRef = useRef(null);
 
   const [statusSel, setStatusSel] = useState(() => new Set());
@@ -57,19 +62,9 @@ export default function ListingsManager() {
   const [sort, setSort]           = useState({ key: 'status', dir: 'asc' });
   const [page, setPage]           = useState(1);
 
-  // Debounce text input so we don't fire a query on every keystroke.
-  const [debouncedQuery, setDebouncedQuery] = useState('');
-  useEffect(() => {
-    const id = setTimeout(() => setDebouncedQuery(query.trim()), 200);
-    return () => clearTimeout(id);
-  }, [query]);
-
-  const statusKey = Array.from(statusSel).sort().join(',');
-  const hoodKey   = Array.from(hoodSel).sort().join(',');
-  // Bring the page back to 1 anytime the filter set changes — otherwise the
-  // user could be stranded on a now-empty page.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { setPage(1); }, [statusKey, hoodKey, debouncedQuery]);
+  // Debounce text input — page-1 reset piggy-backs on the same timer so a
+  // single keystroke never causes two paged fetches (old page → page 1).
+  const debouncedQuery = useDebouncedValue(query.trim(), 200, () => setPage(1));
 
   const { counts: rawCounts, locCounts } = useListingCounts();
   const counts = {
@@ -118,12 +113,15 @@ export default function ListingsManager() {
     }
   }
 
+  // Filter/sort toggles also reset the page in the same render so the
+  // paged query never fires twice (old page → page 1).
   function toggleStatus(key) {
     setStatusSel(s => {
       const next = new Set(s);
       if (next.has(key)) next.delete(key); else next.add(key);
       return next;
     });
+    setPage(1);
   }
   function toggleHood(key) {
     setHoodSel(s => {
@@ -131,17 +129,20 @@ export default function ListingsManager() {
       if (next.has(key)) next.delete(key); else next.add(key);
       return next;
     });
+    setPage(1);
   }
   function clearAll() {
     setStatusSel(new Set());
     setHoodSel(new Set());
     setQuery('');
+    setPage(1);
   }
   function onSortClick(key) {
     setSort(prev => {
       if (prev.key === key) return { key, dir: prev.dir === 'asc' ? 'desc' : 'asc' };
       return { key, dir: SORT_COLUMNS[key].defaultAsc ? 'asc' : 'desc' };
     });
+    setPage(1);
   }
 
   const totalFilters = statusSel.size + hoodSel.size;
@@ -152,9 +153,9 @@ export default function ListingsManager() {
         ? `${total} of ${totalListings} ${totalListings === 1 ? 'residence' : 'residences'}`
         : `${totalListings} ${totalListings === 1 ? 'residence' : 'residences'}`);
 
-  const headlineColor = isB ? t.palette.emerald : t.fgPage;
-  const primaryBg = isB ? t.palette.emerald : t.palette.ink;
-  const primaryFg = isB ? '#fff' : t.palette.bone;
+  const headlineColor = t.palette.emerald;
+  const primaryBg = t.palette.emerald;
+  const primaryFg = '#fff';
   const accentGold = '#B59568';
 
   return (
@@ -164,7 +165,7 @@ export default function ListingsManager() {
         paddingBottom: 32, borderBottom: `1px solid ${t.line}`, flexWrap: 'wrap', gap: 16,
       }}>
         <div>
-          <Eyebrow>The Index · {counts.Active} active · {counts.Pending} {isB ? 'in contract' : 'pending'} · {counts.Sold} {isB ? 'closed' : 'sold'} YTD</Eyebrow>
+          <Eyebrow>The Index · {counts.Active} active · {counts.Pending} in contract · {counts.Sold} closed YTD</Eyebrow>
           <h1 style={{
             fontFamily: t.fonts.display, fontWeight: 400,
             fontSize: 'clamp(36px, 3.9vw, 56px)', margin: '14px 0 0',
@@ -176,8 +177,8 @@ export default function ListingsManager() {
             display: 'inline-block', padding: '14px 22px',
             background: primaryBg, color: primaryFg,
             fontFamily: t.eyebrowFont,
-            fontSize: 11, fontWeight: isB ? 600 : 400,
-            letterSpacing: isB ? '0.28em' : '0.24em',
+            fontSize: 11, fontWeight: 600,
+            letterSpacing: '0.28em',
             textTransform: 'uppercase', cursor: 'pointer',
           }}>{t.admin.addCta}</span>
         </Link>
@@ -185,50 +186,14 @@ export default function ListingsManager() {
 
       {/* Search row — quiet, line-only input + italic helper. Matches the
           design's editorial query treatment. */}
-      <div ref={filterRef} style={{
-        display: 'flex', alignItems: 'flex-end', gap: 16,
-        marginTop: 28, scrollMarginTop: 24,
-      }}>
-        <span style={{ color: t.fgFaint, paddingBottom: 14, display: 'grid', placeItems: 'center' }} aria-hidden>
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="1.4">
-            <circle cx="10" cy="10" r="6.5" />
-            <path d="M19 19l-4.5-4.5" />
-          </svg>
-        </span>
-        <input
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          placeholder="Search a residence by name, address, or neighborhood…"
-          autoComplete="off"
-          style={{
-            flex: 1, minWidth: 0,
-            background: 'transparent', border: 0, outline: 'none',
-            padding: '6px 0 10px',
-            borderBottom: `1px solid ${t.line}`,
-            fontFamily: t.fonts.display, fontWeight: 400,
-            fontSize: 'clamp(20px, 2vw, 26px)',
-            color: isB ? t.palette.emerald : t.fgPage,
-          }}
-          onFocus={e => { e.currentTarget.style.borderBottomColor = isB ? t.palette.emerald : t.palette.ink; }}
-          onBlur={e => { e.currentTarget.style.borderBottomColor = t.line; }}
-        />
-        <span style={{
-          fontFamily: t.fonts.display, fontStyle: 'italic',
-          fontSize: 14, color: t.fgFaint,
-          paddingBottom: 14, whiteSpace: 'nowrap',
-        }}>{helperText}</span>
-        {query && (
-          <button
-            type="button"
-            onClick={() => setQuery('')}
-            aria-label="Clear search"
-            style={{
-              background: 'none', border: 0, color: t.fgFaint, fontSize: 20,
-              cursor: 'pointer', padding: '4px 6px 10px', lineHeight: 1,
-            }}
-          >×</button>
-        )}
-      </div>
+      <SearchBar
+        ref={filterRef}
+        value={query}
+        onChange={setQuery}
+        placeholder="Search a residence by name, address, or neighborhood…"
+        helperText={helperText}
+        onClear={() => setQuery('')}
+      />
 
       {/* Facet block — Status + Neighborhood pill rows. Multi-select per row;
           single "clear all filters" link only visible when something is on. */}
@@ -249,6 +214,7 @@ export default function ListingsManager() {
           }))}
           selected={statusSel}
           onToggle={toggleStatus}
+          showCounts
         />
         <FacetRow
           label="Neighborhood"
@@ -260,6 +226,7 @@ export default function ListingsManager() {
           }))}
           selected={hoodSel}
           onToggle={toggleHood}
+          showCounts
         />
         {(totalFilters > 0 || query) && (
           <button
@@ -272,7 +239,7 @@ export default function ListingsManager() {
               fontSize: 14, color: t.fgFaint, cursor: 'pointer',
               padding: '4px 2px', borderBottom: '1px solid transparent',
             }}
-            onMouseEnter={e => { e.currentTarget.style.color = isB ? t.palette.emerald : t.palette.ink; e.currentTarget.style.borderBottomColor = isB ? t.palette.emerald : t.palette.ink; }}
+            onMouseEnter={e => { e.currentTarget.style.color = t.palette.emerald; e.currentTarget.style.borderBottomColor = t.palette.emerald; }}
             onMouseLeave={e => { e.currentTarget.style.color = t.fgFaint; e.currentTarget.style.borderBottomColor = 'transparent'; }}
           >— clear all filters</button>
         )}
@@ -285,8 +252,8 @@ export default function ListingsManager() {
             gridTemplateColumns: '80px 1.4fr 1fr 110px 110px 110px 60px',
             gap: 18, padding: '16px 0', borderBottom: `1px solid ${t.line}`,
             fontFamily: t.eyebrowFont,
-            fontSize: isB ? 9 : 9.5, fontWeight: isB ? 600 : 400,
-            letterSpacing: isB ? '0.28em' : '0.24em',
+            fontSize: 9, fontWeight: 600,
+            letterSpacing: '0.28em',
             textTransform: 'uppercase', color: t.fgFaint,
             alignItems: 'center',
           }}>
@@ -322,27 +289,27 @@ export default function ListingsManager() {
                   <div style={{ minWidth: 0 }}>
                     <div style={{
                       fontFamily: t.fonts.display, fontSize: 19,
-                      color: isB ? t.palette.emerald : t.fgPage,
+                      color: t.palette.emerald,
                       whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                    }}>{highlight(l.addr, debouncedQuery, accentGold)}</div>
+                    }}>{highlight(l.addr, debouncedQuery, 'tw-listing-mark')}</div>
                     <div style={{ fontSize: 11, color: t.fgFaint }}>
-                      {highlight(l.street, debouncedQuery, accentGold)}{l.street && l.loc ? ', ' : ''}{highlight(l.loc, debouncedQuery, accentGold)}
+                      {highlight(l.street, debouncedQuery, 'tw-listing-mark')}{l.street && l.loc ? ', ' : ''}{highlight(l.loc, debouncedQuery, 'tw-listing-mark')}
                     </div>
                   </div>
                   <span style={{ fontSize: 11, color: t.fgMuted, letterSpacing: '0.04em' }}>{l.specs}</span>
                   <span style={{
                     fontFamily: t.fonts.display, fontSize: 18, textAlign: 'right',
-                    color: isB ? t.palette.emerald : t.fgPage,
+                    color: t.palette.emerald,
                   }}>{l.price}</span>
                   <StatusChip status={l.status} />
                   <span style={{ fontSize: 11, color: t.fgFaint, textAlign: 'right' }}>{l.listedAt || '—'}</span>
                   <span style={{
                     textAlign: 'right',
                     fontFamily: t.eyebrowFont,
-                    fontSize: 10, fontWeight: isB ? 600 : 400,
-                    letterSpacing: isB ? '0.24em' : '0.2em',
+                    fontSize: 10, fontWeight: 600,
+                    letterSpacing: '0.24em',
                     textTransform: 'uppercase',
-                    color: isB ? t.palette.emerald : t.palette.ink,
+                    color: t.palette.emerald,
                   }}>Edit →</span>
                 </Link>
               ))}
@@ -369,9 +336,9 @@ export default function ListingsManager() {
       <div style={{
         marginTop: 18, textAlign: 'center',
         fontFamily: t.eyebrowFont,
-        fontSize: 10.5, fontWeight: isB ? 500 : 400,
+        fontSize: 10.5, fontWeight: 500,
         color: t.fgFaint,
-        letterSpacing: isB ? '0.24em' : '0.18em',
+        letterSpacing: '0.24em',
         textTransform: 'uppercase',
       }}>
         {loading
@@ -392,130 +359,6 @@ export default function ListingsManager() {
       `}</style>
       <SkeletonStyles />
     </AdminShell>
-  );
-}
-
-function FacetRow({ label, facets, selected, onToggle }) {
-  const t = useTheme();
-  const isB = t.key === 'B';
-  return (
-    <div style={{
-      display: 'grid', gridTemplateColumns: '110px 1fr', gap: 18, alignItems: 'center',
-    }}>
-      <span style={{
-        fontFamily: t.eyebrowFont,
-        fontSize: 10, fontWeight: 600,
-        letterSpacing: '0.32em', textTransform: 'uppercase', color: t.fgFaint,
-      }}>{label}</span>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-        {facets.map(f => {
-          const isVacant = f.count === 0;
-          const isActive = selected.has(f.key);
-          return (
-            <button
-              key={f.key}
-              type="button"
-              onClick={() => !isVacant && onToggle(f.key)}
-              disabled={isVacant}
-              aria-pressed={isActive}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 9,
-                height: 32, padding: '0 14px',
-                background: isActive ? (isB ? t.palette.emerald : t.palette.ink) : t.bgPage,
-                border: `1px solid ${isActive ? (isB ? t.palette.emerald : t.palette.ink) : t.line}`,
-                color: isActive ? '#fff' : t.fgMuted,
-                fontFamily: t.eyebrowFont,
-                fontSize: 11, fontWeight: isActive ? 600 : 500,
-                letterSpacing: '0.18em', textTransform: 'uppercase',
-                cursor: isVacant ? 'default' : 'pointer',
-                opacity: isVacant ? 0.45 : 1,
-                userSelect: 'none',
-              }}
-            >
-              <span style={{
-                width: 7, height: 7, borderRadius: '50%',
-                background: isActive ? '#B59568' : (isVacant ? t.line : f.dot),
-              }} />
-              <span>{f.label}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function SortHeader({ label, k, sort, onClick, align, gold, headlineColor }) {
-  const t = useTheme();
-  const isB = t.key === 'B';
-  const active = sort.key === k;
-  const arrow = active ? (sort.dir === 'asc' ? '↓' : '↑') : '↕';
-  const justify = align === 'right' ? 'flex-end' : 'flex-start';
-  return (
-    <span style={{ textAlign: align || 'left' }}>
-      <button
-        type="button"
-        onClick={() => onClick(k)}
-        style={{
-          display: 'inline-flex', alignItems: 'center', gap: 6,
-          background: 'none', border: 0, padding: 0,
-          fontFamily: t.eyebrowFont,
-          fontSize: isB ? 9 : 9.5, fontWeight: isB ? 600 : 400,
-          letterSpacing: isB ? '0.28em' : '0.24em',
-          textTransform: 'uppercase',
-          color: active ? headlineColor : t.fgFaint,
-          cursor: 'pointer',
-          justifyContent: justify,
-          width: align === 'right' ? '100%' : 'auto',
-        }}
-      >
-        <span>{label}</span>
-        <span style={{
-          opacity: active ? 1 : 0.35,
-          color: active ? gold : 'inherit',
-          fontSize: 10, lineHeight: 1,
-        }}>{arrow}</span>
-      </button>
-    </span>
-  );
-}
-
-// Wraps every occurrence of `q` in the source string with a styled <mark>.
-// Returned as a React fragment so the table cells can keep their styling.
-function highlight(text, q, gold) {
-  if (!text) return text;
-  const s = String(text);
-  if (!q) return s;
-  const lower = s.toLowerCase();
-  const needle = q.toLowerCase();
-  const out = [];
-  let i = 0;
-  let n = 0;
-  while (i < s.length) {
-    const idx = lower.indexOf(needle, i);
-    if (idx === -1) { out.push(s.slice(i)); break; }
-    if (idx > i) out.push(s.slice(i, idx));
-    out.push(
-      <mark
-        key={`m-${n++}`}
-        className="tw-listing-mark"
-        style={{ background: `${gold}33`, color: 'inherit' }}
-      >{s.slice(idx, idx + needle.length)}</mark>
-    );
-    i = idx + needle.length;
-  }
-  return out;
-}
-
-const SHIMMER = 'linear-gradient(90deg, #ECE6D8 0%, #F4EFE2 50%, #ECE6D8 100%)';
-
-function ShimmerBar({ width, height }) {
-  return (
-    <span className="tw-skel-bar" style={{
-      display: 'inline-block',
-      width, height,
-      background: SHIMMER, backgroundSize: '200% 100%',
-    }} />
   );
 }
 

@@ -17,17 +17,16 @@ function buildPageList(current, total) {
 
 export default function PaginationBar({ page, pageCount, onChange }) {
   const t = useTheme();
-  const isB = t.key === 'B';
   if (pageCount <= 1) return null;
   const pages = buildPageList(page, pageCount);
-  const accent = isB ? t.palette.emerald : t.fgPage;
+  const accent = t.palette.emerald;
 
   const baseBtn = {
     minWidth: 40, padding: '8px 14px',
     background: 'transparent', border: `1px solid ${t.line}`,
     fontFamily: t.eyebrowFont,
-    fontSize: 11, fontWeight: isB ? 600 : 400,
-    letterSpacing: isB ? '0.22em' : '0.18em',
+    fontSize: 11, fontWeight: 600,
+    letterSpacing: '0.22em',
     textTransform: 'uppercase', cursor: 'pointer',
     color: t.fgMuted,
   };
@@ -35,7 +34,7 @@ export default function PaginationBar({ page, pageCount, onChange }) {
   const activeBtn = {
     ...baseBtn,
     background: accent,
-    color: isB ? '#fff' : t.bgPage,
+    color: '#fff',
     border: `1px solid ${accent}`,
     cursor: 'default',
   };

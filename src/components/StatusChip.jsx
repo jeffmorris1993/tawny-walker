@@ -11,16 +11,15 @@ export default function StatusChip({ status, size = 'sm', kind = 'listing' }) {
   const label = labels[status] || status;
   const dot = dots[status] || t.fgFaint;
   const f = size === 'lg' ? 12 : 10.5;
-  const isB = t.key === 'B';
   return (
     <span className="tw-status-chip" style={{
       display: 'inline-flex', alignItems: 'center', gap: 7,
       fontFamily: t.eyebrowFont,
-      fontWeight: isB ? 600 : 400,
+      fontWeight: 600,
       fontSize: f,
-      letterSpacing: isB ? '0.24em' : '0.18em',
+      letterSpacing: '0.24em',
       textTransform: 'uppercase',
-      color: isB ? t.palette.emerald : t.palette.ink,
+      color: t.palette.emerald,
       padding: size === 'lg' ? '4px 10px' : '0',
       whiteSpace: 'nowrap',
     }}>

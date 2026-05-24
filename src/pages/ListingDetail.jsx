@@ -176,7 +176,6 @@ function ListingDetailB({ L }) {
 // ─── Shared building blocks ─────────────────────────────────────────────────
 function SpecRow({ L }) {
   const t = useTheme();
-  const isB = t.key === 'B';
   const items = [
     { l: 'Bedrooms', v: L.beds },
     { l: 'Baths',    v: L.baths },
@@ -186,7 +185,7 @@ function SpecRow({ L }) {
   return (
     <div className="tw-detail-specs" style={{
       marginTop: 'clamp(40px, 5vw, 64px)', paddingTop: 32, paddingBottom: 32,
-      borderTop: `1px solid ${isB ? t.palette.emerald : t.line}`,
+      borderTop: `1px solid ${t.palette.emerald}`,
       borderBottom: `1px solid ${t.line}`,
       display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
     }}>
@@ -197,14 +196,14 @@ function SpecRow({ L }) {
         }}>
           <div style={{
             fontFamily: t.eyebrowFont,
-            fontSize: 10, fontWeight: isB ? 600 : 400,
-            letterSpacing: isB ? '0.3em' : '0.28em', textTransform: 'uppercase',
-            color: isB ? t.palette.gold : t.fgFaint,
+            fontSize: 10, fontWeight: 600,
+            letterSpacing: '0.3em', textTransform: 'uppercase',
+            color: t.palette.gold,
           }}>{s.l}</div>
           <div style={{
             fontFamily: t.fonts.display, fontWeight: 400,
             fontSize: 'clamp(22px, 2.6vw, 36px)',
-            color: isB ? t.palette.emerald : t.fgPage,
+            color: t.palette.emerald,
             marginTop: 6, letterSpacing: '-0.01em',
           }}>{s.v ?? '—'}</div>
         </div>
@@ -268,7 +267,6 @@ function Gallery({ L }) {
 
 function RelatedRail({ related }) {
   const t = useTheme();
-  const isB = t.key === 'B';
   if (!related || related.length === 0) return null;
   return (
     <div style={{ padding: '0 clamp(20px, 4.4vw, 64px) clamp(56px, 8vw, 120px)' }}>
@@ -279,17 +277,17 @@ function RelatedRail({ related }) {
         <h3 style={{
           fontFamily: t.fonts.display, fontWeight: 400,
           fontSize: 'clamp(26px, 3vw, 36px)', margin: 0,
-          color: isB ? t.palette.emerald : t.fgPage,
+          color: t.palette.emerald,
         }}>
           Continue <em style={{ fontStyle: 'italic' }}>through the {t.listingNoun}</em>.
         </h3>
         <Link to="/listings" style={{ textDecoration: 'none' }}>
           <span style={{
             fontFamily: t.eyebrowFont,
-            fontSize: 10.5, fontWeight: isB ? 600 : 400,
-            letterSpacing: isB ? '0.26em' : '0.24em', textTransform: 'uppercase',
-            color: isB ? t.palette.emerald : t.fgPage,
-            borderBottom: `1px solid ${isB ? t.palette.emerald : t.fgPage}`, paddingBottom: 4,
+            fontSize: 10.5, fontWeight: 600,
+            letterSpacing: '0.26em', textTransform: 'uppercase',
+            color: t.palette.emerald,
+            borderBottom: `1px solid ${t.palette.emerald}`, paddingBottom: 4,
             cursor: 'pointer',
           }}>View all {t.listingNoun} →</span>
         </Link>
@@ -303,7 +301,7 @@ function RelatedRail({ related }) {
             <div style={{ marginTop: 18 }}>
               <div style={{
                 fontFamily: t.fonts.display, fontSize: 26,
-                color: isB ? t.palette.emerald : t.fgPage,
+                color: t.palette.emerald,
               }}>{l.addr}</div>
               <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 15, color: t.fgMuted }}>{l.loc}</div>
               <div style={{
@@ -312,7 +310,7 @@ function RelatedRail({ related }) {
               }}>
                 <span style={{
                   fontFamily: t.fonts.display, fontSize: 18,
-                  color: isB ? t.palette.emerald : t.fgPage,
+                  color: t.palette.emerald,
                 }}>{l.price}</span>
                 <StatusChip status={l.status} />
               </div>

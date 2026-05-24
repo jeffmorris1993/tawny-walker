@@ -17,25 +17,24 @@ const FOOTER_NOTE = 'Private admin only. All activity is logged.';
 
 function FormField({ label, value, onChange, type = 'text', display, trailing, mono = false, large = false, placeholder = '', error, autoComplete }) {
   const t = useTheme();
-  const isB = t.key === 'B';
   const errorColor = '#B5341F';
   return (
     <div>
       <div style={{
         fontFamily: t.eyebrowFont,
-        fontSize: 10, fontWeight: isB ? 600 : 400,
+        fontSize: 10, fontWeight: 600,
         letterSpacing: '0.28em', textTransform: 'uppercase',
         color: error ? errorColor : t.fgFaint,
       }}>{label}</div>
       <div style={{
         marginTop: 10, paddingBottom: 14,
-        borderBottom: `1px solid ${error ? errorColor : (isB ? t.palette.emerald : t.palette.ink)}`,
+        borderBottom: `1px solid ${error ? errorColor : t.palette.emerald}`,
         display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12,
       }}>
         {display ? (
           <span style={{
             fontFamily: t.fonts.display,
-            fontSize: large ? (isB ? 26 : 28) : (isB ? 22 : 24),
+            fontSize: large ? 26 : 22,
             color: t.fgPage,
             letterSpacing: mono ? '0.32em' : '-0.005em',
           }}>{display}</span>
@@ -86,7 +85,8 @@ function useLoginForm() {
     const { error } = await signIn(email, password);
     setSubmitting(false);
     if (error) {
-      setSubmitError(error.message || 'Sign in failed.');
+      const baseMsg = error.message || 'Sign in failed.';
+      setSubmitError(error.code ? `${baseMsg} [${error.code}]` : baseMsg);
       return;
     }
     navigate('/admin');

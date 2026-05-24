@@ -9,13 +9,12 @@ const LINKEDIN_URL  = 'https://www.linkedin.com/in/tawnythieuwalker/';
 
 export default function SiteFooter() {
   const t = useTheme();
-  const isB = t.key === 'B';
 
-  // B uses an emerald-deep slab, ivory text. A uses warm paper + ink.
-  const bg = isB ? t.palette.emeraldDeep : t.palette.paper;
-  const fg = isB ? 'rgba(248,245,238,0.7)' : t.fgMuted;
-  const labelColor = isB ? t.accentSoft : t.fgFaint;
-  const ruleColor = isB ? 'rgba(248,245,238,0.14)' : t.line;
+  // Emerald-deep slab, ivory text.
+  const bg = t.palette.emeraldDeep;
+  const fg = 'rgba(248,245,238,0.7)';
+  const labelColor = t.accentSoft;
+  const ruleColor = 'rgba(248,245,238,0.14)';
 
   const columns = [
     {
@@ -30,7 +29,7 @@ export default function SiteFooter() {
       { label: 'Active Listings', to: '/listings' },
       { label: 'Sold', to: '/listings/sold' },
     ] },
-    { h: isB ? 'Follow' : 'Connect', items: [
+    { h: 'Follow', items: [
       { label: 'Instagram', href: INSTAGRAM_URL },
       { label: 'Facebook', href: FACEBOOK_URL },
       { label: 'LinkedIn', href: LINKEDIN_URL },
@@ -40,7 +39,7 @@ export default function SiteFooter() {
   return (
     <footer style={{
       padding: '64px 64px 40px',
-      borderTop: isB ? 'none' : `1px solid ${t.line}`,
+      borderTop: 'none',
       background: bg, color: fg,
       fontFamily: t.fonts.body,
     }}>
@@ -49,10 +48,10 @@ export default function SiteFooter() {
         maxWidth: 1296, margin: '0 auto',
       }}>
         <div>
-          <Wordmark size={26} light={isB} sub={false} />
+          <Wordmark size={26} light={true} sub={false} />
           <p style={{
             fontFamily: t.fonts.display, fontStyle: 'italic',
-            fontSize: 17, color: isB ? 'rgba(248,245,238,0.78)' : t.fgMuted,
+            fontSize: 17, color: 'rgba(248,245,238,0.78)',
             marginTop: 24, maxWidth: 380, lineHeight: 1.55, fontWeight: 400,
           }}>
             I partner with the best in the business, experts who have your back from day one to closing day. I&apos;m more than a salesperson; I&apos;m your trusted advisor and advocate, here to guide you, protect your interests, and make every step of your real estate journey seamless.
@@ -62,8 +61,8 @@ export default function SiteFooter() {
           <div key={col.h}>
             <div style={{
               fontFamily: t.eyebrowFont,
-              fontSize: 10.5, fontWeight: isB ? 600 : 400,
-              letterSpacing: isB ? '0.32em' : '0.26em',
+              fontSize: 10.5, fontWeight: 600,
+              letterSpacing: '0.32em',
               textTransform: 'uppercase',
               color: labelColor, marginBottom: 16,
             }}>{col.h}</div>
@@ -101,10 +100,10 @@ export default function SiteFooter() {
         maxWidth: 1296, margin: '32px auto 0',
         paddingTop: 24, borderTop: `1px solid ${ruleColor}`,
         fontFamily: t.eyebrowFont,
-        fontSize: 10.5, fontWeight: isB ? 500 : 400,
-        letterSpacing: isB ? '0.26em' : '0.18em',
+        fontSize: 10.5, fontWeight: 500,
+        letterSpacing: '0.26em',
         textTransform: 'uppercase',
-        color: isB ? 'rgba(248,245,238,0.45)' : t.fgFaint,
+        color: 'rgba(248,245,238,0.45)',
       }}>
         <span>© 2026 Tawny & Co. · {STUDIO.brokeredBy}</span>
         <span>Equal Housing Opportunity</span>

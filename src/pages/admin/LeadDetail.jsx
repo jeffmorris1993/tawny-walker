@@ -9,7 +9,6 @@ import { useLead, updateLeadStatus, updateLeadNote } from '../../lib/queries';
 
 export default function LeadDetail() {
   const t = useTheme();
-  const isB = t.key === 'B';
   const { id } = useParams();
   const { data: d, loading, refresh } = useLead(id);
 
@@ -72,7 +71,7 @@ export default function LeadDetail() {
     );
   }
 
-  const headlineColor = isB ? t.palette.emerald : t.fgPage;
+  const headlineColor = t.palette.emerald;
   const currentLabel = (t.leadStatusLabels[status] || status).toLowerCase();
 
   return (
@@ -80,9 +79,9 @@ export default function LeadDetail() {
       {/* Breadcrumb */}
       <div style={{
         fontFamily: t.eyebrowFont,
-        fontSize: isB ? 10 : 10.5,
-        fontWeight: isB ? 600 : 400,
-        letterSpacing: isB ? '0.28em' : '0.22em',
+        fontSize: 10,
+        fontWeight: 600,
+        letterSpacing: '0.28em',
         textTransform: 'uppercase',
         color: t.fgFaint, marginBottom: 24,
       }}>
@@ -114,8 +113,8 @@ export default function LeadDetail() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, alignItems: 'flex-end' }}>
           <div style={{
             fontFamily: t.eyebrowFont,
-            fontSize: isB ? 9.5 : 9.5,
-            fontWeight: isB ? 600 : 400,
+            fontSize: 9.5,
+            fontWeight: 600,
             letterSpacing: '0.28em', textTransform: 'uppercase',
             color: t.fgFaint,
           }}>Currently · <span style={{ color: headlineColor }}>{currentLabel}</span></div>
@@ -138,14 +137,14 @@ export default function LeadDetail() {
               }}>
                 <span style={{
                   fontFamily: t.eyebrowFont,
-                  fontSize: isB ? 10 : 10.5,
-                  fontWeight: isB ? 600 : 400,
-                  letterSpacing: isB ? '0.28em' : '0.22em',
+                  fontSize: 10,
+                  fontWeight: 600,
+                  letterSpacing: '0.28em',
                   textTransform: 'uppercase', color: t.fgFaint,
                 }}>{r.q}</span>
                 <span style={{
                   fontFamily: t.fonts.display, fontSize: 19,
-                  color: isB ? t.palette.emerald : t.fgPage, lineHeight: 1.4,
+                  color: t.palette.emerald, lineHeight: 1.4,
                 }}>{r.a}</span>
               </div>
             ))}
@@ -161,7 +160,7 @@ export default function LeadDetail() {
                   background: t.bgPanel, border: `1px solid ${t.line}`,
                   fontFamily: t.fonts.display, fontStyle: 'italic',
                   fontSize: 19, lineHeight: 1.55,
-                  color: hasNotes ? (isB ? t.palette.emerald : t.fgPage) : t.fgFaint,
+                  color: hasNotes ? t.palette.emerald : t.fgFaint,
                 }}>{hasNotes ? d.mandateNotes : 'None'}</p>
               );
             })()}
@@ -181,7 +180,7 @@ export default function LeadDetail() {
                 width: '100%', marginTop: 14, padding: 0,
                 background: 'transparent', border: 'none',
                 fontFamily: t.fonts.display, fontStyle: 'italic',
-                fontSize: 16, color: isB ? t.palette.emerald : t.fgPage,
+                fontSize: 16, color: t.palette.emerald,
                 lineHeight: 1.5, minHeight: 110, resize: 'vertical', outline: 'none',
                 boxSizing: 'border-box',
               }}
@@ -189,8 +188,8 @@ export default function LeadDetail() {
             <div style={{
               marginTop: 14, paddingTop: 14, borderTop: `1px solid ${t.line}`,
               fontFamily: t.eyebrowFont,
-              fontSize: isB ? 9.5 : 10, fontWeight: isB ? 600 : 400,
-              letterSpacing: isB ? '0.26em' : '0.2em',
+              fontSize: 9.5, fontWeight: 600,
+              letterSpacing: '0.26em',
               textTransform: 'uppercase', color: t.fgFaint,
             }}>{noteSaving ? 'Saving…' : (noteSaved ? `Saved · ${noteSaved}` : 'Click out to save')}</div>
           </div>

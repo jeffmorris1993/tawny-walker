@@ -43,16 +43,6 @@ export function SkeletonCardB() {
   );
 }
 
-// Renders `count` shimmer cards inside a passed-in grid wrapper.
-export function SkeletonGrid({ count = 12, Card }) {
-  return (
-    <>
-      {Array.from({ length: count }).map((_, i) => <Card key={i} />)}
-      <SkeletonStyles />
-    </>
-  );
-}
-
 // Shared keyframes — included once next to whichever grid renders the
 // skeleton set.
 export function SkeletonStyles() {

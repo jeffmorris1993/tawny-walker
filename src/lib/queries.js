@@ -2,7 +2,7 @@
 // All calls hit Supabase — set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY
 // in your environment. There is no mock fallback.
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from './supabase';
 import { PHOTOS } from '../components/Photo';
 
@@ -97,6 +97,10 @@ function rowToLead(row) {
 function relativeTime(iso, short = false) {
   if (!iso) return '';
   const then = new Date(iso);
+  // `now` is computed at row-mapping time, so the "today" / "yesterday"
+  // bucket reflects when the row was rendered, not when the page first
+  // mounted. Acceptable for short-lived admin views; if a session stays
+  // open across midnight the label will be stale until the next refresh.
   const now = new Date();
   const diffMs = now - then;
   const hours = diffMs / (1000 * 60 * 60);
@@ -112,33 +116,6 @@ function relativeTime(iso, short = false) {
 }
 
 // ─── Listings ──────────────────────────────────────────────────────────────
-export function useListings() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const refresh = useCallback(async () => {
-    if (noClient()) { setData([]); setLoading(false); return; }
-    setLoading(true);
-    const { data: rows, error: err } = await supabase
-      .from('listings')
-      .select('*')
-      .order('sort_order', { ascending: true });
-    if (err) {
-      console.error('[tw] listings fetch failed', err);
-      setData([]);
-      setError(err);
-    } else {
-      setData(rows.map(rowToListing));
-      setError(null);
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { refresh(); }, [refresh]);
-  return { data: data || [], loading, error, refresh };
-}
-
 // Reads the studio's in-progress edit blob for a listing. Used by the
 // preview route so admin tweaks render live without saving to the DB. The
 // editor writes/clears this key; we just observe it.
@@ -173,22 +150,30 @@ export function usePreviewOverride(id) {
 export function useListing(id) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  // Sequence counter — every effect run bumps it and only commits state
+  // when its own request is the latest, so out-of-order Supabase responses
+  // can't paint a previous id's row on top of the current one.
+  const reqRef = useRef(0);
 
   useEffect(() => {
+    const myReq = ++reqRef.current;
     let alive = true;
     async function load() {
       if (!id) {
-        if (alive) { setData(null); setLoading(false); }
+        if (alive && myReq === reqRef.current) { setData(null); setLoading(false); }
         return;
       }
-      if (noClient()) { if (alive) { setData(null); setLoading(false); } return; }
+      if (noClient()) {
+        if (alive && myReq === reqRef.current) { setData(null); setLoading(false); }
+        return;
+      }
       setLoading(true);
       const { data: row, error: err } = await supabase
         .from('listings')
         .select('*')
         .eq('id', id)
         .maybeSingle();
-      if (!alive) return;
+      if (!alive || myReq !== reqRef.current) return;
       if (err) console.error('[tw] listing fetch failed', err);
       setData(row ? rowToListing(row) : null);
       setLoading(false);
@@ -220,6 +205,7 @@ export function usePagedListings({
   const [data, setData] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const reqRef = useRef(0);
 
   // Stable string keys for the filter/sort — avoids re-fetching when the
   // caller creates a new array/object literal each render.
@@ -230,10 +216,11 @@ export function usePagedListings({
   const q        = (query || '').trim();
 
   useEffect(() => {
+    const myReq = ++reqRef.current;
     let alive = true;
     async function load() {
       if (noClient()) {
-        if (alive) { setData([]); setTotal(0); setLoading(false); }
+        if (alive && myReq === reqRef.current) { setData([]); setTotal(0); setLoading(false); }
         return;
       }
       setLoading(true);
@@ -266,7 +253,8 @@ export function usePagedListings({
         );
       }
       const { data: rows, count, error } = await req;
-      if (!alive) return;
+      // Drop out-of-order responses; only the latest request commits state.
+      if (!alive || myReq !== reqRef.current) return;
       if (error) {
         console.error('[tw] paged listings fetch failed', error);
         setData([]);
@@ -285,62 +273,174 @@ export function usePagedListings({
   return { data, total, pageCount, loading };
 }
 
-// PostgREST `or` parsing treats `,` and `)` specially. Strip them out of the
-// user-supplied substring so a query like "Foo, Inc" can't break the filter.
+// PostgREST `or()` parses several characters specially: commas separate
+// clauses, parens delimit groups, dots split column/operator/value, colons
+// rename aliases, asterisk + percent are wildcards, and backslash would
+// escape any of the above. Reduce a user-supplied substring to a plain
+// alphanumeric/space token so it can be safely interpolated into an
+// `ilike.*…*` clause. Whitespace is preserved so multi-word searches still
+// match across rows.
 function escapeOrToken(s) {
-  return String(s).replace(/[,()*]/g, ' ').trim();
+  return String(s)
+    // Strip every character with reserved meaning in PostgREST or() syntax.
+    .replace(/[,()*:.\\%]/g, ' ')
+    // Collapse runs of whitespace so the leading/trailing wildcards still
+    // hug a single token.
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
-// One-shot facet count query — pulls only the status + loc columns so the
-// filter bar shows accurate per-bucket totals without loading every full row.
+// Module-level cache for the per-status / per-loc rollup. Counts don't need
+// to be real-time, so subsequent callers within the TTL window reuse the
+// in-memory snapshot rather than firing another full-table scan.
+const COUNTS_TTL_MS = 60_000;
+const EMPTY_COUNTS = { All: 0, 'Coming Soon': 0, Active: 0, Pending: 0, Sold: 0, Draft: 0 };
+let listingCountsCache = null;
+let listingCountsInflight = null;
+
+async function fetchListingCounts() {
+  if (noClient()) return { counts: { ...EMPTY_COUNTS }, locCounts: {} };
+  const { data: rows, error } = await supabase.from('listings').select('status, loc');
+  if (error || !rows) {
+    if (error) console.error('[tw] listing counts fetch failed', error);
+    return { counts: { ...EMPTY_COUNTS }, locCounts: {} };
+  }
+  const next = { ...EMPTY_COUNTS, All: rows.length };
+  const locNext = {};
+  for (const r of rows) {
+    next[r.status] = (next[r.status] || 0) + 1;
+    if (r.loc) locNext[r.loc] = (locNext[r.loc] || 0) + 1;
+  }
+  return { counts: next, locCounts: locNext };
+}
+
+// One-shot facet count query. Subsequent calls within `COUNTS_TTL_MS` of
+// the last fetch reuse the cached snapshot, so navigating between admin
+// pages doesn't re-pull the table.
+//
 // Returns:
-//   counts      = { All, Active, Pending, Sold, Draft }
-//   locCounts   = { 'Birmingham, MI': n, … }   keyed by raw loc value
+//   counts      = { All, Coming Soon, Active, Pending, Sold, Draft }
+//   locCounts   = { 'Birmingham, MI': n, … }
 export function useListingCounts() {
-  const empty = { All: 0, 'Coming Soon': 0, Active: 0, Pending: 0, Sold: 0, Draft: 0 };
-  const [counts, setCounts] = useState(empty);
-  const [locCounts, setLocCounts] = useState({});
+  const [snapshot, setSnapshot] = useState(() => listingCountsCache?.value
+    || { counts: { ...EMPTY_COUNTS }, locCounts: {} });
+  const [loading, setLoading] = useState(!listingCountsCache);
+
+  useEffect(() => {
+    let alive = true;
+    const fresh = listingCountsCache && (Date.now() - listingCountsCache.at) < COUNTS_TTL_MS;
+    if (fresh) {
+      setSnapshot(listingCountsCache.value);
+      setLoading(false);
+      return () => { alive = false; };
+    }
+    setLoading(true);
+    // Coalesce concurrent callers onto a single network round-trip.
+    if (!listingCountsInflight) {
+      listingCountsInflight = fetchListingCounts().then((value) => {
+        listingCountsCache = { value, at: Date.now() };
+        listingCountsInflight = null;
+        return value;
+      });
+    }
+    listingCountsInflight.then((value) => {
+      if (!alive) return;
+      setSnapshot(value);
+      setLoading(false);
+    });
+    return () => { alive = false; };
+  }, []);
+
+  return { counts: snapshot.counts, locCounts: snapshot.locCounts, loading };
+}
+
+// Invalidate the counts cache — call from createListing/updateListing/
+// deleteListing so the next read picks up fresh totals immediately.
+function invalidateListingCounts() {
+  listingCountsCache = null;
+}
+
+// Unfiltered total — count-only query (no rows fetched, just the header).
+// Cheap enough to share between the admin sidebar badge and any other
+// places that need "how many listings exist in total".
+export function useListingTotal() {
+  const [total, setTotal] = useState(0);
+
+  useEffect(() => {
+    let alive = true;
+    async function load() {
+      if (noClient()) return;
+      const { count, error } = await supabase
+        .from('listings')
+        .select('id', { count: 'exact', head: true });
+      if (!alive) return;
+      if (error) console.error('[tw] listing total fetch failed', error);
+      else setTotal(count ?? 0);
+    }
+    load();
+    return () => { alive = false; };
+  }, []);
+
+  return total;
+}
+
+// Targeted paged query — pulls only `limit` rows that exclude the current
+// listing + sold rows. Replaces the prior implementation which loaded the
+// entire listings table client-side just to render 3 cards.
+export function useRelatedListings(currentId, limit = 3) {
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    let alive = true;
+    async function load() {
+      if (!currentId || noClient()) return;
+      let req = supabase
+        .from('listings')
+        .select('*')
+        .neq('status', 'Sold')
+        .neq('status', 'Draft')
+        .order('sort_order', { ascending: true })
+        .limit(limit + 1); // +1 in case the current id sneaks in
+      req = req.neq('id', currentId);
+      const { data: rows, error } = await req;
+      if (!alive) return;
+      if (error) { console.error('[tw] related listings failed', error); return; }
+      setData((rows || []).slice(0, limit).map(rowToListing));
+    }
+    load();
+    return () => { alive = false; };
+  }, [currentId, limit]);
+
+  return data;
+}
+
+// Lightweight featured-listings query for the public Landing page. Pulls a
+// few active rows, ordered by sort_order, so the home page doesn't need to
+// load the full table just to render three cards.
+export function useFeaturedListings(limit = 3) {
+  const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let alive = true;
     async function load() {
-      if (noClient()) {
-        if (alive) { setCounts(empty); setLocCounts({}); setLoading(false); }
-        return;
-      }
-      setLoading(true);
-      const { data: rows, error } = await supabase.from('listings').select('status, loc');
+      if (noClient()) { setLoading(false); return; }
+      const { data: rows, error } = await supabase
+        .from('listings')
+        .select('*')
+        .not('status', 'in', '("Sold","Draft")')
+        .order('sort_order', { ascending: true })
+        .limit(limit);
       if (!alive) return;
-      if (error || !rows) {
-        if (error) console.error('[tw] listing counts fetch failed', error);
-        setCounts(empty);
-        setLocCounts({});
-      } else {
-        const next = { ...empty, All: rows.length };
-        const locNext = {};
-        for (const r of rows) {
-          next[r.status] = (next[r.status] || 0) + 1;
-          if (r.loc) locNext[r.loc] = (locNext[r.loc] || 0) + 1;
-        }
-        setCounts(next);
-        setLocCounts(locNext);
-      }
+      if (error) console.error('[tw] featured listings fetch failed', error);
+      setData((rows || []).map(rowToListing));
       setLoading(false);
     }
     load();
     return () => { alive = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [limit]);
 
-  return { counts, locCounts, loading };
-}
-
-export function useRelatedListings(currentId, limit = 3) {
-  const { data } = useListings();
-  return data
-    .filter(l => l.id !== currentId && l.status !== 'Sold')
-    .slice(0, limit);
+  return { data, loading };
 }
 
 export async function createListing(input) {
@@ -367,12 +467,15 @@ export async function createListing(input) {
   if (noClient()) return { data: null, error: { message: 'Supabase not configured' } };
   const { data, error } = await supabase.from('listings').insert(payload).select().single();
   if (error) console.error('[tw] listing insert failed', error);
+  if (!error) invalidateListingCounts();
   return { data, error };
 }
 
 export async function updateListingStatus(id, status) {
   if (noClient()) return { data: null, error: { message: 'Supabase not configured' } };
-  return supabase.from('listings').update({ status }).eq('id', id).select().single();
+  const result = await supabase.from('listings').update({ status }).eq('id', id).select().single();
+  if (!result.error) invalidateListingCounts();
+  return result;
 }
 
 // Full-field update for an existing listing. Field names mirror createListing
@@ -398,6 +501,7 @@ export async function updateListing(id, input) {
   if (noClient()) return { data: null, error: { message: 'Supabase not configured' } };
   const { data, error } = await supabase.from('listings').update(payload).eq('id', id).select().single();
   if (error) console.error('[tw] listing update failed', error);
+  if (!error) invalidateListingCounts();
   return { data, error };
 }
 
@@ -405,6 +509,7 @@ export async function deleteListing(id) {
   if (noClient()) return { error: { message: 'Supabase not configured' } };
   const { error } = await supabase.from('listings').delete().eq('id', id);
   if (error) console.error('[tw] listing delete failed', error);
+  if (!error) invalidateListingCounts();
   return { error };
 }
 
@@ -434,21 +539,50 @@ const LEAD_SORT_COLUMN = {
 };
 
 // Unfiltered total — used by the inbox helper text ("2 matches in 9 leads").
+// Module-level cache mirrors the listing-counts pattern so a fresh insert or
+// status update can invalidate the cached count and the sidebar badge picks
+// up the new value on the next mount.
+const LEAD_TOTAL_TTL_MS = 60_000;
+let leadTotalCache = null; // { value, at }
+let leadTotalInflight = null;
+
+function invalidateLeadTotal() {
+  leadTotalCache = null;
+}
+
+async function fetchLeadTotal() {
+  if (noClient()) return 0;
+  const { count, error } = await supabase
+    .from('leads')
+    .select('id', { count: 'exact', head: true });
+  if (error) {
+    console.error('[tw] lead total fetch failed', error);
+    return 0;
+  }
+  return count ?? 0;
+}
+
 export function useLeadTotal() {
-  const [total, setTotal] = useState(0);
+  const [total, setTotal] = useState(() => leadTotalCache?.value ?? 0);
 
   useEffect(() => {
     let alive = true;
-    async function load() {
-      if (noClient()) return;
-      const { count, error } = await supabase
-        .from('leads')
-        .select('id', { count: 'exact', head: true });
-      if (!alive) return;
-      if (error) console.error('[tw] lead total fetch failed', error);
-      else setTotal(count ?? 0);
+    const fresh = leadTotalCache && (Date.now() - leadTotalCache.at) < LEAD_TOTAL_TTL_MS;
+    if (fresh) {
+      setTotal(leadTotalCache.value);
+      return () => { alive = false; };
     }
-    load();
+    if (!leadTotalInflight) {
+      leadTotalInflight = fetchLeadTotal().then((value) => {
+        leadTotalCache = { value, at: Date.now() };
+        leadTotalInflight = null;
+        return value;
+      });
+    }
+    leadTotalInflight.then((value) => {
+      if (!alive) return;
+      setTotal(value);
+    });
     return () => { alive = false; };
   }, []);
 
@@ -467,16 +601,18 @@ export function usePagedLeads({
   const [data, setData] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const reqRef = useRef(0);
 
   const rolesKey = (roleIn || []).slice().sort().join(',');
   const statusesKey = (statusIn || []).slice().sort().join(',');
   const q = (query || '').trim();
 
   useEffect(() => {
+    const myReq = ++reqRef.current;
     let alive = true;
     async function load() {
       if (noClient()) {
-        if (alive) { setData([]); setTotal(0); setLoading(false); }
+        if (alive && myReq === reqRef.current) { setData([]); setTotal(0); setLoading(false); }
         return;
       }
       setLoading(true);
@@ -500,7 +636,7 @@ export function usePagedLeads({
         );
       }
       const { data: rows, count, error } = await req;
-      if (!alive) return;
+      if (!alive || myReq !== reqRef.current) return;
       if (error) {
         console.error('[tw] paged leads fetch failed', error);
         setData([]);
@@ -520,30 +656,6 @@ export function usePagedLeads({
 }
 
 // ─── Leads ──────────────────────────────────────────────────────────────────
-export function useLeads() {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  const refresh = useCallback(async () => {
-    if (noClient()) { setData([]); setLoading(false); return; }
-    setLoading(true);
-    const { data: rows, error } = await supabase
-      .from('leads')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (error) {
-      console.error('[tw] leads fetch failed', error);
-      setData([]);
-    } else {
-      setData(rows.map(rowToLead));
-    }
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { refresh(); }, [refresh]);
-  return { data: data || [], loading, refresh };
-}
-
 export function useLead(id) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -583,6 +695,7 @@ export function useLeadEvents(leadId, { pageSize = 15, bumpKey = 0 } = {}) {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
+  const reqRef = useRef(0);
 
   /* eslint-disable react-hooks/set-state-in-effect */
   // Whenever the lead changes (or a write bumps the key) reset to page 0.
@@ -596,6 +709,7 @@ export function useLeadEvents(leadId, { pageSize = 15, bumpKey = 0 } = {}) {
   useEffect(() => {
     if (!leadId) { setLoading(false); return; }
     if (noClient()) { setLoading(false); return; }
+    const myReq = ++reqRef.current;
     let alive = true;
     async function load() {
       const from = page * pageSize;
@@ -606,7 +720,9 @@ export function useLeadEvents(leadId, { pageSize = 15, bumpKey = 0 } = {}) {
         .eq('lead_id', leadId)
         .order('created_at', { ascending: false })
         .range(from, to);
-      if (!alive) return;
+      // Drop late responses (e.g. user scrolled quickly across two pages
+      // before the first request landed) so we never double-append.
+      if (!alive || myReq !== reqRef.current) return;
       if (error) {
         console.error('[tw] lead events fetch failed', error);
         setHasMore(false);
@@ -632,6 +748,7 @@ export function useLeadEvents(leadId, { pageSize = 15, bumpKey = 0 } = {}) {
 export async function updateLeadStatus(id, status, previousStatus) {
   if (noClient()) return { error: { message: 'Supabase not configured' } };
   const { error } = await supabase.from('leads').update({ status }).eq('id', id);
+  if (!error) invalidateLeadTotal();
   if (!error && previousStatus !== status) {
     await supabase.from('lead_events').insert({
       lead_id: id, kind: 'status',
@@ -680,6 +797,7 @@ export async function submitInquiry({ role, name, email, phone, contact, payload
     .select()
     .single();
   if (error) console.error('[tw] lead insert failed', error);
+  if (!error) invalidateLeadTotal();
   return { data, error };
 }
 
@@ -726,15 +844,24 @@ function inquiryToLead({ role, name, email, phone, contact, payload, message }) 
   }
   const summary = summaryParts.length ? summaryParts.join(' · ') : (message ? message.slice(0, 160) : null);
 
-  // The intake list rendered on the lead detail page.
+  // The intake list rendered on the lead detail page. The multi-select
+  // dropdowns ("Other → please specify") write their typed value into a
+  // companion field named "<label> — other"; fold those into the chip
+  // entry so the studio sees one row per question, not two.
+  const OTHER_SUFFIX = ' — other';
   const intake = [];
   for (const [q, a] of Object.entries(fields)) {
     if (!a) continue;
     if (q === 'Name' || q === 'Email' || q === 'Phone' || q === 'Best contact') continue;
+    // Skip "<label> — other" rows; they get folded into the chip entry below.
+    if (q.endsWith(OTHER_SUFFIX)) continue;
     intake.push({ q, a });
   }
   for (const [q, arr] of Object.entries(chips)) {
-    if (Array.isArray(arr) && arr.length) intake.push({ q, a: arr.join(' · ') });
+    if (!Array.isArray(arr) || arr.length === 0) continue;
+    const otherText = (fields[`${q}${OTHER_SUFFIX}`] || '').trim();
+    const items = arr.map(v => (v === 'Other' && otherText) ? `Other: ${otherText}` : v);
+    intake.push({ q, a: items.join(' · ') });
   }
   for (const [q, b] of Object.entries(budgets)) {
     if (b && b.display) intake.push({ q, a: b.display });
@@ -762,42 +889,35 @@ function inquiryToLead({ role, name, email, phone, contact, payload, message }) 
 
 // ─── Auth ──────────────────────────────────────────────────────────────────
 export async function signIn(email, password) {
-  // Env-driven shared password, useful while there's only one studio user
-  // and you don't want to provision a full Supabase Auth user.
-  const demoEmail = import.meta.env.VITE_ADMIN_EMAIL;
-  const demoPassword = import.meta.env.VITE_ADMIN_PASSWORD;
-  if (demoEmail && demoPassword) {
-    if (email === demoEmail && password === demoPassword) {
-      localStorage.setItem('tw.admin', '1');
-      return { error: null };
-    }
-    return { error: { message: 'Incorrect email or password.' } };
-  }
+  // Auth is Supabase-only. The previous env-var "demo" branch shipped the
+  // password in the public Vite bundle (anything VITE_* is inlined), so it
+  // has been removed.
   if (noClient()) return { error: { message: 'Supabase not configured' } };
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (!error) localStorage.setItem('tw.admin', '1');
   return { error };
 }
 
 export async function signOut() {
-  localStorage.removeItem('tw.admin');
   if (supabase) await supabase.auth.signOut();
 }
 
+// Auth state has three values: 'checking' (initial, before getSession
+// resolves), true (signed in), false (signed out). RequireAdmin renders a
+// neutral loader on 'checking' so the admin pages never flash before the
+// redirect-to-login decision is made.
 export function useIsAdmin() {
-  const [admin, setAdmin] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return localStorage.getItem('tw.admin') === '1';
-  });
+  const [admin, setAdmin] = useState('checking');
 
   useEffect(() => {
-    if (!supabase) return;
+    if (!supabase) { setAdmin(false); return undefined; }
     let alive = true;
     supabase.auth.getSession().then(({ data }) => {
-      if (alive && data.session) setAdmin(true);
+      if (!alive) return;
+      setAdmin(!!data.session);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setAdmin(!!session || localStorage.getItem('tw.admin') === '1');
+      if (!alive) return;
+      setAdmin(!!session);
     });
     return () => { alive = false; sub.subscription.unsubscribe(); };
   }, []);

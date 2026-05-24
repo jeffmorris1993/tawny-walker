@@ -7,13 +7,12 @@ export default function Button({
   to, onClick, children, variant = 'primary', arrow = true, full = false, size = 'md', style,
 }) {
   const t = useTheme();
-  const isB = t.key === 'B';
 
   const sizing = size === 'sm'
     ? { padX: 20, padY: 14, fz: 10.5 }
     : size === 'lg'
       ? { padX: 36, padY: 22, fz: 12 }
-      : { padX: isB ? 32 : 28, padY: isB ? 18 : 18, fz: 11.5 };
+      : { padX: 32, padY: 18, fz: 11.5 };
 
   const variants = {
     primary: { bg: t.primary, fg: t.primaryFg, border: t.primary },
@@ -31,8 +30,8 @@ export default function Button({
       background: v.bg, color: v.fg, border: `1px solid ${v.border}`,
       fontFamily: t.eyebrowFont,
       fontSize: sizing.fz,
-      fontWeight: isB ? 600 : 400,
-      letterSpacing: isB ? '0.28em' : '0.24em',
+      fontWeight: 600,
+      letterSpacing: '0.28em',
       textTransform: 'uppercase',
       textAlign: 'center',
       cursor: to || onClick ? 'pointer' : 'default',

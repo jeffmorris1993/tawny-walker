@@ -13,14 +13,13 @@ import { required } from '../../lib/validation';
 
 function FormInput({ label, value, onChange, placeholder, dropdown, error }) {
   const t = useTheme();
-  const isB = t.key === 'B';
   const errorColor = '#B5341F';
   return (
     <div>
       <div style={{
         fontFamily: t.eyebrowFont,
-        fontSize: 10, fontWeight: isB ? 600 : 400,
-        letterSpacing: isB ? '0.28em' : '0.22em',
+        fontSize: 10, fontWeight: 600,
+        letterSpacing: '0.28em',
         textTransform: 'uppercase',
         color: error ? errorColor : t.fgFaint, marginBottom: 8,
       }}>{label}</div>
@@ -39,10 +38,10 @@ function FormInput({ label, value, onChange, placeholder, dropdown, error }) {
             flex: 1, minWidth: 0,
             background: 'transparent', border: 'none', outline: 'none', padding: 0,
             fontFamily: t.fonts.display, fontSize: 18,
-            color: isB ? t.palette.emerald : t.fgPage, lineHeight: 1.3,
+            color: t.palette.emerald, lineHeight: 1.3,
           }}
         />
-        {dropdown && <span style={{ color: isB ? t.palette.emerald : t.fgFaint, fontSize: 13 }}>▾</span>}
+        {dropdown && <span style={{ color: t.palette.emerald, fontSize: 13 }}>▾</span>}
       </div>
       {error && (
         <div style={{ marginTop: 6, fontSize: 11, color: errorColor, fontFamily: t.fonts.body }}>{error}</div>
@@ -75,7 +74,6 @@ function listingToForm(L) {
 
 export default function AddListing() {
   const t = useTheme();
-  const isB = t.key === 'B';
   const navigate = useNavigate();
   const { id: routeId } = useParams();
   const editing = !!routeId;
@@ -98,10 +96,11 @@ export default function AddListing() {
   }, [editing, existing, form]);
 
   // Mirror in-progress edits to localStorage so the /studio/preview/<id> tab
-  // can render them live. Cleared on unmount so the preview tab falls back to
+  // can render them live. Debounced so we don't fire a write + storage event
+  // on every keystroke. Cleared on unmount so the preview tab falls back to
   // the saved DB row once the editor closes.
   useEffect(() => {
-    if (!editing || !routeId || !form) return;
+    if (!editing || !routeId || !form) return undefined;
     const key = `tw.preview.${routeId}`;
     const photos = form.photos || [];
     const blob = {
@@ -122,7 +121,10 @@ export default function AddListing() {
       img: photos[0]?.url || null,
       _stamp: Date.now(),
     };
-    try { localStorage.setItem(key, JSON.stringify(blob)); } catch { /* quota */ }
+    const id = setTimeout(() => {
+      try { localStorage.setItem(key, JSON.stringify(blob)); } catch { /* quota */ }
+    }, 250);
+    return () => clearTimeout(id);
   }, [editing, routeId, form]);
 
   useEffect(() => {
@@ -209,9 +211,9 @@ export default function AddListing() {
     navigate('/admin/listings');
   }
 
-  const headlineColor = isB ? t.palette.emerald : t.fgPage;
-  const primaryBg = isB ? t.palette.emerald : t.palette.ink;
-  const primaryFg = isB ? '#fff' : t.palette.bone;
+  const headlineColor = t.palette.emerald;
+  const primaryBg = t.palette.emerald;
+  const primaryFg = '#fff';
 
   const publishLabel = editing
     ? (submitting ? 'Saving…' : 'Save Changes →')
@@ -222,9 +224,9 @@ export default function AddListing() {
       {/* Breadcrumb */}
       <div style={{
         fontFamily: t.eyebrowFont,
-        fontSize: isB ? 10 : 10.5,
-        fontWeight: isB ? 600 : 400,
-        letterSpacing: isB ? '0.28em' : '0.22em',
+        fontSize: 10,
+        fontWeight: 600,
+        letterSpacing: '0.28em',
         textTransform: 'uppercase', color: t.fgFaint, marginBottom: 24,
       }}>
         <Link to="/admin/listings" style={{ color: t.fgFaint, textDecoration: 'none' }}>
@@ -270,8 +272,8 @@ export default function AddListing() {
                 padding: '14px 22px', border: `1px solid #B5341F`,
                 background: 'transparent',
                 fontFamily: t.eyebrowFont,
-                fontSize: isB ? 10.5 : 11, fontWeight: isB ? 600 : 400,
-                letterSpacing: isB ? '0.26em' : '0.24em',
+                fontSize: 10.5, fontWeight: 600,
+                letterSpacing: '0.26em',
                 textTransform: 'uppercase', color: '#B5341F',
                 cursor: submitting ? 'wait' : 'pointer',
               }}>Delete</button>
@@ -284,8 +286,8 @@ export default function AddListing() {
                 padding: '14px 22px', border: `1px solid ${t.line}`,
                 background: 'transparent',
                 fontFamily: t.eyebrowFont,
-                fontSize: isB ? 10.5 : 11, fontWeight: isB ? 600 : 400,
-                letterSpacing: isB ? '0.26em' : '0.24em',
+                fontSize: 10.5, fontWeight: 600,
+                letterSpacing: '0.26em',
                 textTransform: 'uppercase', color: t.fgMuted,
                 cursor: submitting ? 'wait' : 'pointer',
               }}>Save Draft</button>
@@ -295,12 +297,12 @@ export default function AddListing() {
               type="button"
               onClick={() => window.open(`/studio/preview/${routeId}`, '_blank', 'noopener')}
               style={{
-                padding: '14px 22px', border: `1px solid ${isB ? t.palette.emerald : t.palette.ink}`,
+                padding: '14px 22px', border: `1px solid ${t.palette.emerald}`,
                 background: 'transparent',
-                color: isB ? t.palette.emerald : t.fgPage,
+                color: t.palette.emerald,
                 fontFamily: t.eyebrowFont,
-                fontSize: isB ? 10.5 : 11, fontWeight: isB ? 600 : 400,
-                letterSpacing: isB ? '0.26em' : '0.24em',
+                fontSize: 10.5, fontWeight: 600,
+                letterSpacing: '0.26em',
                 textTransform: 'uppercase', cursor: 'pointer',
               }}>Preview</button>
           )}
@@ -311,8 +313,8 @@ export default function AddListing() {
             style={{
               padding: '14px 22px', background: primaryBg, color: primaryFg, border: 'none',
               fontFamily: t.eyebrowFont,
-              fontSize: isB ? 10.5 : 11, fontWeight: isB ? 600 : 400,
-              letterSpacing: isB ? '0.26em' : '0.24em',
+              fontSize: 10.5, fontWeight: 600,
+              letterSpacing: '0.26em',
               textTransform: 'uppercase', cursor: submitting ? 'wait' : 'pointer',
               opacity: submitting ? 0.6 : 1,
             }}>{publishLabel}</button>
@@ -355,8 +357,8 @@ export default function AddListing() {
                 <div style={{ position: 'relative' }}>
                   <div style={{
                     fontFamily: t.eyebrowFont,
-                    fontSize: 10, fontWeight: isB ? 600 : 400,
-                    letterSpacing: isB ? '0.28em' : '0.22em',
+                    fontSize: 10, fontWeight: 600,
+                    letterSpacing: '0.28em',
                     textTransform: 'uppercase',
                     color: t.fgFaint, marginBottom: 8,
                   }}>Status</div>
@@ -371,11 +373,11 @@ export default function AddListing() {
                       border: 'none', borderBottom: `1px solid ${t.fgMuted}`,
                       padding: '0 0 6px', cursor: 'pointer', textAlign: 'left',
                       fontFamily: t.fonts.display, fontSize: 18,
-                      color: isB ? t.palette.emerald : t.fgPage, lineHeight: 1.3,
+                      color: t.palette.emerald, lineHeight: 1.3,
                     }}>
                     <span>{t.statusLabels[form.status] || form.status}</span>
                     <span style={{
-                      color: isB ? t.palette.emerald : t.fgFaint, fontSize: 13,
+                      color: t.palette.emerald, fontSize: 13,
                       transform: statusOpen ? 'rotate(180deg)' : 'none',
                       transition: 'transform 0.15s',
                     }}>▾</span>
@@ -408,7 +410,7 @@ export default function AddListing() {
                               style={{
                                 padding: '10px 12px', cursor: 'pointer',
                                 fontFamily: t.fonts.body, fontSize: 13,
-                                color: selected ? (isB ? t.palette.emerald : t.fgPage) : t.fgMuted,
+                                color: selected ? t.palette.emerald : t.fgMuted,
                                 background: selected ? t.bgPanel : 'transparent',
                                 display: 'flex', alignItems: 'center', gap: 10,
                               }}
@@ -438,7 +440,7 @@ export default function AddListing() {
                 marginTop: 18, width: '100%', background: 'transparent', border: 'none',
                 borderBottom: `1px solid ${t.fgMuted}`, outline: 'none', padding: '8px 0',
                 fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 20,
-                color: isB ? t.palette.emerald : t.fgPage,
+                color: t.palette.emerald,
                 lineHeight: 1.5, resize: 'none', minHeight: 100, boxSizing: 'border-box',
               }}
             />
@@ -468,7 +470,7 @@ export default function AddListing() {
               />
               <div style={{
                 position: 'absolute', top: 10, left: 10, padding: '4px 9px',
-                background: isB ? '#fff' : 'rgba(251,249,245,0.95)',
+                background: '#fff',
               }}>
                 <StatusChip status={form.status} />
               </div>
@@ -477,7 +479,7 @@ export default function AddListing() {
               <h3 style={{
                 fontFamily: t.fonts.display, fontWeight: 400,
                 fontSize: 20, margin: 0,
-                color: isB ? t.palette.emerald : t.fgPage, lineHeight: 1.1,
+                color: t.palette.emerald, lineHeight: 1.1,
               }}>{form.name || '—'}</h3>
               <div style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 13, color: t.fgMuted }}>
                 {form.address}{form.city ? `, ${form.city}` : ''}
@@ -489,12 +491,12 @@ export default function AddListing() {
               }}>
                 <span style={{
                   fontFamily: t.fonts.display, fontSize: 16,
-                  color: isB ? t.palette.emerald : t.fgPage,
+                  color: t.palette.emerald,
                 }}>{form.price || '$—'}</span>
                 <span style={{
                   fontFamily: t.eyebrowFont,
-                  fontSize: isB ? 9 : 9, fontWeight: isB ? 600 : 400,
-                  letterSpacing: isB ? '0.22em' : '0.18em',
+                  fontSize: 9, fontWeight: 600,
+                  letterSpacing: '0.22em',
                   textTransform: 'uppercase', color: t.fgFaint,
                   whiteSpace: 'nowrap',
                 }}>{form.beds || '—'} BD · {form.baths || '—'} BA</span>

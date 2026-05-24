@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTheme } from '../theme/DirectionContext';
 import Wordmark from './Wordmark';
 import { ADMIN_NAV_KEYS } from '../data/leads';
-import { signOut, useLeads, useListings } from '../lib/queries';
+import { signOut, useLeadTotal, useListingTotal } from '../lib/queries';
 
 const NAV_PATHS = {
   Leads: '/admin',
@@ -12,18 +12,20 @@ const NAV_PATHS = {
 
 export default function AdminShell({ children }) {
   const t = useTheme();
-  const isB = t.key === 'B';
   const a = t.admin;
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
   const activeKey = pathname.startsWith('/admin/listings') ? 'Listings' : 'Leads';
 
-  const { data: leads } = useLeads();
-  const { data: listings } = useListings();
+  // Count-only round-trips (HEAD requests) — no row payload. Avoids
+  // re-pulling both tables on every admin navigation just for the sidebar
+  // badges.
+  const leadTotal = useLeadTotal();
+  const listingTotal = useListingTotal();
   const navCounts = {
-    Leads: leads.length || null,
-    Listings: listings.length || null,
+    Leads: leadTotal || null,
+    Listings: listingTotal || null,
   };
 
   async function handleSignOut() {
@@ -41,22 +43,22 @@ export default function AdminShell({ children }) {
       <aside className="tw-admin-sidebar" style={{
         width: 240, flexShrink: 0,
         background: a.sidebarBg, color: a.sidebarFg,
-        borderRight: `1px solid ${isB ? 'transparent' : t.line}`,
+        borderRight: `1px solid transparent`,
         padding: '32px 24px',
         display: 'flex', flexDirection: 'column',
         overflowY: 'auto',
       }}>
         <Link to="/" style={{ textDecoration: 'none' }}>
-          <Wordmark size={18} light={isB} sub={false} color={a.sidebarFg} />
+          <Wordmark size={18} light={true} sub={false} color={a.sidebarFg} />
         </Link>
         <div style={{
           fontFamily: t.eyebrowFont,
-          fontSize: isB ? 9 : 9.5,
-          fontWeight: isB ? 600 : 400,
-          letterSpacing: isB ? '0.32em' : '0.28em',
+          fontSize: 9,
+          fontWeight: 600,
+          letterSpacing: '0.32em',
           textTransform: 'uppercase',
           color: a.sidebarSubLabel,
-          marginTop: isB ? 10 : 4,
+          marginTop: 10,
         }}>The Studio · Private</div>
 
         <nav style={{ marginTop: 48, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -96,7 +98,7 @@ export default function AdminShell({ children }) {
               background: a.avatarBg, color: a.avatarFg,
               display: 'grid', placeItems: 'center', flexShrink: 0,
               fontFamily: t.fonts.display, fontStyle: 'italic',
-              fontSize: 15, fontWeight: isB ? 500 : 400,
+              fontSize: 15, fontWeight: 500,
             }}>TW</div>
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: 12, color: a.sidebarFg }}>Tawny Walker</div>
@@ -107,9 +109,9 @@ export default function AdminShell({ children }) {
                   marginTop: 2,
                   background: 'none', border: 'none', padding: 0, cursor: 'pointer',
                   fontFamily: t.eyebrowFont,
-                  fontSize: isB ? 9 : 9.5,
-                  fontWeight: isB ? 600 : 400,
-                  letterSpacing: isB ? '0.26em' : '0.2em',
+                  fontSize: 9,
+                  fontWeight: 600,
+                  letterSpacing: '0.26em',
                   textTransform: 'uppercase',
                   color: a.sidebarSubLabel,
                 }}

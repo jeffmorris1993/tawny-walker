@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useTheme } from '../../theme/DirectionContext';
 
 // Editorial replacement for window.confirm / window.alert. Centered card
@@ -22,7 +22,13 @@ export default function ConfirmDialog({
   danger = false, busy = false,
 }) {
   const t = useTheme();
-  const isB = t.key === 'B';
+
+  // Refs for focus management — the cancel button receives initial focus
+  // (safer default for destructive dialogs), and Tab cycles between the
+  // two action buttons so focus can never escape the dialog.
+  const cancelRef = useRef(null);
+  const confirmRef = useRef(null);
+  const previouslyFocusedRef = useRef(null);
 
   useEffect(() => {
     if (!open) return;
@@ -33,10 +39,55 @@ export default function ConfirmDialog({
     return () => document.removeEventListener('keydown', onKey);
   }, [open, busy, onCancel]);
 
+  // Body scroll lock + focus capture/restore + initial focus on cancel.
+  useEffect(() => {
+    if (!open) return;
+    previouslyFocusedRef.current = document.activeElement;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    // Defer to next tick so the buttons are mounted before we focus.
+    const id = setTimeout(() => {
+      (cancelRef.current || confirmRef.current)?.focus();
+    }, 0);
+    return () => {
+      clearTimeout(id);
+      document.body.style.overflow = prevOverflow;
+      try {
+        const prev = previouslyFocusedRef.current;
+        if (prev && typeof prev.focus === 'function' && document.contains(prev)) {
+          prev.focus();
+        }
+      } catch {
+        /* best-effort — the trigger may have unmounted */
+      }
+    };
+  }, [open]);
+
+  // Two-button focus trap: Tab/Shift+Tab cycles cancel ↔ confirm.
+  function onDialogKeyDown(e) {
+    if (e.key !== 'Tab') return;
+    const cancelEl = cancelRef.current;
+    const confirmEl = confirmRef.current;
+    // If only one is present, just keep focus on it.
+    if (!cancelEl || !confirmEl) {
+      const lone = cancelEl || confirmEl;
+      if (lone) { e.preventDefault(); lone.focus(); }
+      return;
+    }
+    const active = document.activeElement;
+    if (e.shiftKey) {
+      if (active === cancelEl) { e.preventDefault(); confirmEl.focus(); }
+      else if (active !== confirmEl) { e.preventDefault(); confirmEl.focus(); }
+    } else {
+      if (active === confirmEl) { e.preventDefault(); cancelEl.focus(); }
+      else if (active !== cancelEl) { e.preventDefault(); cancelEl.focus(); }
+    }
+  }
+
   if (!open) return null;
 
-  const ink     = isB ? t.palette.emerald : t.palette.ink;
-  const onInk   = isB ? '#FFFFFF' : t.palette.bone;
+  const ink     = t.palette.emerald;
+  const onInk   = '#FFFFFF';
   const danger0 = '#9B2A1F';
   const dangerFg = '#FFFFFF';
 
@@ -48,6 +99,7 @@ export default function ConfirmDialog({
       role="dialog"
       aria-modal="true"
       onClick={() => !busy && onCancel && onCancel()}
+      onKeyDown={onDialogKeyDown}
       style={{
         position: 'fixed', inset: 0, zIndex: 250,
         background: 'rgba(15, 15, 12, 0.55)',
@@ -69,7 +121,7 @@ export default function ConfirmDialog({
             fontFamily: t.fonts.display, fontWeight: 400,
             fontSize: 'clamp(22px, 2.4vw, 28px)', margin: 0,
             letterSpacing: '-0.012em',
-            color: isB ? t.palette.emerald : t.fgPage, lineHeight: 1.2,
+            color: t.palette.emerald, lineHeight: 1.2,
           }}>{title}</h2>
         )}
         {message && (
@@ -85,6 +137,7 @@ export default function ConfirmDialog({
         }}>
           {onCancel && (
             <button
+              ref={cancelRef}
               type="button"
               onClick={onCancel}
               disabled={busy}
@@ -94,8 +147,8 @@ export default function ConfirmDialog({
                 border: `1px solid ${t.line}`,
                 color: t.fgMuted,
                 fontFamily: t.eyebrowFont,
-                fontSize: isB ? 10.5 : 11, fontWeight: isB ? 600 : 400,
-                letterSpacing: isB ? '0.26em' : '0.22em',
+                fontSize: 10.5, fontWeight: 600,
+                letterSpacing: '0.26em',
                 textTransform: 'uppercase',
                 cursor: busy ? 'not-allowed' : 'pointer',
                 opacity: busy ? 0.5 : 1,
@@ -104,6 +157,7 @@ export default function ConfirmDialog({
           )}
           {onConfirm && (
             <button
+              ref={confirmRef}
               type="button"
               onClick={onConfirm}
               disabled={busy}
@@ -113,8 +167,8 @@ export default function ConfirmDialog({
                 border: `1px solid ${primaryBg}`,
                 color: primaryFg,
                 fontFamily: t.eyebrowFont,
-                fontSize: isB ? 10.5 : 11, fontWeight: isB ? 600 : 400,
-                letterSpacing: isB ? '0.26em' : '0.22em',
+                fontSize: 10.5, fontWeight: 600,
+                letterSpacing: '0.26em',
                 textTransform: 'uppercase',
                 cursor: busy ? 'wait' : 'pointer',
                 opacity: busy ? 0.7 : 1,

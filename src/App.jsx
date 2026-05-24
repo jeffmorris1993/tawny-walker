@@ -16,6 +16,18 @@ import { useIsAdmin } from './lib/queries';
 
 function RequireAdmin({ children }) {
   const isAdmin = useIsAdmin();
+  if (isAdmin === 'checking') {
+    // Neutral loader — doesn't paint anything that could leak admin chrome
+    // before the session check resolves.
+    return (
+      <div style={{
+        minHeight: '100dvh', display: 'grid', placeItems: 'center',
+        background: '#FFFFFF', color: '#97A095',
+        fontFamily: 'Inter, sans-serif',
+        fontSize: 11, letterSpacing: '0.26em', textTransform: 'uppercase',
+      }}>Checking session…</div>
+    );
+  }
   if (!isAdmin) return <Navigate to="/admin/login" replace />;
   return children;
 }
@@ -42,6 +54,8 @@ function HashScroller() {
         el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } else if (tries++ < 20) {
         requestAnimationFrame(tick);
+      } else {
+        console.warn(`[tw] HashScroller: no element found for #${id} after 20 frames`);
       }
     };
     requestAnimationFrame(tick);

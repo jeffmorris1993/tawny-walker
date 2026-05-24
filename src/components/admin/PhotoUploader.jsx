@@ -16,7 +16,6 @@ const BUCKET = 'listing-photos';
 
 export default function PhotoUploader({ value = [], onChange, listingId }) {
   const t = useTheme();
-  const isB = t.key === 'B';
 
   const fileInputRef = useRef(null);
   const [uploading, setUploading] = useState(0);   // count of in-flight uploads
@@ -41,24 +40,34 @@ export default function PhotoUploader({ value = [], onChange, listingId }) {
     const folder = listingId || '_drafts';
     const uploaded = [];
     setUploading(c => c + files.length);
-    for (const file of files) {
-      // Path: listing-photos/{listingId}/{timestamp}-{slug}.{ext}
-      const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-      const slug = file.name.replace(/\.[^.]+$/, '').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 40) || 'photo';
-      const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${slug}.${ext}`;
-      const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, {
-        cacheControl: '3600',
-        contentType: file.type || undefined,
-      });
-      if (upErr) {
-        console.error('[tw] photo upload failed', upErr);
-        setUploadError(upErr.message || 'Upload failed.');
-        continue;
+    // try/finally so a thrown network/storage error can never leave the
+    // counter elevated (which would freeze the "Uploading…" CTA).
+    try {
+      for (const file of files) {
+        // Path: listing-photos/{listingId}/{timestamp}-{slug}.{ext}
+        const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+        const slug = file.name.replace(/\.[^.]+$/, '').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 40) || 'photo';
+        const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${slug}.${ext}`;
+        try {
+          const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, {
+            cacheControl: '3600',
+            contentType: file.type || undefined,
+          });
+          if (upErr) {
+            console.error('[tw] photo upload failed', upErr);
+            setUploadError(upErr.message || 'Upload failed.');
+            continue;
+          }
+          const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
+          uploaded.push({ path, url: pub.publicUrl });
+        } catch (err) {
+          console.error('[tw] photo upload threw', err);
+          setUploadError(err?.message || 'Upload failed.');
+        }
       }
-      const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
-      uploaded.push({ path, url: pub.publicUrl });
+    } finally {
+      setUploading(c => Math.max(0, c - files.length));
     }
-    setUploading(c => Math.max(0, c - files.length));
     if (uploaded.length) {
       onChange?.([...(value || []), ...uploaded]);
     }
@@ -91,16 +100,27 @@ export default function PhotoUploader({ value = [], onChange, listingId }) {
     setDragIndex(null);
   }
 
+  // Keyboard / touch fallback for reorder — drag-and-drop is unusable on
+  // iPad and inaccessible to keyboard users, so each tile also exposes
+  // left/right arrow buttons that swap with the adjacent tile.
+  function moveBy(i, delta) {
+    const next = [...(value || [])];
+    const j = i + delta;
+    if (j < 0 || j >= next.length) return;
+    [next[i], next[j]] = [next[j], next[i]];
+    onChange?.(next);
+  }
+
   const isBusy = uploading > 0;
 
   const labelStyle = {
     position: 'absolute', top: 14, right: 14, padding: '6px 12px',
-    background: isB ? '#fff' : 'rgba(251,249,245,0.95)',
+    background: '#fff',
     fontFamily: t.eyebrowFont,
-    fontSize: isB ? 9.5 : 10, fontWeight: isB ? 600 : 400,
-    letterSpacing: isB ? '0.26em' : '0.22em',
+    fontSize: 9.5, fontWeight: 600,
+    letterSpacing: '0.26em',
     textTransform: 'uppercase',
-    color: isB ? t.palette.emerald : t.fgPage,
+    color: t.palette.emerald,
   };
 
   return (
@@ -158,6 +178,33 @@ export default function PhotoUploader({ value = [], onChange, listingId }) {
                 }}
               />
               {i === 0 && loaded && <div style={labelStyle}>Hero · drag to reorder</div>}
+              <div style={{
+                position: 'absolute', top: 8, left: 8,
+                display: 'flex', gap: 4,
+              }}>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); moveBy(i, -1); }}
+                  disabled={i === 0}
+                  aria-label={`Move photo ${i + 1} earlier`}
+                  style={{
+                    ...moveBtnStyle,
+                    opacity: i === 0 ? 0.35 : 1,
+                    cursor: i === 0 ? 'not-allowed' : 'pointer',
+                  }}
+                >‹</button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); moveBy(i, +1); }}
+                  disabled={i === (value || []).length - 1}
+                  aria-label={`Move photo ${i + 1} later`}
+                  style={{
+                    ...moveBtnStyle,
+                    opacity: i === (value || []).length - 1 ? 0.35 : 1,
+                    cursor: i === (value || []).length - 1 ? 'not-allowed' : 'pointer',
+                  }}
+                >›</button>
+              </div>
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); removeAt(i); }}
@@ -176,8 +223,8 @@ export default function PhotoUploader({ value = [], onChange, listingId }) {
             background: t.bgPanel, border: `1px dashed ${t.line}`,
             display: 'grid', placeItems: 'center',
             fontFamily: t.eyebrowFont,
-            fontSize: isB ? 10.5 : 11, fontWeight: isB ? 600 : 400,
-            letterSpacing: isB ? '0.26em' : '0.22em',
+            fontSize: 10.5, fontWeight: 600,
+            letterSpacing: '0.26em',
             textTransform: 'uppercase', color: t.fgFaint,
             cursor: isBusy ? 'wait' : 'pointer',
           }}
@@ -202,7 +249,7 @@ export default function PhotoUploader({ value = [], onChange, listingId }) {
       <div style={{
         marginTop: 10,
         fontFamily: t.eyebrowFont, fontSize: 10.5,
-        letterSpacing: isB ? '0.2em' : '0.16em',
+        letterSpacing: '0.2em',
         textTransform: 'uppercase', color: t.fgFaint,
         display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
       }}>
@@ -220,5 +267,16 @@ const removeBtnStyle = {
   border: 'none', cursor: 'pointer',
   fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
   fontSize: 16, lineHeight: 1,
+  display: 'grid', placeItems: 'center',
+};
+
+// Mirrors removeBtnStyle but lives at top-left — used for the keyboard /
+// touch reorder arrows so they read as a matching set with the × remove.
+const moveBtnStyle = {
+  width: 24, height: 24, borderRadius: '50%',
+  background: 'rgba(15,15,12,0.7)', color: '#fff',
+  border: 'none',
+  fontFamily: '"Helvetica Neue", Helvetica, Arial, sans-serif',
+  fontSize: 15, lineHeight: 1,
   display: 'grid', placeItems: 'center',
 };

@@ -13,10 +13,9 @@ function pathFor(item) {
 
 export default function TopNav({ active, dark = false }) {
   const t = useTheme();
-  const isB = t.key === 'B';
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const fg = dark ? '#FFFFFF' : (isB ? t.palette.emerald : t.palette.ink);
+  const fg = dark ? '#FFFFFF' : t.palette.emerald;
   const muted = dark ? 'rgba(255,255,255,0.62)' : t.fgMuted;
   const line = dark ? 'rgba(255,255,255,0.16)' : t.line;
   const bg = dark ? 'transparent' : t.bgPage;
@@ -25,22 +24,22 @@ export default function TopNav({ active, dark = false }) {
     <>
       <div className="tw-desktop-nav" style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: isB ? '28px 72px' : '24px 64px',
+        padding: '28px 72px',
         borderBottom: `1px solid ${line}`,
         background: bg,
         position: 'relative', zIndex: 10,
       }}>
         <Link to="/" style={{ textDecoration: 'none' }}>
-          <Wordmark size={isB ? 24 : 22} light={dark} sub={false} />
+          <Wordmark size={24} light={dark} sub={false} />
         </Link>
-        <nav style={{ display: 'flex', gap: isB ? 40 : 36 }}>
+        <nav style={{ display: 'flex', gap: 40 }}>
           {t.navItems.map(it => (
             <Link key={it} to={pathFor(it)} style={{ textDecoration: 'none' }}>
               <span style={{
                 fontFamily: t.eyebrowFont,
-                fontSize: isB ? 11 : 11.5,
-                fontWeight: isB ? 500 : 400,
-                letterSpacing: isB ? '0.24em' : '0.22em',
+                fontSize: 11,
+                fontWeight: 500,
+                letterSpacing: '0.24em',
                 textTransform: 'uppercase',
                 color: active === it ? fg : muted,
                 borderBottom: active === it ? `1px solid ${fg}` : '1px solid transparent',
@@ -53,23 +52,23 @@ export default function TopNav({ active, dark = false }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           <a href={`tel:${STUDIO.phone.replace(/[^\d+]/g, '')}`} style={{
             fontFamily: t.eyebrowFont,
-            fontSize: isB ? 11 : 11.5,
-            fontWeight: isB ? 500 : 400,
-            letterSpacing: isB ? '0.18em' : '0.2em',
+            fontSize: 11,
+            fontWeight: 500,
+            letterSpacing: '0.18em',
             textTransform: 'uppercase',
             color: muted,
             textDecoration: 'none',
           }}>{STUDIO.phone}</a>
           <Link to="/#inquiry" style={{ textDecoration: 'none' }}>
             <span style={{
-              padding: isB ? '11px 22px' : '10px 18px',
-              background: dark ? '#fff' : (isB ? t.palette.emerald : 'transparent'),
-              color: dark ? (isB ? t.palette.emerald : t.palette.ink) : (isB ? '#fff' : fg),
-              border: isB && !dark ? 'none' : `1px solid ${fg}`,
+              padding: '11px 22px',
+              background: dark ? '#fff' : t.palette.emerald,
+              color: dark ? t.palette.emerald : '#fff',
+              border: !dark ? 'none' : `1px solid ${fg}`,
               fontFamily: t.eyebrowFont,
-              fontSize: isB ? 10.5 : 11,
-              fontWeight: isB ? 600 : 400,
-              letterSpacing: isB ? '0.24em' : '0.22em',
+              fontSize: 10.5,
+              fontWeight: 600,
+              letterSpacing: '0.24em',
               textTransform: 'uppercase',
               cursor: 'pointer',
             }}>{t.ctaNav} →</span>
@@ -111,7 +110,7 @@ export default function TopNav({ active, dark = false }) {
           {t.navItems.map(it => (
             <Link key={it} to={pathFor(it)} style={{ textDecoration: 'none' }} onClick={() => setMobileOpen(false)}>
               <div style={{
-                fontFamily: t.eyebrowFont, fontWeight: isB ? 500 : 400,
+                fontFamily: t.eyebrowFont, fontWeight: 500,
                 fontSize: 13, letterSpacing: '0.22em', textTransform: 'uppercase',
                 color: fg, padding: '14px 0', borderBottom: `1px solid ${line}`,
               }}>{it}</div>
@@ -121,9 +120,9 @@ export default function TopNav({ active, dark = false }) {
             <div style={{
               marginTop: 20, padding: '14px 0', textAlign: 'center',
               border: `1px solid ${fg}`,
-              background: isB ? t.palette.emerald : 'transparent',
-              color: isB ? '#fff' : fg,
-              fontFamily: t.eyebrowFont, fontWeight: isB ? 600 : 400,
+              background: t.palette.emerald,
+              color: '#fff',
+              fontFamily: t.eyebrowFont, fontWeight: 600,
               fontSize: 11, letterSpacing: '0.24em', textTransform: 'uppercase',
             }}>{t.ctaPrimary} →</div>
           </Link>

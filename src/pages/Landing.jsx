@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useTheme, useDirection } from '../theme/DirectionContext';
+import { useTheme } from '../theme/DirectionContext';
 import Photo, { PHOTOS } from '../components/Photo';
 
 const HERO_VIDEO_SRC = '/videos/hero.mp4';
@@ -7,29 +7,23 @@ const HERO_VIDEO_SRC = '/videos/hero.mp4';
 // doesn't read as a black gap on first paint.
 const HERO_VIDEO_POSTER = '/videos/hero-poster.jpg';
 
-const HERO_VIDEO_BG_COLORS = {
-  emerald: '#0B3D2E',
-  cream: '#F6F2EA',
-};
+// Hero frame sits on cream — colors below-fold (mobile) adapt to that.
+const HERO_FRAME_COLOR = '#F6F2EA';
 
 function HeroVideoSection() {
   const t = useTheme();
-  const isB = t.key === 'B';
-  const { heroVideoBg } = useDirection();
-  const frameColor = HERO_VIDEO_BG_COLORS[heroVideoBg] || HERO_VIDEO_BG_COLORS.emerald;
-  const isCream = heroVideoBg === 'cream';
 
-  // Below-fold (mobile) layout sits on the frame bg — colors adapt accordingly.
-  const belowfoldHeadlineColor = isCream ? t.fgPage : '#fff';
-  const belowfoldOutline = isCream ? 'secondary' : 'on-dark-outline';
-  const belowfoldPrimary = isCream ? 'primary' : 'on-dark-primary';
+  // Below-fold (mobile) layout sits on the cream frame bg.
+  const belowfoldHeadlineColor = t.fgPage;
+  const belowfoldOutline = 'secondary';
+  const belowfoldPrimary = 'primary';
 
   const headlineFs = 'clamp(40px, 6.5vw, 104px)';
-  const headlineEmWeight = isB ? 400 : 300;
+  const headlineEmWeight = 400;
 
   return (
-    <div style={{ background: frameColor }}>
-      <TopNav dark={!isCream} />
+    <div style={{ background: HERO_FRAME_COLOR }}>
+      <TopNav dark={false} />
       <div style={{ padding: 'clamp(20px, 3vw, 36px) clamp(20px, 4.4vw, 64px) clamp(28px, 4vw, 56px)' }}>
         <div style={{
           position: 'relative', width: '100%',
@@ -104,62 +98,21 @@ import StatusChip from '../components/StatusChip';
 import Button from '../components/Button';
 import Rule from '../components/Rule';
 import { PILLARS, STUDIO } from '../data/listings';
-import { useListings } from '../lib/queries';
+import { useFeaturedListings, useListingTotal } from '../lib/queries';
 import { InquiryWidget } from './Inquiry';
 
 const SCROLL_TO_INQUIRY = '/#inquiry';
 
 function LandingB() {
   const t = useTheme();
-  const { heroMedia } = useDirection();
-  const { data: LISTINGS } = useListings();
+  // Just the three featured cards + the public-side total for the CTA
+  // count. Avoids pulling the whole listings table on the homepage.
+  const { data: LISTINGS } = useFeaturedListings(3);
+  const totalListings = useListingTotal();
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
       {/* HERO */}
-      {heroMedia === 'video' ? <HeroVideoSection /> : (
-        <div style={{ position: 'relative', minHeight: 880, background: t.palette.emerald }}>
-          <Photo label="HERO · INTERIOR — BIRMINGHAM" tone="dusk" height={880} src={PHOTOS.livingMarble} style={{ position: 'absolute', inset: 0 }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(8,42,32,0.95) 0%, rgba(8,42,32,0.88) 35%, rgba(8,42,32,0.85) 60%, rgba(8,42,32,0.97) 100%)' }} />
-          <div style={{ position: 'relative', zIndex: 3 }}>
-            <TopNav dark={true} />
-          </div>
-          <div className="tw-hero-content" style={{
-            position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center', padding: 'clamp(96px, 12vw, 120px) clamp(20px, 5vw, 72px) clamp(64px, 8vw, 96px)',
-            zIndex: 2, textAlign: 'center', color: '#fff',
-          }}>
-            <h1 style={{
-              fontFamily: t.fonts.display, fontWeight: 300,
-              fontSize: 'clamp(44px, 9.2vw, 132px)', lineHeight: 0.94, letterSpacing: '-0.024em',
-              margin: 0, maxWidth: 1100,
-            }}>
-              Real estate, <em style={{ fontStyle: 'italic', fontWeight: 400 }}>reimagined.</em>
-            </h1>
-            <p style={{
-              fontFamily: t.fonts.display, fontStyle: 'italic', fontWeight: 400,
-              fontSize: 'clamp(16px, 1.7vw, 22px)', lineHeight: 1.5, maxWidth: 660, margin: '32px auto 0',
-              color: 'rgba(255,255,255,0.88)',
-            }}>
-              Design-driven real estate and renovation, done with intention.
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginTop: 48, flexWrap: 'wrap' }}>
-              <Button to={SCROLL_TO_INQUIRY} variant="on-dark-primary">{t.ctaPrimary}</Button>
-              <Button to="/listings" variant="on-dark-outline">View The {t.indexNoun}</Button>
-            </div>
-          </div>
-          <div className="tw-hero-colophon" style={{
-            position: 'absolute', left: 'clamp(20px, 5vw, 72px)', right: 'clamp(20px, 5vw, 72px)', bottom: 36, zIndex: 2,
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 14,
-            color: 'rgba(255,255,255,0.7)',
-            fontFamily: t.eyebrowFont, fontSize: 10, fontWeight: 500,
-            letterSpacing: '0.28em', textTransform: 'uppercase',
-          }}>
-            <span>Tawny Walker · {STUDIO.brokeredBy}</span>
-            <span style={{ fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 14, letterSpacing: 'normal', textTransform: 'none' }}>Scroll for current work ↓</span>
-            <span>Metro Detroit · Birmingham · Bloomfield Hills</span>
-          </div>
-        </div>
-      )}
+      <HeroVideoSection />
 
       {/* INTRO — centered, two columns */}
       <div className="tw-landing-intro" style={{ padding: 'clamp(64px, 11vw, 160px) clamp(20px, 5vw, 72px) 0' }}>
@@ -257,7 +210,7 @@ function LandingB() {
           </div>
         </div>
         <div style={{ textAlign: 'center', marginTop: 'clamp(40px, 5vw, 64px)' }}>
-          <Button to="/listings" variant="secondary">View the Full Index ({LISTINGS.length})</Button>
+          <Button to="/listings" variant="secondary">View the Full Index ({totalListings || LISTINGS.length})</Button>
         </div>
       </div>
 

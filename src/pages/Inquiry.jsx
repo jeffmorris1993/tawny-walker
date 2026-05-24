@@ -52,30 +52,28 @@ export function useInquiryState({ syncUrl = false } = {}) {
 
 function useInquirySkin() {
   const t = useTheme();
-  const isB = t.key === 'B';
   return {
-    isB,
-    leftBg: isB ? t.palette.emerald : t.bgPanel,
-    leftFg: isB ? '#fff' : t.fgPage,
-    leftMuted: isB ? 'rgba(255,255,255,0.78)' : t.fgMuted,
-    leftLine: isB ? 'rgba(255,255,255,0.18)' : t.line,
-    leftAccent: isB ? t.accentSoft : t.accent,
-    rightBg: isB ? '#fff' : t.bgPage,
-    accentLine: isB ? t.palette.emerald : t.palette.ink,
-    headlineColor: isB ? '#fff' : t.fgPage,
-    selectionColor: isB ? t.palette.emerald : t.palette.ink,
+    leftBg: t.palette.emerald,
+    leftFg: '#fff',
+    leftMuted: 'rgba(255,255,255,0.78)',
+    leftLine: 'rgba(255,255,255,0.18)',
+    leftAccent: t.accentSoft,
+    rightBg: '#fff',
+    accentLine: t.palette.emerald,
+    headlineColor: '#fff',
+    selectionColor: t.palette.emerald,
     selectionFaint: t.palette.ink4,
-    arrowColor: isB ? t.palette.emerald : t.fgFaint,
+    arrowColor: t.palette.emerald,
     arrowOpenColor: t.accent,
     cursorColor: t.accent,
-    submitBg: isB ? t.palette.emerald : t.palette.ink,
-    submitFg: isB ? '#fff' : t.palette.bone,
-    chipBg: isB ? t.palette.emerald : t.palette.ink,
-    chipFg: isB ? '#fff' : t.palette.bone,
+    submitBg: t.palette.emerald,
+    submitFg: '#fff',
+    chipBg: t.palette.emerald,
+    chipFg: '#fff',
     sliderTrack: t.line,
-    sliderEnd: isB ? t.palette.emerald : t.palette.ink,
+    sliderEnd: t.palette.emerald,
     sliderMid: t.accent,
-    valueColor: isB ? t.palette.emerald : t.fgPage,
+    valueColor: t.palette.emerald,
     error: '#B5341F',
     t,
   };
@@ -206,8 +204,8 @@ function FormLabel({ children, error }) {
   return (
     <div style={{
       fontFamily: t.eyebrowFont,
-      fontSize: 10, fontWeight: skin.isB ? 600 : 400,
-      letterSpacing: skin.isB ? '0.28em' : '0.22em',
+      fontSize: 10, fontWeight: 600,
+      letterSpacing: '0.28em',
       textTransform: 'uppercase',
       color: error ? skin.error : t.fgFaint,
     }}>{children}</div>
@@ -282,10 +280,13 @@ function TextField({ value, onChange, placeholder, dropdown, error }) {
 
 // Custom editorial dropdown: a styled control over a styled menu, both using
 // the active theme's fonts and palette. Closes on outside click or Escape.
-function EditorialSelect({ value, onChange, options, placeholder, error }) {
+// Pass `multi` for a checkbox-style multi-select; otherwise behaves as a
+// single picker that closes on selection.
+function EditorialSelect({ value, onChange, options, placeholder, error, multi = false }) {
   const skin = useInquirySkin();
   const t = skin.t;
-  const filled = value && String(value).length > 0;
+  const selectedList = multi ? (Array.isArray(value) ? value : []) : [];
+  const filled = multi ? selectedList.length > 0 : (value && String(value).length > 0);
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
 
@@ -303,10 +304,25 @@ function EditorialSelect({ value, onChange, options, placeholder, error }) {
     };
   }, [open]);
 
-  function pick(opt) {
+  function pickSingle(opt) {
     onChange && onChange(opt);
     setOpen(false);
   }
+  function toggleMulti(opt) {
+    const next = selectedList.includes(opt)
+      ? selectedList.filter(s => s !== opt)
+      : [...selectedList, opt];
+    onChange && onChange(next);
+  }
+  function clearAll() {
+    onChange && onChange([]);
+  }
+
+  const summary = multi
+    ? (!filled
+        ? placeholder
+        : (selectedList.length <= 2 ? selectedList.join(', ') : `${selectedList.length} selected`))
+    : (filled ? value : placeholder);
 
   return (
     <div ref={wrapRef} style={{ position: 'relative' }}>
@@ -317,105 +333,6 @@ function EditorialSelect({ value, onChange, options, placeholder, error }) {
           width: '100%', marginTop: 10, paddingBottom: 10, padding: 0,
           background: 'transparent', border: 'none', outline: 'none',
           borderBottom: `1px solid ${error ? skin.error : t.fgMuted}`,
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
-          cursor: 'pointer', textAlign: 'left',
-          fontFamily: filled ? t.fonts.display : t.fonts.body,
-          fontStyle: filled ? 'italic' : 'normal',
-          fontSize: filled ? 19 : 14,
-          color: filled ? skin.valueColor : t.fgFaint,
-        }}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-      >
-        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {filled ? value : placeholder}
-        </span>
-        <span style={{
-          color: skin.accentLine, fontSize: 13, flexShrink: 0,
-          transition: 'transform 0.2s ease',
-          transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-        }}>▾</span>
-      </button>
-
-      {open && (
-        <div
-          role="listbox"
-          style={{
-            position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0,
-            zIndex: 30,
-            background: '#fff',
-            border: `1px solid ${skin.accentLine}`,
-            boxShadow: '0 24px 48px -16px rgba(0,0,0,0.22)',
-            maxHeight: 320, overflowY: 'auto',
-          }}
-        >
-          {options.map((opt, i) => {
-            const selected = opt === value;
-            return (
-              <SelectOption
-                key={opt}
-                option={opt}
-                selected={selected}
-                first={i === 0}
-                onPick={pick}
-              />
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Editorial multi-select: same look as EditorialSelect but each option is
-// a togglable checkbox row. Selected items render as a comma-joined list
-// in the trigger; long lists collapse to "{count} selected" so the field
-// stays one line.
-function EditorialMultiSelect({ value, onChange, options, placeholder }) {
-  const skin = useInquirySkin();
-  const t = skin.t;
-  const selected = Array.isArray(value) ? value : [];
-  const filled = selected.length > 0;
-  const [open, setOpen] = useState(false);
-  const wrapRef = useRef(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function onDocClick(e) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
-    }
-    function onKey(e) { if (e.key === 'Escape') setOpen(false); }
-    document.addEventListener('mousedown', onDocClick);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDocClick);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
-
-  function toggle(opt) {
-    const next = selected.includes(opt)
-      ? selected.filter(s => s !== opt)
-      : [...selected, opt];
-    onChange && onChange(next);
-  }
-  function clearAll() {
-    onChange && onChange([]);
-  }
-
-  const summary = !filled
-    ? placeholder
-    : (selected.length <= 2 ? selected.join(', ') : `${selected.length} selected`);
-
-  return (
-    <div ref={wrapRef} style={{ position: 'relative' }}>
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        style={{
-          width: '100%', marginTop: 10, paddingBottom: 10, padding: 0,
-          background: 'transparent', border: 'none', outline: 'none',
-          borderBottom: `1px solid ${t.fgMuted}`,
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
           cursor: 'pointer', textAlign: 'left',
           fontFamily: filled ? t.fonts.display : t.fonts.body,
@@ -439,7 +356,7 @@ function EditorialMultiSelect({ value, onChange, options, placeholder }) {
       {open && (
         <div
           role="listbox"
-          aria-multiselectable="true"
+          aria-multiselectable={multi ? 'true' : undefined}
           style={{
             position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0,
             zIndex: 30,
@@ -450,18 +367,19 @@ function EditorialMultiSelect({ value, onChange, options, placeholder }) {
           }}
         >
           {options.map((opt, i) => {
-            const isOn = selected.includes(opt);
+            const isSelected = multi ? selectedList.includes(opt) : (opt === value);
             return (
-              <MultiOption
+              <SelectOption
                 key={opt}
                 option={opt}
-                selected={isOn}
+                selected={isSelected}
                 first={i === 0}
-                onToggle={toggle}
+                multi={multi}
+                onPick={multi ? toggleMulti : pickSingle}
               />
             );
           })}
-          {filled && (
+          {multi && filled && (
             <button
               type="button"
               onClick={clearAll}
@@ -480,46 +398,10 @@ function EditorialMultiSelect({ value, onChange, options, placeholder }) {
   );
 }
 
-function MultiOption({ option, selected, first, onToggle }) {
-  const skin = useInquirySkin();
-  const t = skin.t;
-  const [hover, setHover] = useState(false);
-  const active = hover || selected;
-  return (
-    <button
-      type="button"
-      role="option"
-      aria-selected={selected}
-      onClick={() => onToggle(option)}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      style={{
-        display: 'flex', alignItems: 'center', gap: 12,
-        width: '100%', textAlign: 'left',
-        padding: '14px 18px',
-        background: active ? t.bgPanel : '#fff',
-        border: 'none', borderTop: first ? 'none' : `1px solid ${t.line}`,
-        cursor: 'pointer',
-        fontFamily: t.fonts.display,
-        fontStyle: selected ? 'italic' : 'normal',
-        fontSize: 17,
-        color: active ? skin.selectionColor : t.fgPage,
-        transition: 'background 0.12s ease, color 0.12s ease',
-      }}
-    >
-      <span style={{
-        width: 16, height: 16, flexShrink: 0,
-        border: `1px solid ${selected ? skin.accentLine : t.fgMuted}`,
-        background: selected ? skin.accentLine : 'transparent',
-        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        color: '#fff', fontSize: 12, lineHeight: 1,
-      }}>{selected ? '✓' : ''}</span>
-      <span>{option}</span>
-    </button>
-  );
-}
-
-function SelectOption({ option, selected, first, onPick }) {
+// Option row used by EditorialSelect. In `multi` mode, renders a checkbox
+// affordance on the left and styles the row as a togglable item. In single
+// mode, shows the centered dot accent on the right of the selected row.
+function SelectOption({ option, selected, first, onPick, multi = false }) {
   const skin = useInquirySkin();
   const t = skin.t;
   const [hover, setHover] = useState(false);
@@ -533,7 +415,8 @@ function SelectOption({ option, selected, first, onPick }) {
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        display: 'flex', alignItems: 'center',
+        justifyContent: multi ? 'flex-start' : 'space-between',
         gap: 12, width: '100%', textAlign: 'left',
         padding: '14px 18px',
         background: active ? t.bgPanel : '#fff',
@@ -546,8 +429,17 @@ function SelectOption({ option, selected, first, onPick }) {
         transition: 'background 0.12s ease, color 0.12s ease',
       }}
     >
+      {multi && (
+        <span style={{
+          width: 16, height: 16, flexShrink: 0,
+          border: `1px solid ${selected ? skin.accentLine : t.fgMuted}`,
+          background: selected ? skin.accentLine : 'transparent',
+          display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+          color: '#fff', fontSize: 12, lineHeight: 1,
+        }}>{selected ? '✓' : ''}</span>
+      )}
       <span>{option}</span>
-      {selected && (
+      {!multi && selected && (
         <span style={{ color: skin.accentLine, fontSize: 14, fontFamily: t.fonts.display }}>·</span>
       )}
     </button>
@@ -739,8 +631,8 @@ function BudgetRange({ label, min, max, range, onChange }) {
         display: 'flex', justifyContent: 'space-between',
         marginTop: 10, gap: 12,
         fontFamily: t.eyebrowFont, fontSize: 9.5,
-        fontWeight: skin.isB ? 600 : 400,
-        letterSpacing: skin.isB ? '0.24em' : '0.2em',
+        fontWeight: 600,
+        letterSpacing: '0.24em',
         textTransform: 'uppercase', color: t.fgFaint,
       }}>
         <span>Min · {formatMoney(minParsed.value, suffix)}</span>
@@ -843,7 +735,8 @@ function RoleSection({ s, form, setForm, errors }) {
       return (
         <div style={{ marginBottom: 26 }}>
           <FormLabel>{s.label}</FormLabel>
-          <EditorialMultiSelect
+          <EditorialSelect
+            multi
             value={selected}
             onChange={setSelected}
             options={s.options}
@@ -895,8 +788,8 @@ function RoleSection({ s, form, setForm, errors }) {
                   color: isOn ? skin.chipFg : t.fgMuted,
                   border: isOn ? 'none' : `1px solid ${t.line}`,
                   fontFamily: t.eyebrowFont,
-                  fontSize: 11, fontWeight: skin.isB ? 600 : 400,
-                  letterSpacing: skin.isB ? '0.2em' : '0.16em',
+                  fontSize: 11, fontWeight: 600,
+                  letterSpacing: '0.2em',
                   textTransform: 'uppercase',
                   display: 'inline-flex', alignItems: 'center', gap: 8,
                   cursor: 'pointer',
@@ -979,8 +872,8 @@ function RoleForm({ role, form, setForm, errors, submitting, submitError, onSubm
               padding: '20px 36px',
               background: skin.submitBg, color: skin.submitFg, border: 'none',
               fontFamily: t.eyebrowFont,
-              fontSize: 11.5, fontWeight: skin.isB ? 600 : 400,
-              letterSpacing: skin.isB ? '0.28em' : '0.24em',
+              fontSize: 11.5, fontWeight: 600,
+              letterSpacing: '0.28em',
               textTransform: 'uppercase',
               cursor: submitting ? 'wait' : 'pointer',
               opacity: submitting ? 0.6 : 1,
@@ -1024,8 +917,8 @@ function SuccessPanel({ role, onReset }) {
           background: 'transparent', border: `1px solid ${skin.accentLine}`,
           color: skin.selectionColor,
           fontFamily: t.eyebrowFont,
-          fontSize: 11, fontWeight: skin.isB ? 600 : 400,
-          letterSpacing: skin.isB ? '0.28em' : '0.24em',
+          fontSize: 11, fontWeight: 600,
+          letterSpacing: '0.28em',
           textTransform: 'uppercase', cursor: 'pointer',
         }}>
         Send another inquiry
@@ -1079,8 +972,8 @@ function InteractiveDropdown({ state, selected, onToggle, onPick }) {
       <div style={{
         marginTop: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         fontFamily: t.eyebrowFont, fontSize: 10.5,
-        fontWeight: skin.isB ? 600 : 400,
-        letterSpacing: skin.isB ? '0.28em' : '0.24em',
+        fontWeight: 600,
+        letterSpacing: '0.28em',
         textTransform: 'uppercase', color: t.fgFaint, gap: 12, flexWrap: 'wrap',
       }}>
         <span>{selected ? selected.sub : 'Required to begin'}</span>
@@ -1127,8 +1020,8 @@ function DropdownOption({ k, first, onPick }) {
       </div>
       <span style={{
         fontFamily: t.eyebrowFont, fontSize: 11,
-        fontWeight: skin.isB ? 600 : 400,
-        letterSpacing: skin.isB ? '0.28em' : '0.24em',
+        fontWeight: 600,
+        letterSpacing: '0.28em',
         textTransform: 'uppercase',
         color: hover ? skin.selectionColor : t.fgFaint,
         whiteSpace: 'nowrap',
@@ -1159,7 +1052,7 @@ function InitialHint({ onPick }) {
               onMouseLeave={() => setHovered(null)}
               style={{
                 padding: '22px 18px',
-                background: isHover ? (skin.isB ? '#fff' : t.bgPage) : t.bgPanel,
+                background: isHover ? '#fff' : t.bgPanel,
                 border: `1px solid ${isHover ? skin.accentLine : t.line}`,
                 display: 'flex', flexDirection: 'column', minHeight: 168,
                 cursor: 'pointer', textAlign: 'left',
@@ -1173,8 +1066,8 @@ function InitialHint({ onPick }) {
               <div style={{
                 marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 fontFamily: t.eyebrowFont, fontSize: 10,
-                fontWeight: skin.isB ? 600 : 400,
-                letterSpacing: skin.isB ? '0.26em' : '0.22em',
+                fontWeight: 600,
+                letterSpacing: '0.26em',
                 textTransform: 'uppercase', color: isHover ? skin.selectionColor : t.fgFaint,
               }}>
                 <span>{isHover ? 'Select' : 'Begin'}</span>
@@ -1205,7 +1098,7 @@ export function InquiryWidget({ syncUrl = false, showHeading = true }) {
   const { state, selected, selectedKey, open, toggleOpen, pick } = inq;
 
   // Form lifecycle, per-role.
-  const initialForm = useMemo(() => (selected ? buildInitial(selected) : null), [selectedKey]);
+  const initialForm = useMemo(() => (selected ? buildInitial(selected) : null), [selected]);
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState('idle'); // 'idle' | 'submitting' | 'success' | 'error'
@@ -1296,8 +1189,8 @@ export function InquiryWidget({ syncUrl = false, showHeading = true }) {
           <Eyebrow>Intake · One form, four paths</Eyebrow>
           <div style={{
             fontFamily: t.eyebrowFont, fontSize: 10.5,
-            fontWeight: skin.isB ? 600 : 400,
-            letterSpacing: skin.isB ? '0.28em' : '0.22em',
+            fontWeight: 600,
+            letterSpacing: '0.28em',
             textTransform: 'uppercase', color: t.fgFaint,
           }}>
             {selected ? `${selected.roman} · ${selected.label.toUpperCase()}` : 'AWAITING SELECTION'}
@@ -1370,10 +1263,10 @@ export default function Inquiry() {
             Tell me how I <em style={{ fontStyle: 'italic' }}>can help.</em>
           </h1>
           <p style={{
-            fontFamily: skin.isB ? t.fonts.display : t.fonts.body,
-            fontStyle: skin.isB ? 'italic' : 'normal',
-            fontWeight: skin.isB ? 400 : 300,
-            fontSize: skin.isB ? 19 : 16.5,
+            fontFamily: t.fonts.display,
+            fontStyle: 'italic',
+            fontWeight: 400,
+            fontSize: 19,
             lineHeight: 1.6, color: skin.leftMuted, marginTop: 28, maxWidth: 460,
           }}>
             One short form, four kinds of conversation. Choose what you are: buyer, seller, investor, or agent. The intake tailors itself. Tawny reads each note personally and replies within one business day.
@@ -1397,10 +1290,10 @@ export default function Inquiry() {
             marginTop: 'auto', paddingTop: 40,
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             fontFamily: t.eyebrowFont, fontSize: 10.5,
-            fontWeight: skin.isB ? 600 : 400,
-            letterSpacing: skin.isB ? '0.28em' : '0.22em',
+            fontWeight: 600,
+            letterSpacing: '0.28em',
             textTransform: 'uppercase',
-            color: skin.isB ? 'rgba(255,255,255,0.55)' : t.fgFaint,
+            color: 'rgba(255,255,255,0.55)',
             flexWrap: 'wrap', gap: 12,
           }}>
             <span>Replies within 1 business day</span>

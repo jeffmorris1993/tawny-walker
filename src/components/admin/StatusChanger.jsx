@@ -5,7 +5,6 @@ import { LEAD_STATUS_SEQUENCE } from '../../data/leads';
 // the status label + the matching colored dot from the active theme.
 export default function StatusChanger({ value, onChange }) {
   const t = useTheme();
-  const isB = t.key === 'B';
   const a = t.admin;
   return (
     <div style={{
@@ -27,9 +26,9 @@ export default function StatusChanger({ value, onChange }) {
               background: active ? a.statusChangerActiveBg : 'transparent',
               color: active ? a.statusChangerActiveFg : a.statusChangerIdleFg,
               fontFamily: t.eyebrowFont,
-              fontSize: isB ? 10 : 10.5,
-              fontWeight: isB ? 600 : 400,
-              letterSpacing: isB ? '0.22em' : '0.22em',
+              fontSize: 10,
+              fontWeight: 600,
+              letterSpacing: '0.22em',
               textTransform: 'uppercase',
               borderRight: i < LEAD_STATUS_SEQUENCE.length - 1 ? `1px solid ${a.statusChangerBorder}` : 'none',
               cursor: active ? 'default' : 'pointer',

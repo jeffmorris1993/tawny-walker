@@ -20,7 +20,6 @@ const MAX_HEIGHT = 440;
 
 export default function StudioLog({ leadId, leadCreatedAt, leadWhen, bumpKey = 0 }) {
   const t = useTheme();
-  const isB = t.key === 'B';
   const { events, hasMore, loading, loadMore } = useLeadEvents(leadId, { pageSize: 15, bumpKey });
 
   // Synthesize the "Intake received" entry from the lead's birth.
@@ -50,17 +49,23 @@ export default function StudioLog({ leadId, leadCreatedAt, leadWhen, bumpKey = 0
   }, [events, intakeItem]);
 
   // Infinite-scroll: observe a sentinel inside the scrollable container.
+  // The observer is attached once per `hasMore` change — `loading` is read
+  // through a ref inside the callback so we don't tear down and rebuild
+  // the observer on every page load.
   const sentinelRef = useRef(null);
   const scrollRef = useRef(null);
+  const loadingRef = useRef(loading);
+  useEffect(() => { loadingRef.current = loading; }, [loading]);
   useEffect(() => {
     const node = sentinelRef.current;
-    if (!node || !hasMore || loading) return;
+    if (!node || !hasMore) return;
     const obs = new IntersectionObserver((entries) => {
+      if (loadingRef.current) return;
       if (entries[0].isIntersecting) loadMore();
     }, { root: scrollRef.current, rootMargin: '120px' });
     obs.observe(node);
     return () => obs.disconnect();
-  }, [hasMore, loading, loadMore]);
+  }, [hasMore, loadMore]);
 
   const [active, setActive] = useState(null);  // selected item for modal
 
@@ -105,7 +110,7 @@ export default function StudioLog({ leadId, leadCreatedAt, leadWhen, bumpKey = 0
             }} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{
-                fontSize: 13, color: isB ? t.palette.emerald : t.fgPage,
+                fontSize: 13, color: t.palette.emerald,
                 whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
               }}>{a.headline}</div>
               <div style={{
@@ -122,7 +127,7 @@ export default function StudioLog({ leadId, leadCreatedAt, leadWhen, bumpKey = 0
             style={{
               padding: '12px 16px', textAlign: 'center',
               fontFamily: t.eyebrowFont,
-              fontSize: 10, fontWeight: isB ? 600 : 400,
+              fontSize: 10, fontWeight: 600,
               letterSpacing: '0.22em', textTransform: 'uppercase',
               color: t.fgFaint,
             }}
@@ -139,7 +144,11 @@ export default function StudioLog({ leadId, leadCreatedAt, leadWhen, bumpKey = 0
 
 function LogModal({ item, onClose }) {
   const t = useTheme();
-  const isB = t.key === 'B';
+
+  // The Close button is the only interactive element in the dialog, so
+  // it doubles as the focus trap target — every Tab cycles back to it.
+  const closeRef = useRef(null);
+  const previouslyFocusedRef = useRef(null);
 
   useEffect(() => {
     function onKey(e) { if (e.key === 'Escape') onClose(); }
@@ -147,7 +156,36 @@ function LogModal({ item, onClose }) {
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const headlineColor = isB ? t.palette.emerald : t.fgPage;
+  // Body scroll lock + focus capture/restore + initial focus on close button.
+  useEffect(() => {
+    previouslyFocusedRef.current = document.activeElement;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const id = setTimeout(() => { closeRef.current?.focus(); }, 0);
+    return () => {
+      clearTimeout(id);
+      document.body.style.overflow = prevOverflow;
+      try {
+        const prev = previouslyFocusedRef.current;
+        if (prev && typeof prev.focus === 'function' && document.contains(prev)) {
+          prev.focus();
+        }
+      } catch {
+        /* best-effort */
+      }
+    };
+  }, []);
+
+  // Single-element focus trap: any Tab snaps back to the close button.
+  function onDialogKeyDown(e) {
+    if (e.key !== 'Tab') return;
+    if (closeRef.current) {
+      e.preventDefault();
+      closeRef.current.focus();
+    }
+  }
+
+  const headlineColor = t.palette.emerald;
   const fullStamp = item.timestamp ? new Date(item.timestamp).toLocaleString([], {
     weekday: 'short', month: 'long', day: 'numeric',
     hour: 'numeric', minute: '2-digit',
@@ -158,6 +196,7 @@ function LogModal({ item, onClose }) {
       role="dialog"
       aria-modal="true"
       onClick={onClose}
+      onKeyDown={onDialogKeyDown}
       style={{
         position: 'fixed', inset: 0, zIndex: 200,
         background: 'rgba(15, 15, 12, 0.55)',
@@ -176,8 +215,8 @@ function LogModal({ item, onClose }) {
       >
         <div style={{
           fontFamily: t.eyebrowFont,
-          fontSize: isB ? 10 : 10.5, fontWeight: isB ? 600 : 400,
-          letterSpacing: isB ? '0.28em' : '0.22em',
+          fontSize: 10, fontWeight: 600,
+          letterSpacing: '0.28em',
           textTransform: 'uppercase', color: t.fgFaint,
         }}>{item.kind === 'status' ? 'Status Change' : item.kind === 'note' ? 'Note Edit' : 'Intake'}</div>
 
@@ -194,8 +233,8 @@ function LogModal({ item, onClose }) {
 
         {item.kind === 'note' && (
           <div style={{ marginTop: 22, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <NoteBlock label="Previous" body={item.previous} t={t} isB={isB} muted />
-            <NoteBlock label="Current"  body={item.next}     t={t} isB={isB} />
+            <NoteBlock label="Previous" body={item.previous} t={t} muted />
+            <NoteBlock label="Current"  body={item.next}     t={t} />
           </div>
         )}
 
@@ -222,16 +261,17 @@ function LogModal({ item, onClose }) {
 
         <div style={{ marginTop: 28, display: 'flex', justifyContent: 'flex-end' }}>
           <button
+            ref={closeRef}
             type="button"
             onClick={onClose}
             style={{
               padding: '10px 22px',
               background: 'transparent',
-              border: `1px solid ${isB ? t.palette.emerald : t.palette.ink}`,
-              color: isB ? t.palette.emerald : t.palette.ink,
+              border: `1px solid ${t.palette.emerald}`,
+              color: t.palette.emerald,
               fontFamily: t.eyebrowFont,
-              fontSize: isB ? 10.5 : 11, fontWeight: isB ? 600 : 400,
-              letterSpacing: isB ? '0.26em' : '0.22em',
+              fontSize: 10.5, fontWeight: 600,
+              letterSpacing: '0.26em',
               textTransform: 'uppercase', cursor: 'pointer',
             }}>Close</button>
         </div>
@@ -240,13 +280,13 @@ function LogModal({ item, onClose }) {
   );
 }
 
-function NoteBlock({ label, body, t, isB, muted }) {
+function NoteBlock({ label, body, t, muted }) {
   return (
     <div>
       <div style={{
         fontFamily: t.eyebrowFont,
-        fontSize: 10, fontWeight: isB ? 600 : 400,
-        letterSpacing: isB ? '0.28em' : '0.22em',
+        fontSize: 10, fontWeight: 600,
+        letterSpacing: '0.28em',
         textTransform: 'uppercase', color: t.fgFaint, marginBottom: 6,
       }}>{label}</div>
       <div style={{
@@ -255,7 +295,7 @@ function NoteBlock({ label, body, t, isB, muted }) {
         border: `1px solid ${t.line}`,
         fontFamily: t.fonts.display, fontStyle: 'italic',
         fontSize: 15, lineHeight: 1.55,
-        color: body ? (muted ? t.fgMuted : (isB ? t.palette.emerald : t.fgPage)) : t.fgFaint,
+        color: body ? (muted ? t.fgMuted : t.palette.emerald) : t.fgFaint,
         whiteSpace: 'pre-wrap',
       }}>{body && body.trim() ? body : '(empty)'}</div>
     </div>

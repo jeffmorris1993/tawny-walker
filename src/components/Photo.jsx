@@ -34,20 +34,18 @@ export default function Photo({
             backgroundImage: 'repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 6px)',
             mixBlendMode: 'overlay',
           }} />
-          {t.key === 'B' && (
-            <div style={{
-              position: 'absolute', inset: 0,
-              background: 'radial-gradient(ellipse at 70% 30%, rgba(255,255,255,0.08) 0%, transparent 60%)',
-            }} />
-          )}
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'radial-gradient(ellipse at 70% 30%, rgba(255,255,255,0.08) 0%, transparent 60%)',
+          }} />
         </>
       )}
       {label && (
         <div style={{
           position: 'absolute', left: 14, bottom: 12,
           fontFamily: t.photoLabelFont,
-          fontWeight: t.key === 'B' ? 500 : 400,
-          fontSize: 9.5, letterSpacing: t.key === 'B' ? '0.24em' : '0.18em',
+          fontWeight: 500,
+          fontSize: 9.5, letterSpacing: '0.24em',
           textTransform: 'uppercase', color: 'rgba(255,255,255,0.78)',
           textShadow: src ? '0 1px 3px rgba(0,0,0,0.5)' : 'none',
           pointerEvents: 'none',
