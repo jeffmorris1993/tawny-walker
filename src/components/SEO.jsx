@@ -22,7 +22,7 @@ const SITE_URL = (import.meta.env.VITE_SITE_URL || 'https://example.com').replac
 const SITE_NAME = 'Tawny & Co.';
 const DEFAULT_DESCRIPTION =
   'Design-driven real estate and renovation in Birmingham, Bloomfield Hills, and the wider Metro Detroit area, with broker Tawny Walker.';
-const DEFAULT_IMAGE = `${SITE_URL}/videos/hero-poster.jpg`;
+const DEFAULT_IMAGE = `${SITE_URL}/videos/hero_video_2-poster.jpg`;
 
 export default function SEO({
   title,

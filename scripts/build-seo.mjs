@@ -54,7 +54,7 @@ const SITE_URL  = (env.VITE_SITE_URL || 'https://example.com').replace(/\/$/, ''
 const SITE_NAME = 'Tawny & Co.';
 const DEFAULT_DESCRIPTION =
   'Design-driven real estate and renovation in Birmingham, Bloomfield Hills, and the wider Metro Detroit area, with broker Tawny Walker.';
-const DEFAULT_IMAGE = `${SITE_URL}/videos/hero-poster.jpg`;
+const DEFAULT_IMAGE = `${SITE_URL}/videos/hero_video_2-poster.jpg`;
 
 // Mirror src/data/listings.js STUDIO (duplicated rather than imported to
 // keep this script free of the Vite/JSX module graph).

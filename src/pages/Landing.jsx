@@ -1,17 +1,28 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../theme/DirectionContext';
 import Photo, { PHOTOS } from '../components/Photo';
 
-const HERO_VIDEO_SRC = '/videos/hero.mp4';
+const HERO_VIDEO_SRC = '/videos/hero_video_2.mp4';
 // Still frame shown until the video has enough data to play, so the hero
-// doesn't read as a black gap on first paint.
-const HERO_VIDEO_POSTER = '/videos/hero-poster.jpg';
+// reads as a finished image even before the bytes land. The same file is
+// used as the default OG/Twitter share image by SEO.jsx and the build-time
+// SEO script.
+const HERO_VIDEO_POSTER = '/videos/hero_video_2-poster.jpg';
 
 // Hero frame sits on cream — colors below-fold (mobile) adapt to that.
 const HERO_FRAME_COLOR = '#F6F2EA';
 
 function HeroVideoSection() {
   const t = useTheme();
+
+  // The <video> tracks two readiness moments:
+  //   - `videoReady`  → enough data buffered to start playback (canplay)
+  //   - `videoStarted`→ the first frame has actually rendered (playing)
+  // We crossfade from the poster to the video using `videoStarted`; the
+  // `videoReady` flag is currently only used to gate the visual transition
+  // start so we don't flicker if Safari fires `canplay` repeatedly.
+  const [videoStarted, setVideoStarted] = useState(false);
 
   // Below-fold (mobile) layout sits on the cream frame bg.
   const belowfoldHeadlineColor = t.fgPage;
@@ -31,14 +42,31 @@ function HeroVideoSection() {
           maxHeight: 'calc(100vh - 200px)',
           minHeight: 280,
           overflow: 'hidden',
-          background: '#1B1B1A',
+          // Painted with the poster as a background-image so the visual
+          // never blanks to black while the <video> is fading in.
+          backgroundImage: `url(${HERO_VIDEO_POSTER})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundColor: '#1B1B1A',
         }}>
           <video
             src={HERO_VIDEO_SRC}
             poster={HERO_VIDEO_POSTER}
             autoPlay loop muted playsInline preload="auto"
+            // The browser may need a nudge to fire `playing` on some mobile
+            // Safari builds — onCanPlay attempts play() defensively.
+            onCanPlay={(e) => { e.currentTarget.play?.().catch(() => {}); }}
+            onPlaying={() => setVideoStarted(true)}
             aria-label="Hero — Tawny Walker"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: 'scale(1.18)', transformOrigin: 'center' }}
+            style={{
+              width: '100%', height: '100%',
+              objectFit: 'cover', display: 'block',
+              transform: 'scale(1.18)', transformOrigin: 'center',
+              // Fade in once the video is actually playing, so the
+              // transition from poster → motion is smooth.
+              opacity: videoStarted ? 1 : 0,
+              transition: 'opacity 0.5s ease',
+            }}
           />
           <div className="tw-hero-video-overlay" style={{
             position: 'absolute',
