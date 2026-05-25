@@ -212,6 +212,9 @@ export default function AddListing() {
       setErrors(prev => {
         const next = { ...prev };
         if (err) next[field] = err; else delete next[field];
+        // Drop the form-level "Please complete the required fields"
+        // banner once every field error has cleared.
+        if (Object.keys(next).length === 0) setSubmitError(null);
         return next;
       });
     };

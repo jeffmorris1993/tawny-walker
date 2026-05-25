@@ -1358,6 +1358,9 @@ export function InquiryWidget({ syncUrl = false, showHeading = true }) {
             setErrors(prev => {
               const next = { ...prev };
               if (err) next[label] = err; else delete next[label];
+              // Clear the form-level "Fix the highlighted fields" message
+              // once every field error has been resolved.
+              if (Object.keys(next).length === 0) setSubmitError(null);
               return next;
             });
           }}
