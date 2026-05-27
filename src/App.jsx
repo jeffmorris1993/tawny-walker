@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { DirectionProvider } from './theme/DirectionContext';
 import Landing from './pages/Landing';
@@ -84,6 +85,7 @@ export default function App() {
           <Route path="/admin/listings/:id/edit" element={<RequireAdmin><AddListing /></RequireAdmin>} />
           <Route path="/studio/preview/:id" element={<RequireAdmin><ListingDetail /></RequireAdmin>} />
         </Routes>
+        <Analytics />
         <SpeedInsights />
       </BrowserRouter>
     </DirectionProvider>
