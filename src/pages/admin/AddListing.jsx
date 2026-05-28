@@ -97,6 +97,26 @@ function FormInput({ label, value, onChange, placeholder, dropdown, error, money
 
 const STATUS_CYCLE = ['Draft', 'Coming Soon', 'Active', 'Pending', 'Sold'];
 
+// Each non-Draft status maps to a single date column. Used to auto-fill
+// today's date when the studio bumps a listing into a new status, and to
+// pick which date is required at publish time.
+const STATUS_DATE_KEY = {
+  'Coming Soon': 'comingSoonAt',
+  Active:        'activeAt',
+  Pending:       'pendingAt',
+  Sold:          'soldAt',
+};
+
+// ISO date (YYYY-MM-DD) in local time — the shape <input type="date">
+// uses and the shape Supabase accepts for a `date` column.
+function todayIso() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 // Map a fetched listing (DB or mock shape) into the local form shape used
 // by the composer.
 function listingToForm(L) {
@@ -114,7 +134,50 @@ function listingToForm(L) {
     description: L.blurb || L.description || '',
     tone: L.tone || 'warm',
     photos: Array.isArray(L.photos) ? L.photos : [],
+    comingSoonAt: L.comingSoonAt || '',
+    activeAt:     L.activeAt     || '',
+    pendingAt:    L.pendingAt    || '',
+    soldAt:       L.soldAt       || '',
   };
+}
+
+// Tiny date input that mirrors the FormInput styling — same eyebrow
+// label, same underlined input row, same error treatment. Kept inline
+// because <input type="date"> can't share FormInput's draft/blur cycle.
+function DateInput({ label, value, onChange, error }) {
+  const t = useTheme();
+  const errorColor = '#B5341F';
+  return (
+    <div>
+      <div style={{
+        fontFamily: t.eyebrowFont,
+        fontSize: 10, fontWeight: 600,
+        letterSpacing: '0.28em',
+        textTransform: 'uppercase',
+        color: error ? errorColor : t.fgFaint, marginBottom: 8,
+      }}>{label}</div>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        borderBottom: `1px solid ${error ? errorColor : t.fgMuted}`,
+        paddingBottom: 6,
+      }}>
+        <input
+          type="date"
+          value={value || ''}
+          onChange={e => onChange(e.target.value)}
+          style={{
+            flex: 1, minWidth: 0,
+            background: 'transparent', border: 'none', outline: 'none', padding: 0,
+            fontFamily: t.fonts.display, fontSize: 18,
+            color: t.palette.emerald, lineHeight: 1.3,
+          }}
+        />
+      </div>
+      {error && (
+        <div style={{ marginTop: 6, fontSize: 11, color: errorColor, fontFamily: t.fonts.body }}>{error}</div>
+      )}
+    </div>
+  );
 }
 
 export default function AddListing() {
@@ -192,6 +255,18 @@ export default function AddListing() {
 
   const set = (k) => (v) => setForm(f => ({ ...f, [k]: v }));
 
+  // Status changes auto-fill the matching date column with today (only
+  // when it's blank, so revisiting Active doesn't overwrite a date the
+  // studio set deliberately). Draft has no date.
+  function setStatus(next) {
+    setForm(f => {
+      const dateKey = STATUS_DATE_KEY[next];
+      if (!dateKey || f?.[dateKey]) return { ...f, status: next };
+      return { ...f, status: next, [dateKey]: todayIso() };
+    });
+    setStatusOpen(false);
+  }
+
   // Per-field validation runs on blur as soon as the user leaves a field
   // they've touched — so they don't have to hit "Publish" before learning
   // a required field was missed.
@@ -220,7 +295,7 @@ export default function AddListing() {
     };
   }
 
-  function validate() {
+  function validate(targetStatus) {
     const next = {};
     const nameErr = required(form.name, 'Listing name');
     if (nameErr) next.name = nameErr;
@@ -230,11 +305,18 @@ export default function AddListing() {
     if (cityErr) next.city = cityErr;
     const priceErr = required(form.price, 'Price');
     if (priceErr) next.price = priceErr;
+    // Whichever status the studio is publishing into, the matching date
+    // is required. Draft has no date, so it's exempt.
+    const dateKey = STATUS_DATE_KEY[targetStatus];
+    if (dateKey && !form?.[dateKey]) {
+      next[dateKey] = `${targetStatus} date is required.`;
+    }
     return next;
   }
 
   async function handleSave(targetStatus) {
-    const nextErrors = validate();
+    const resolvedStatus = targetStatus || form.status;
+    const nextErrors = validate(resolvedStatus);
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) {
       setSubmitError('Please complete the required fields.');
@@ -252,10 +334,14 @@ export default function AddListing() {
       baths: form.baths,
       sqft: form.sqft,
       lot: form.lot,
-      status: targetStatus || form.status,
+      status: resolvedStatus,
       tone: form.tone,
       blurb: form.description,
       photos: form.photos || [],
+      comingSoonAt: form.comingSoonAt || null,
+      activeAt:     form.activeAt     || null,
+      pendingAt:    form.pendingAt    || null,
+      soldAt:       form.soldAt       || null,
     };
 
     const { error } = editing
@@ -496,7 +582,7 @@ export default function AddListing() {
                               key={s}
                               role="option"
                               aria-selected={selected}
-                              onClick={() => { set('status')(s); setStatusOpen(false); }}
+                              onClick={() => setStatus(s)}
                               style={{
                                 padding: '10px 12px', cursor: 'pointer',
                                 fontFamily: t.fonts.body, fontSize: 13,
@@ -516,6 +602,37 @@ export default function AddListing() {
                     </>
                   )}
                 </div>
+              </div>
+
+              {/* Per-status dates. The studio fills in whichever ones
+                  apply; the public detail page renders the one matching
+                  the current status. Status changes auto-fill today's
+                  date for the new status if blank. */}
+              <div className="tw-add-pair-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
+                <DateInput
+                  label="Coming Soon date"
+                  value={form.comingSoonAt}
+                  onChange={set('comingSoonAt')}
+                  error={errors.comingSoonAt}
+                />
+                <DateInput
+                  label="Listed date"
+                  value={form.activeAt}
+                  onChange={set('activeAt')}
+                  error={errors.activeAt}
+                />
+                <DateInput
+                  label="Pending date"
+                  value={form.pendingAt}
+                  onChange={set('pendingAt')}
+                  error={errors.pendingAt}
+                />
+                <DateInput
+                  label="Sold date"
+                  value={form.soldAt}
+                  onChange={set('soldAt')}
+                  error={errors.soldAt}
+                />
               </div>
             </div>
           </div>

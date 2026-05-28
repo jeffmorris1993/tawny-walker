@@ -13,10 +13,20 @@ import FacetRow from '../../components/admin/FacetRow';
 import ShimmerBar from '../../components/admin/ShimmerBar';
 import { highlight } from '../../lib/highlight';
 import useDebouncedValue from '../../lib/useDebouncedValue';
-import { dashIfBlank } from '../../lib/format';
+import { dashIfBlank, listingStatusDate, formatListingDate } from '../../lib/format';
 import { usePagedListings, useListingCounts } from '../../lib/queries';
 
 const PAGE_SIZE = 12;
+
+// Short eyebrow label that pairs with the Date column value in each row,
+// so "JUL 10" reads as e.g. "LISTED · JUL 10" or "SOLD · JUL 10" without
+// having to glance back at the Status column.
+const ROW_DATE_BADGE = {
+  'Coming Soon': 'Coming Soon',
+  Active:        'Listed',
+  Pending:       'Pending',
+  Sold:          'Sold',
+};
 
 // Status pills shown in the facet bar. Order matches the design — Active /
 // Pending / Sold / Draft. Labels resolve through theme.statusLabels so
@@ -284,7 +294,7 @@ export default function ListingsManager() {
             <span>Specs</span>
             <SortHeader label="Price" k="price" sort={sort} onClick={onSortClick} align="right" gold={accentGold} headlineColor={headlineColor} />
             <SortHeader label="Status" k="status" sort={sort} onClick={onSortClick} gold={accentGold} headlineColor={headlineColor} />
-            <SortHeader label="Listed" k="listed" sort={sort} onClick={onSortClick} align="right" gold={accentGold} headlineColor={headlineColor} />
+            <SortHeader label="Date" k="listed" sort={sort} onClick={onSortClick} align="right" gold={accentGold} headlineColor={headlineColor} />
             <span style={{ textAlign: 'right' }}> </span>
           </div>
 
@@ -330,7 +340,19 @@ export default function ListingsManager() {
                     color: t.palette.emerald,
                   }}>{dashIfBlank(l.price)}</span>
                   <StatusChip status={l.status} />
-                  <span style={{ fontSize: 11, color: t.fgFaint, textAlign: 'right' }}>{dashIfBlank(l.listedAt)}</span>
+                  <div style={{ textAlign: 'right' }}>
+                    {ROW_DATE_BADGE[l.status] && (
+                      <div style={{
+                        fontFamily: t.eyebrowFont,
+                        fontSize: 9, fontWeight: 600,
+                        letterSpacing: '0.22em',
+                        textTransform: 'uppercase',
+                        color: t.fgFaint,
+                        marginBottom: 2,
+                      }}>{ROW_DATE_BADGE[l.status]}</div>
+                    )}
+                    <div style={{ fontSize: 11, color: t.fgFaint }}>{dashIfBlank(formatListingDate(listingStatusDate(l)))}</div>
+                  </div>
                   <span style={{
                     textAlign: 'right',
                     fontFamily: t.eyebrowFont,

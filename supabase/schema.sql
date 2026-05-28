@@ -20,7 +20,7 @@ create table public.listings (
   loc text not null,
   price text not null,
   specs text not null,
-  status text not null check (status in ('Active', 'Pending', 'Sold', 'Draft')),
+  status text not null check (status in ('Coming Soon', 'Active', 'Pending', 'Sold', 'Draft')),
   tone text not null,                        -- color/palette key
   tag text,
   img text,                                  -- key into PHOTOS map
@@ -32,7 +32,14 @@ create table public.listings (
   built int,
   renovated int,
   architect text,
-  listed_at text,
+  -- Per-status effective dates. The studio sets the one matching the
+  -- current status; the public detail page picks the relevant one to
+  -- display ("Coming Soon", "Listed", "Pending since", "Sold").
+  coming_soon_at date,
+  active_at      date,
+  pending_at     date,
+  sold_at        date,
+  listed_at text,                            -- legacy freeform string; superseded by the four typed columns above
   tagline text,
   summary text[],                            -- editorial paragraphs
   attributes jsonb,                          -- [{l, v}, ...]

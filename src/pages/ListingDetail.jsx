@@ -5,7 +5,7 @@ import TopNav from '../components/TopNav';
 import SiteFooter from '../components/SiteFooter';
 import StatusChip from '../components/StatusChip';
 import { useListing, useRelatedListings, usePreviewOverride } from '../lib/queries';
-import { dashIfBlank } from '../lib/format';
+import { dashIfBlank, listingStatusDate, listingStatusDateLabel, formatListingDate } from '../lib/format';
 import { parseMoney } from '../lib/money';
 import SEO from '../components/SEO';
 
@@ -56,8 +56,12 @@ function ListingDetailB({ L, noindex = false }) {
     floorSize: L.sqft
       ? { '@type': 'QuantitativeValue', value: String(L.sqft).replace(/[^\d]/g, '') || undefined, unitCode: 'FTK' }
       : undefined,
-    datePosted: L.listedAt || undefined,
+    datePosted: L.activeAt || L.listedAt || undefined,
   };
+
+  const statusDateRaw = listingStatusDate(L);
+  const statusDateLabel = listingStatusDateLabel(L.status);
+  const statusDateText = statusDateRaw ? formatListingDate(statusDateRaw) : '';
 
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
@@ -143,13 +147,13 @@ function ListingDetailB({ L, noindex = false }) {
               alignItems: 'center', flexWrap: 'wrap',
             }}>
               <StatusChip status={L.status} size="lg" />
-              {L.listedAt && (
+              {statusDateText && statusDateLabel && (
                 <>
                   <span style={{ color: t.fgFaint }}>·</span>
                   <span style={{
                     fontFamily: t.eyebrowFont, fontSize: 9.5, fontWeight: 600,
                     letterSpacing: '0.26em', textTransform: 'uppercase', color: t.fgFaint,
-                  }}>Listed {L.listedAt}</span>
+                  }}>{statusDateLabel} {statusDateText}</span>
                 </>
               )}
             </div>

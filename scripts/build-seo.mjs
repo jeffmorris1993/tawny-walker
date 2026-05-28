@@ -273,6 +273,7 @@ function listingRoute(l) {
     offers,
     numberOfRooms: l.beds || undefined,
     numberOfBathroomsTotal: l.baths || undefined,
+    datePosted: l.active_at || l.coming_soon_at || undefined,
   };
   return {
     path: `/listings/${l.id}`,
@@ -297,7 +298,7 @@ async function fetchListings() {
     const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
     const { data, error } = await supabase
       .from('listings')
-      .select('id, addr, street, loc, price, status, beds, baths, sqft, tagline, blurb, photos, img, updated_at')
+      .select('id, addr, street, loc, price, status, beds, baths, sqft, tagline, blurb, photos, img, updated_at, coming_soon_at, active_at, pending_at, sold_at')
       .neq('status', 'Draft');
     if (error) {
       console.warn(`[seo] Supabase fetch failed (${error.message}); skipping listing routes.`);

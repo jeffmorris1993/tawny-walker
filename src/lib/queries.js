@@ -61,6 +61,10 @@ function rowToListing(row) {
     renovated: row.renovated,
     architect: row.architect,
     listedAt: row.listed_at,
+    comingSoonAt: row.coming_soon_at,
+    activeAt: row.active_at,
+    pendingAt: row.pending_at,
+    soldAt: row.sold_at,
     tagline: row.tagline,
     summary: row.summary || [],
     attributes: row.attributes || [],
@@ -480,6 +484,10 @@ export async function createListing(input) {
     sqft: input.sqft || null,
     lot: input.lot || null,
     photos: Array.isArray(input.photos) ? input.photos : [],
+    coming_soon_at: input.comingSoonAt || null,
+    active_at:      input.activeAt     || null,
+    pending_at:     input.pendingAt    || null,
+    sold_at:        input.soldAt       || null,
     sort_order: input.sort_order || 200,
   };
   if (noClient()) return { data: null, error: { message: 'Supabase not configured' } };
@@ -515,6 +523,10 @@ export async function updateListing(id, input) {
     sqft: input.sqft ?? null,
     lot: input.lot ?? null,
     photos: Array.isArray(input.photos) ? input.photos : [],
+    coming_soon_at: input.comingSoonAt ?? null,
+    active_at:      input.activeAt     ?? null,
+    pending_at:     input.pendingAt    ?? null,
+    sold_at:        input.soldAt       ?? null,
   };
   if (noClient()) return { data: null, error: { message: 'Supabase not configured' } };
   const { data, error } = await supabase.from('listings').update(payload).eq('id', id).select().single();
