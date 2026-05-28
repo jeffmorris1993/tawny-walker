@@ -5,7 +5,7 @@ import TopNav from '../components/TopNav';
 import SiteFooter from '../components/SiteFooter';
 import StatusChip from '../components/StatusChip';
 import { useListing, useRelatedListings, usePreviewOverride } from '../lib/queries';
-import { dashIfBlank, listingStatusDate, listingStatusDateLabel, formatListingDate } from '../lib/format';
+import { dashIfBlank, formatLot, listingStatusDate, listingStatusDateLabel, formatListingDate } from '../lib/format';
 import { parseMoney } from '../lib/money';
 import SEO from '../components/SEO';
 
@@ -236,7 +236,7 @@ function SpecRow({ L }) {
     { l: 'Bedrooms', v: dashIfBlank(L.beds) },
     { l: 'Baths',    v: dashIfBlank(L.baths) },
     { l: 'Interior', v: dashIfBlank(interior) },
-    { l: 'Lot',      v: dashIfBlank(L.lot) },
+    { l: 'Lot',      v: dashIfBlank(formatLot(L.lot)) },
   ];
   return (
     <div className="tw-detail-specs" style={{

@@ -39,18 +39,57 @@ create table public.listings (
   active_at      date,
   pending_at     date,
   sold_at        date,
+  -- Per-row "current status date" so server-side ORDER BY can pick the
+  -- date matching each listing's status without a CASE expression at
+  -- query time. Draft falls through to NULL.
+  status_date date generated always as (
+    case status
+      when 'Coming Soon' then coming_soon_at
+      when 'Active'      then active_at
+      when 'Pending'     then pending_at
+      when 'Sold'        then sold_at
+    end
+  ) stored,
   listed_at text,                            -- legacy freeform string; superseded by the four typed columns above
   tagline text,
   summary text[],                            -- editorial paragraphs
   attributes jsonb,                          -- [{l, v}, ...]
   area jsonb,                                -- {name, body, coords, waterLabel, nearby:[{l,v}]}
   sort_order int default 100,
+  -- Numeric form of the freeform `price` text so server-side ORDER BY
+  -- works. The K/M/B suffix is multiplied through, so "$1.45M" sorts
+  -- above "$289K" instead of being treated as 1.45.
+  price_value numeric generated always as (
+    case
+      when price ~* 'b\s*$' then
+        nullif(regexp_replace(price, '[^0-9.]', '', 'g'), '')::numeric * 1000000000
+      when price ~* 'm\s*$' then
+        nullif(regexp_replace(price, '[^0-9.]', '', 'g'), '')::numeric * 1000000
+      when price ~* 'k\s*$' then
+        nullif(regexp_replace(price, '[^0-9.]', '', 'g'), '')::numeric * 1000
+      else
+        nullif(regexp_replace(price, '[^0-9.]', '', 'g'), '')::numeric
+    end
+  ) stored,
+  -- Status sort order used by the admin "By Status" column so the pipeline
+  -- reads Coming Soon → Active → Pending → Sold → Draft top to bottom.
+  status_rank int generated always as (
+    case status
+      when 'Coming Soon' then 1
+      when 'Active'      then 2
+      when 'Pending'     then 3
+      when 'Sold'        then 4
+      when 'Draft'       then 5
+      else 99
+    end
+  ) stored,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 
 create index listings_status_idx on public.listings(status);
 create index listings_sort_order_idx on public.listings(sort_order);
+create index listings_status_date_idx on public.listings(status_date desc);
 
 -- Leads: people who have inquired through the public form.
 create table public.leads (

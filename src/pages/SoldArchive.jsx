@@ -11,22 +11,46 @@ import {
   ListingsGridStyles,
   UniformGrid,
   ListingCardStdB,
+  SortButton,
   PAGE_SIZE,
 } from './Listings';
 
 function useSoldPage() {
   const [page, setPage] = useState(1);
+  // Default sort: by sold date, newest first. Price toggles independently
+  // so switching back to Price after Date keeps the prior direction.
+  const [sortKey, setSortKey] = useState('date');
+  const [dateAsc, setDateAsc] = useState(false);
+  const [priceAsc, setPriceAsc] = useState(false);
+  const sortColumn = sortKey === 'price' ? 'price_value' : 'sold_at';
+  const ascending = sortKey === 'price' ? priceAsc : dateAsc;
   const { data, total, pageCount, loading } = usePagedListings({
     statusEquals: 'Sold',
     page,
     pageSize: PAGE_SIZE,
+    sort: { column: sortColumn, ascending },
   });
-  return { page, setPage, listings: data, total, pageCount, loading };
+
+  function chooseSort(nextKey) {
+    if (nextKey === sortKey) {
+      if (nextKey === 'price') setPriceAsc(v => !v);
+      else                     setDateAsc(v => !v);
+    } else {
+      setSortKey(nextKey);
+    }
+    setPage(1);
+  }
+
+  return {
+    page, setPage,
+    listings: data, total, pageCount, loading,
+    sortKey, dateAsc, priceAsc, chooseSort,
+  };
 }
 
 function ArchiveB() {
   const t = useTheme();
-  const { page, setPage, listings, total, pageCount, loading } = useSoldPage();
+  const { page, setPage, listings, total, pageCount, loading, sortKey, dateAsc, priceAsc, chooseSort } = useSoldPage();
   const gridRef = useRef(null);
 
   function goToPage(p) {
@@ -65,6 +89,7 @@ function ArchiveB() {
       </div>
 
       <div ref={gridRef} style={{ padding: '0 clamp(24px, 5vw, 72px) 120px', maxWidth: 1296, margin: '0 auto', scrollMarginTop: 24 }}>
+        <SortBar sortKey={sortKey} dateAsc={dateAsc} priceAsc={priceAsc} chooseSort={chooseSort} />
         <UniformGrid variant="b">
           {loading
             ? Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonCardB key={`s-${i}`} />)
@@ -82,6 +107,32 @@ function ArchiveB() {
 
       <SiteFooter />
       <ListingsGridStyles />
+    </div>
+  );
+}
+
+// Sold-only sort bar — same SortButton chrome as the public Listings page,
+// pared down because the page has no status filter to share row space with.
+function SortBar({ sortKey, dateAsc, priceAsc, chooseSort }) {
+  const t = useTheme();
+  return (
+    <div className="tw-filter-bar" style={{
+      paddingTop: 24, paddingBottom: 16, marginBottom: 32,
+      borderTop: `1px solid ${t.line}`, borderBottom: `1px solid ${t.line}`,
+      display: 'flex', justifyContent: 'flex-end', alignItems: 'center',
+      flexWrap: 'wrap', gap: 16,
+    }}>
+      <div className="tw-filter-sort" style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+        <span className="tw-sort-label" style={{ fontFamily: t.eyebrowFont, fontSize: 10.5, fontWeight: 500, letterSpacing: '0.28em', textTransform: 'uppercase', color: t.fgFaint }}>Sort</span>
+        <SortButton
+          label="Date" active={sortKey === 'date'} ascending={dateAsc}
+          onClick={() => chooseSort('date')}
+        />
+        <SortButton
+          label="Price" active={sortKey === 'price'} ascending={priceAsc}
+          onClick={() => chooseSort('price')}
+        />
+      </div>
     </div>
   );
 }

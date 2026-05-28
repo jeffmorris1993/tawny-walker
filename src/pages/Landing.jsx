@@ -128,6 +128,7 @@ import Rule from '../components/Rule';
 import SEO from '../components/SEO';
 import { PILLARS, STUDIO } from '../data/listings';
 import { useFeaturedListings, useListingTotal } from '../lib/queries';
+import { formatSpecs } from '../lib/format';
 import { InquiryWidget } from './Inquiry';
 
 const SCROLL_TO_INQUIRY = '/#inquiry';
@@ -340,7 +341,7 @@ function FeaturedBigB({ listing, num }) {
         <p style={{ fontSize: 15, lineHeight: 1.7, color: t.fgMuted, margin: '20px 0 0' }}>{listing.blurb}</p>
         <div style={{ marginTop: 28, paddingTop: 22, borderTop: `1px solid ${t.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
           <span style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(26px, 3vw, 36px)', color: t.palette.emerald }}>{listing.price}</span>
-          <span style={{ fontFamily: t.eyebrowFont, fontSize: 10, fontWeight: 600, letterSpacing: '0.26em', textTransform: 'uppercase', color: t.fgFaint }}>{listing.specs}</span>
+          <span style={{ fontFamily: t.eyebrowFont, fontSize: 10, fontWeight: 600, letterSpacing: '0.26em', textTransform: 'uppercase', color: t.fgFaint }}>{formatSpecs(listing.specs)}</span>
         </div>
       </div>
     </Link>
@@ -363,7 +364,7 @@ function FeaturedSmallB({ listing }) {
         <p style={{ fontSize: 13, lineHeight: 1.6, color: t.fgMuted, margin: '14px 0 0' }}>{listing.blurb}</p>
         <div style={{ marginTop: 20, paddingTop: 14, borderTop: `1px solid ${t.line}`, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
           <span style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 22, color: t.palette.emerald }}>{listing.price}</span>
-          <span style={{ fontFamily: t.eyebrowFont, fontSize: 9, fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.fgFaint }}>{listing.specs}</span>
+          <span style={{ fontFamily: t.eyebrowFont, fontSize: 9, fontWeight: 600, letterSpacing: '0.22em', textTransform: 'uppercase', color: t.fgFaint }}>{formatSpecs(listing.specs)}</span>
         </div>
       </div>
     </Link>

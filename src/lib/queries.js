@@ -5,6 +5,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from './supabase';
 import { PHOTOS } from '../components/Photo';
+import { formatLot } from './format';
 
 if (!isSupabaseConfigured) {
   // Loud, dev-time warning. Pages will render empty if the queries can't
@@ -193,9 +194,12 @@ export function useListing(id) {
 // for the current page round-trip to Supabase (range query), so adding more
 // rows doesn't increase the initial payload.
 //
-// `sort` is { column: 'sort_order' | 'price_value' | …, ascending: boolean }.
-// `price_value` is a stored generated column on `listings` that strips the
-// text price down to a numeric, so server-side ordering works across pages.
+// `sort` is { column: 'sort_order' | 'price_value' | 'status_date' | …,
+// ascending: boolean }. `price_value` is a stored generated column that
+// strips the text price down to a numeric; `status_date` is a stored
+// generated column that resolves to the per-row date matching each
+// listing's current status (coming_soon_at / active_at / pending_at /
+// sold_at). Both let server-side ordering work across paginated reads.
 export function usePagedListings({
   statusEquals,
   statusIn,
@@ -554,7 +558,7 @@ function buildSpecs(input) {
   if (input.beds) parts.push(`${input.beds} BD`);
   if (input.baths) parts.push(`${input.baths} BA`);
   if (input.sqft) parts.push(`${input.sqft} SF`);
-  if (input.lot && input.lot !== '—') parts.push(input.lot);
+  if (input.lot && input.lot !== '—') parts.push(formatLot(input.lot));
   return parts.join(' · ');
 }
 

@@ -19,6 +19,16 @@ const linkStyle = { textDecoration: 'none', color: 'inherit', display: 'block' }
 const PUBLIC_FILTERS = ['All', 'Coming Soon', 'Active', 'Pending'];
 const PAGE_SIZE = 12;
 
+// Status → the matching per-status date column. The "All" filter sorts on
+// the generated `status_date` column instead, which resolves to whichever
+// of these columns is relevant for each row.
+const FILTER_DATE_COLUMN = {
+  All:           'status_date',
+  'Coming Soon': 'coming_soon_at',
+  Active:        'active_at',
+  Pending:       'pending_at',
+};
+
 // Stage-aware empty state — speaks to the filter the visitor is on rather
 // than the generic "no results".
 const EMPTY_COPY = {
@@ -33,17 +43,23 @@ const EMPTY_COPY = {
 function usePublicListings() {
   const [filter, setFilter] = useState('All');
   const [page, setPage] = useState(1);
-  // Default: highest-price first (matches the "By Price ↓" label that
-  // shipped before the toggle was interactive).
+  // Default sort: by date, newest first. The date column we order on is
+  // chosen per-filter (status-aware) — see FILTER_DATE_COLUMN above.
+  const [sortKey, setSortKey] = useState('date');
+  const [dateAsc, setDateAsc] = useState(false);
   const [priceAsc, setPriceAsc] = useState(false);
   const { counts: rawCounts } = useListingCounts();
   const statusEquals = filter === 'All' ? null : filter;
+  const sortColumn = sortKey === 'price'
+    ? 'price_value'
+    : (FILTER_DATE_COLUMN[filter] || 'status_date');
+  const ascending = sortKey === 'price' ? priceAsc : dateAsc;
   const { data, total, pageCount, loading } = usePagedListings({
     statusEquals,
     statusNotIn: ['Sold', 'Draft'],
     page,
     pageSize: PAGE_SIZE,
-    sort: { column: 'price_value', ascending: priceAsc },
+    sort: { column: sortColumn, ascending },
   });
 
   // Active inventory counts (sold excluded) so the filter bar labels stay
@@ -64,8 +80,15 @@ function usePublicListings() {
     setPage(1);
   }
 
-  function togglePriceSort() {
-    setPriceAsc(v => !v);
+  // Clicking the active sort flips its direction; clicking the other
+  // sort switches over without resetting its remembered direction.
+  function chooseSort(nextKey) {
+    if (nextKey === sortKey) {
+      if (nextKey === 'price') setPriceAsc(v => !v);
+      else                     setDateAsc(v => !v);
+    } else {
+      setSortKey(nextKey);
+    }
     setPage(1);
   }
 
@@ -75,7 +98,7 @@ function usePublicListings() {
     listings: data, total, pageCount,
     counts, soldCount: rawCounts.Sold || 0,
     loading,
-    priceAsc, togglePriceSort,
+    sortKey, dateAsc, priceAsc, chooseSort,
   };
 }
 
@@ -108,7 +131,7 @@ function UniformGrid({ children, variant = 'a' }) {
 
 function ListingsB() {
   const t = useTheme();
-  const { filter, setFilter, page, setPage, listings, pageCount, counts, soldCount, loading, priceAsc, togglePriceSort } = usePublicListings();
+  const { filter, setFilter, page, setPage, listings, pageCount, counts, soldCount, loading, sortKey, dateAsc, priceAsc, chooseSort } = usePublicListings();
   const filterRef = useRef(null);
 
   function goToPage(p) {
@@ -147,7 +170,10 @@ function ListingsB() {
       </div>
 
       <div ref={filterRef} style={{ padding: '0 clamp(24px, 5vw, 72px) 56px', maxWidth: 1296, margin: '0 auto', scrollMarginTop: 24 }}>
-        <FilterBarB filter={filter} setFilter={setFilter} counts={counts} priceAsc={priceAsc} togglePriceSort={togglePriceSort} />
+        <FilterBarB
+          filter={filter} setFilter={setFilter} counts={counts}
+          sortKey={sortKey} dateAsc={dateAsc} priceAsc={priceAsc} chooseSort={chooseSort}
+        />
       </div>
 
       <div style={{ padding: '0 clamp(24px, 5vw, 72px) 96px', maxWidth: 1296, margin: '0 auto' }}>
@@ -179,7 +205,7 @@ function ListingsB() {
   );
 }
 
-function FilterBarB({ filter, setFilter, counts, priceAsc, togglePriceSort }) {
+function FilterBarB({ filter, setFilter, counts, sortKey, dateAsc, priceAsc, chooseSort }) {
   const t = useTheme();
   return (
     <div className="tw-filter-bar" style={{
@@ -201,21 +227,37 @@ function FilterBarB({ filter, setFilter, counts, priceAsc, togglePriceSort }) {
       </div>
       <div className="tw-filter-sort" style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
         <span className="tw-sort-label" style={{ fontFamily: t.eyebrowFont, fontSize: 10.5, fontWeight: 500, letterSpacing: '0.28em', textTransform: 'uppercase', color: t.fgFaint }}>Sort</span>
-        <button
-          type="button"
-          onClick={togglePriceSort}
-          aria-label={`Sort by price ${priceAsc ? 'ascending' : 'descending'}`}
-          className="tw-filter-chip tw-sort-btn"
-          style={{
-            background: 'transparent', border: 'none', padding: '0 0 4px',
-            fontFamily: t.eyebrowFont, fontSize: 11, fontWeight: 600,
-            letterSpacing: '0.28em', textTransform: 'uppercase',
-            color: t.palette.emerald, borderBottom: `1px solid ${t.palette.emerald}`,
-            cursor: 'pointer', whiteSpace: 'nowrap',
-          }}
-        >By Price {priceAsc ? '↑' : '↓'}</button>
+        <SortButton
+          label="Date" active={sortKey === 'date'} ascending={dateAsc}
+          onClick={() => chooseSort('date')}
+        />
+        <SortButton
+          label="Price" active={sortKey === 'price'} ascending={priceAsc}
+          onClick={() => chooseSort('price')}
+        />
       </div>
     </div>
+  );
+}
+
+function SortButton({ label, active, ascending, onClick }) {
+  const t = useTheme();
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={`Sort by ${label.toLowerCase()} ${ascending ? 'ascending' : 'descending'}`}
+      aria-pressed={active}
+      className="tw-filter-chip tw-sort-btn"
+      style={{
+        background: 'transparent', border: 'none', padding: '0 0 4px',
+        fontFamily: t.eyebrowFont, fontSize: 11, fontWeight: 600,
+        letterSpacing: '0.28em', textTransform: 'uppercase',
+        color: active ? t.palette.emerald : t.fgFaint,
+        borderBottom: active ? `1px solid ${t.palette.emerald}` : '1px solid transparent',
+        cursor: 'pointer', whiteSpace: 'nowrap',
+      }}
+    >By {label} {active ? (ascending ? '↑' : '↓') : ''}</button>
   );
 }
 
@@ -290,5 +332,6 @@ export {
   ListingsGridStyles,
   UniformGrid,
   ListingCardStdB,
+  SortButton,
   PAGE_SIZE,
 };

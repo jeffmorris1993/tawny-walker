@@ -39,6 +39,37 @@ export function listingStatusDateLabel(status) {
   }
 }
 
+// Lot sizes are stored as freeform text — sometimes "0.47", sometimes
+// "0.6 acres". Normalize so the rendered value always carries the unit:
+// a bare numeric gets " acres" appended (or " acre" if it's exactly 1).
+// Values that already include any form of "acre" pass through untouched.
+export function formatLot(value) {
+  if (value === null || value === undefined) return '';
+  const s = String(value).trim();
+  if (!s) return '';
+  if (/acre/i.test(s)) return s;
+  if (/^\d+(\.\d+)?$/.test(s)) {
+    return Number(s) === 1 ? `${s} acre` : `${s} acres`;
+  }
+  return s;
+}
+
+// Specs strings carry the lot as the trailing " · "-separated token, so
+// historical rows with bare-numeric lots ("3 BD · 2 BA · 1980 SF · 0.6")
+// also need the acres suffix. Any purely numeric token gets normalized;
+// the BD / BA / SF tokens already carry their own units and are left alone.
+export function formatSpecs(specs) {
+  if (!specs) return '';
+  return String(specs)
+    .split(' · ')
+    .map(token => {
+      const trimmed = token.trim();
+      if (/^\d+(\.\d+)?$/.test(trimmed)) return formatLot(trimmed);
+      return token;
+    })
+    .join(' · ');
+}
+
 // Render a YYYY-MM-DD (the shape Supabase returns for `date`) as
 // "Jun 15, 2026". Pass-through for any other shape so legacy `listed_at`
 // text values still render verbatim.

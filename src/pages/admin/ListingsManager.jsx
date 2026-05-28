@@ -13,7 +13,7 @@ import FacetRow from '../../components/admin/FacetRow';
 import ShimmerBar from '../../components/admin/ShimmerBar';
 import { highlight } from '../../lib/highlight';
 import useDebouncedValue from '../../lib/useDebouncedValue';
-import { dashIfBlank, listingStatusDate, formatListingDate } from '../../lib/format';
+import { dashIfBlank, formatSpecs, listingStatusDate, formatListingDate } from '../../lib/format';
 import { usePagedListings, useListingCounts } from '../../lib/queries';
 
 const PAGE_SIZE = 12;
@@ -67,11 +67,15 @@ const KNOWN_AREA_MATCHES = NEIGHBORHOOD_FACETS
   .map(n => n.match);
 
 // Sortable columns → DB sort_order key + default direction on first click.
+// The DATE column sorts on `status_date` (the per-row generated column that
+// resolves to whichever of coming_soon_at / active_at / pending_at /
+// sold_at matches the row's current status) so the order matches the date
+// actually shown in each row.
 const SORT_COLUMNS = {
   property: { col: 'addr',        defaultAsc: true  },
   price:    { col: 'price_value', defaultAsc: false },
   status:   { col: 'status_rank', defaultAsc: true  },
-  listed:   { col: 'created_at',  defaultAsc: false },
+  listed:   { col: 'status_date', defaultAsc: false },
 };
 
 export default function ListingsManager() {
@@ -334,7 +338,7 @@ export default function ListingsManager() {
                         : '—'}
                     </div>
                   </div>
-                  <span style={{ fontSize: 11, color: t.fgMuted, letterSpacing: '0.04em' }}>{dashIfBlank(l.specs)}</span>
+                  <span style={{ fontSize: 11, color: t.fgMuted, letterSpacing: '0.04em' }}>{dashIfBlank(formatSpecs(l.specs))}</span>
                   <span style={{
                     fontFamily: t.fonts.display, fontSize: 18, textAlign: 'right',
                     color: t.palette.emerald,

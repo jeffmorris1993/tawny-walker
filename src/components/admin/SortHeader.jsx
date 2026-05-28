@@ -1,7 +1,8 @@
 import { useTheme } from '../../theme/DirectionContext';
 
 // Single sort-aware column header used by every admin table. Renders the
-// label + ↕ → ↓ → ↑ chevron, goes emerald + gold-arrow when active.
+// label + ↕ → ↑ → ↓ chevron (↑ for ascending, ↓ for descending — matches
+// the spreadsheet convention), goes emerald + gold-arrow when active.
 //
 // Props:
 //   label           plain text shown in the header
@@ -14,7 +15,7 @@ import { useTheme } from '../../theme/DirectionContext';
 export default function SortHeader({ label, k, sort, onClick, align, gold = '#B59568', headlineColor }) {
   const t = useTheme();
   const active = sort.key === k;
-  const arrow = active ? (sort.dir === 'asc' ? '↓' : '↑') : '↕';
+  const arrow = active ? (sort.dir === 'asc' ? '↑' : '↓') : '↕';
   const justify = align === 'right' ? 'flex-end' : 'flex-start';
   const activeColor = headlineColor || t.palette.emerald;
   return (
