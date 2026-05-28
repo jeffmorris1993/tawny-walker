@@ -21,6 +21,9 @@ create table public.listings (
   price text not null,
   specs text not null,
   status text not null check (status in ('Coming Soon', 'Active', 'Pending', 'Sold', 'Draft')),
+  -- Which side of the deal Tawny is representing on this listing. Nullable
+  -- so legacy rows that predate the field stay valid.
+  represented_by text check (represented_by in ('Buyer', 'Seller', 'Both')),
   tone text not null,                        -- color/palette key
   tag text,
   img text,                                  -- key into PHOTOS map

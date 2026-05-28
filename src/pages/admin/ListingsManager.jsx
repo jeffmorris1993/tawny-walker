@@ -282,10 +282,10 @@ export default function ListingsManager() {
       </div>
 
       <div style={{ overflowX: 'auto' }}>
-        <div style={{ minWidth: 820 }}>
+        <div style={{ minWidth: 930 }}>
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '80px 1.4fr 1fr 110px 110px 110px 60px',
+            gridTemplateColumns: '80px 1.4fr 1fr 110px 110px 110px 110px 60px',
             gap: 18, padding: '16px 0', borderBottom: `1px solid ${t.line}`,
             fontFamily: t.eyebrowFont,
             fontSize: 9, fontWeight: 600,
@@ -298,6 +298,7 @@ export default function ListingsManager() {
             <span>Specs</span>
             <SortHeader label="Price" k="price" sort={sort} onClick={onSortClick} align="right" gold={accentGold} headlineColor={headlineColor} />
             <SortHeader label="Status" k="status" sort={sort} onClick={onSortClick} gold={accentGold} headlineColor={headlineColor} />
+            <span>Represented By</span>
             <SortHeader label="Date" k="listed" sort={sort} onClick={onSortClick} align="right" gold={accentGold} headlineColor={headlineColor} />
             <span style={{ textAlign: 'right' }}> </span>
           </div>
@@ -313,7 +314,7 @@ export default function ListingsManager() {
                   className="tw-listing-row"
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '80px 1.4fr 1fr 110px 110px 110px 60px',
+                    gridTemplateColumns: '80px 1.4fr 1fr 110px 110px 110px 110px 60px',
                     gap: 18, padding: '16px 0', borderBottom: `1px solid ${t.lineSoft}`,
                     alignItems: 'center',
                     textDecoration: 'none', color: 'inherit',
@@ -344,6 +345,10 @@ export default function ListingsManager() {
                     color: t.palette.emerald,
                   }}>{dashIfBlank(l.price)}</span>
                   <StatusChip status={l.status} />
+                  <span style={{
+                    fontFamily: t.fonts.body, fontSize: 12,
+                    color: l.representedBy ? t.fgMuted : t.fgFaint,
+                  }}>{dashIfBlank(l.representedBy)}</span>
                   <div style={{ textAlign: 'right' }}>
                     {ROW_DATE_BADGE[l.status] && (
                       <div style={{
@@ -430,6 +435,7 @@ function ListingSkeletonRow() {
       <ShimmerBar width="70%" height={11} />
       <ShimmerBar width={86} height={16} />
       <ShimmerBar width={70} height={11} />
+      <ShimmerBar width={50} height={11} />
       <ShimmerBar width={64} height={10} />
       <ShimmerBar width={32} height={10} />
     </div>

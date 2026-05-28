@@ -96,6 +96,7 @@ function FormInput({ label, value, onChange, placeholder, dropdown, error, money
 }
 
 const STATUS_CYCLE = ['Draft', 'Coming Soon', 'Active', 'Pending', 'Sold'];
+const REPRESENTING_OPTIONS = ['Buyer', 'Seller', 'Both'];
 
 // Each non-Draft status maps to a single date column. Used to auto-fill
 // today's date when the studio bumps a listing into a new status, and to
@@ -131,6 +132,7 @@ function listingToForm(L) {
     lot: L.lot || '',
     price: L.price || '',
     status: L.status || 'Draft',
+    representedBy: L.representedBy || '',
     description: L.blurb || L.description || '',
     tone: L.tone || 'warm',
     photos: Array.isArray(L.photos) ? L.photos : [],
@@ -195,6 +197,7 @@ export default function AddListing() {
   const [submitError, setSubmitError] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [statusOpen, setStatusOpen] = useState(false);
+  const [representingOpen, setRepresentingOpen] = useState(false);
 
   useEffect(() => {
     // Seed the form once the existing listing has been fetched. Safe to setState
@@ -221,6 +224,7 @@ export default function AddListing() {
       sqft: form.sqft,
       lot: form.lot,
       status: form.status,
+      representedBy: form.representedBy || null,
       tone: form.tone,
       blurb: form.description,
       photos,
@@ -335,6 +339,7 @@ export default function AddListing() {
       sqft: form.sqft,
       lot: form.lot,
       status: resolvedStatus,
+      representedBy: form.representedBy || null,
       tone: form.tone,
       blurb: form.description,
       photos: form.photos || [],
@@ -520,7 +525,7 @@ export default function AddListing() {
                 <FormInput label="Sq Ft" value={form.sqft} onChange={set('sqft')} />
                 <FormInput label="Lot" value={form.lot} onChange={set('lot')} />
               </div>
-              <div className="tw-add-pair-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+              <div className="tw-add-pair-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 20 }}>
                 <FormInput
                   label="Asking price"
                   value={form.price}
@@ -596,6 +601,81 @@ export default function AddListing() {
                               <StatusChip status={s} />
                               <span>{t.statusLabels[s] || s}</span>
                             </li>
+                          );
+                        })}
+                      </ul>
+                    </>
+                  )}
+                </div>
+
+                {/* Representing — which side of the deal Tawny is on. The
+                    table column reflects this; the public site doesn't
+                    surface it. */}
+                <div style={{ position: 'relative' }}>
+                  <div style={{
+                    fontFamily: t.eyebrowFont,
+                    fontSize: 10, fontWeight: 600,
+                    letterSpacing: '0.28em',
+                    textTransform: 'uppercase',
+                    color: t.fgFaint, marginBottom: 8,
+                  }}>Represented By</div>
+                  <button
+                    type="button"
+                    onClick={() => setRepresentingOpen(o => !o)}
+                    aria-haspopup="listbox"
+                    aria-expanded={representingOpen}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      gap: 8, background: 'transparent',
+                      border: 'none', borderBottom: `1px solid ${t.fgMuted}`,
+                      padding: '0 0 6px', cursor: 'pointer', textAlign: 'left',
+                      fontFamily: t.fonts.display, fontSize: 18,
+                      color: form.representedBy ? t.palette.emerald : t.fgFaint, lineHeight: 1.3,
+                    }}>
+                    <span>{form.representedBy || '—'}</span>
+                    <span style={{
+                      color: t.palette.emerald, fontSize: 13,
+                      transform: representingOpen ? 'rotate(180deg)' : 'none',
+                      transition: 'transform 0.15s',
+                    }}>▾</span>
+                  </button>
+                  {representingOpen && (
+                    <>
+                      <div
+                        onClick={() => setRepresentingOpen(false)}
+                        style={{ position: 'fixed', inset: 0, zIndex: 60 }}
+                        aria-hidden
+                      />
+                      <ul
+                        role="listbox"
+                        style={{
+                          position: 'absolute', zIndex: 61,
+                          top: 'calc(100% + 6px)', left: 0, right: 0,
+                          margin: 0, padding: 6, listStyle: 'none',
+                          background: t.bgPage, border: `1px solid ${t.line}`,
+                          boxShadow: '0 14px 30px -16px rgba(0,0,0,0.3)',
+                        }}
+                      >
+                        {REPRESENTING_OPTIONS.map(s => {
+                          const selected = s === form.representedBy;
+                          return (
+                            <li
+                              key={s}
+                              role="option"
+                              aria-selected={selected}
+                              onClick={() => {
+                                setForm(f => ({ ...f, representedBy: s }));
+                                setRepresentingOpen(false);
+                              }}
+                              style={{
+                                padding: '10px 12px', cursor: 'pointer',
+                                fontFamily: t.fonts.body, fontSize: 13,
+                                color: selected ? t.palette.emerald : t.fgMuted,
+                                background: selected ? t.bgPanel : 'transparent',
+                              }}
+                              onMouseEnter={e => { if (!selected) e.currentTarget.style.background = t.bgPanel; }}
+                              onMouseLeave={e => { if (!selected) e.currentTarget.style.background = 'transparent'; }}
+                            >{s}</li>
                           );
                         })}
                       </ul>
@@ -720,10 +800,14 @@ export default function AddListing() {
           .tw-add-header   { align-items: flex-start !important; }
           .tw-add-actions  { width: 100% !important; }
         }
+        @media (max-width: 900px) {
+          .tw-add-pair-3   { grid-template-columns: 1fr 1fr !important; }
+        }
         @media (max-width: 600px) {
           .tw-add-pair-2-1 { grid-template-columns: 1fr !important; }
           .tw-add-pair-4   { grid-template-columns: 1fr 1fr !important; }
           .tw-add-pair-2   { grid-template-columns: 1fr !important; }
+          .tw-add-pair-3   { grid-template-columns: 1fr !important; }
         }
       `}</style>
 

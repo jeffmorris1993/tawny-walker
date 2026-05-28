@@ -14,6 +14,7 @@ export const DRAFT_LISTING = {
   lot: '',
   price: '',
   status: 'Draft',
+  representedBy: '',
   description: '',
   tone: 'warm',
   photos: [],
