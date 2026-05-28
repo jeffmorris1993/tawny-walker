@@ -98,7 +98,7 @@ function ListingDetailB({ L, noindex = false }) {
 
       {/* HERO */}
       <div style={{ padding: '0 clamp(20px, 5vw, 72px)' }}>
-        <Photo label="" tone={L.tone} height={'clamp(360px, 50vw, 720px)'} src={L.img || PHOTOS.livingMarble} />
+        <Photo label="" tone={L.tone} height={'clamp(360px, 50vw, 720px)'} src={L.img || PHOTOS.livingMarble} width={1800} eager />
       </div>
 
       {/* HEAD */}
@@ -313,7 +313,7 @@ function Gallery({ L }) {
       }}>
         {tiles.map((tile, i) => (
           <div key={i} style={{ aspectRatio: '3 / 2' }}>
-            <Photo label="" tone={tile.tone} height="100%" src={tile.src} />
+            <Photo label="" tone={tile.tone} height="100%" src={tile.src} width={900} />
           </div>
         ))}
       </div>
@@ -353,7 +353,7 @@ function RelatedRail({ related }) {
       }}>
         {related.map(l => (
           <Link key={l.id} to={`/listings/${l.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-            <Photo label="" tone={l.tone} height={'clamp(240px, 28vw, 340px)'} src={l.img} />
+            <Photo label="" tone={l.tone} height={'clamp(240px, 28vw, 340px)'} src={l.img} width={900} />
             <div style={{ marginTop: 18 }}>
               <div style={{
                 fontFamily: t.fonts.display, fontSize: 26,

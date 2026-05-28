@@ -6,6 +6,8 @@ import Rule from '../components/Rule';
 import PaginationBar from '../components/PaginationBar';
 import { SkeletonCardB, SkeletonStyles } from '../components/SkeletonCard';
 import { usePagedListings } from '../lib/queries';
+import useImagesPreloaded from '../lib/useImagesPreloaded';
+import { thumbUrl } from '../lib/photo';
 import SEO from '../components/SEO';
 import {
   ListingsGridStyles,
@@ -52,6 +54,12 @@ function ArchiveB() {
   const t = useTheme();
   const { page, setPage, listings, total, pageCount, loading, sortKey, dateAsc, priceAsc, chooseSort } = useSoldPage();
   const gridRef = useRef(null);
+  // Mirror the width used by ListingCardStdB so the preloader and the
+  // <img> request the same transformed URL.
+  const imagesReady = useImagesPreloaded(
+    listings.map(l => thumbUrl(l.img, 900)),
+  );
+  const showSkeleton = loading || !imagesReady;
 
   function goToPage(p) {
     setPage(p);
@@ -91,11 +99,11 @@ function ArchiveB() {
       <div ref={gridRef} style={{ padding: '0 clamp(24px, 5vw, 72px) 120px', maxWidth: 1296, margin: '0 auto', scrollMarginTop: 24 }}>
         <SortBar sortKey={sortKey} dateAsc={dateAsc} priceAsc={priceAsc} chooseSort={chooseSort} />
         <UniformGrid variant="b">
-          {loading
+          {showSkeleton
             ? Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonCardB key={`s-${i}`} />)
             : listings.map(l => <ListingCardStdB key={l.id} listing={l} />)}
         </UniformGrid>
-        {!loading && listings.length === 0 && (
+        {!showSkeleton && listings.length === 0 && (
           <p style={{
             textAlign: 'center', padding: '64px 0',
             fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 18, color: t.fgMuted,

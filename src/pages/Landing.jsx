@@ -327,7 +327,7 @@ function FeaturedBigB({ listing, num }) {
   return (
     <Link to={`/listings/${listing.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', background: '#fff', border: `1px solid ${t.line}` }}>
       <div className="tw-featured-photo" style={{ position: 'relative' }}>
-        <Photo label={`${listing.addr.toUpperCase()}`} tone={listing.tone} height={620} src={listing.img} />
+        <Photo label={`${listing.addr.toUpperCase()}`} tone={listing.tone} height={620} src={listing.img} width={1400} />
         <div style={{ position: 'absolute', top: 20, left: 20, padding: '6px 12px', background: '#fff' }}>
           <StatusChip status={listing.status} />
         </div>
@@ -353,7 +353,7 @@ function FeaturedSmallB({ listing }) {
   return (
     <Link to={`/listings/${listing.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', background: '#fff', border: `1px solid ${t.line}` }}>
       <div className="tw-featured-photo" style={{ position: 'relative' }}>
-        <Photo label={listing.addr.toUpperCase()} tone={listing.tone} height={250} src={listing.img} />
+        <Photo label={listing.addr.toUpperCase()} tone={listing.tone} height={250} src={listing.img} width={900} />
         <div style={{ position: 'absolute', top: 14, left: 14, padding: '5px 10px', background: '#fff' }}>
           <StatusChip status={listing.status} />
         </div>

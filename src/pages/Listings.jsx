@@ -10,6 +10,8 @@ import Rule from '../components/Rule';
 import PaginationBar from '../components/PaginationBar';
 import { SkeletonCardB, SkeletonStyles } from '../components/SkeletonCard';
 import { usePagedListings, useListingCounts } from '../lib/queries';
+import useImagesPreloaded from '../lib/useImagesPreloaded';
+import { thumbUrl } from '../lib/photo';
 import { dashIfBlank } from '../lib/format';
 import SEO from '../components/SEO';
 
@@ -18,6 +20,10 @@ const linkStyle = { textDecoration: 'none', color: 'inherit', display: 'block' }
 
 const PUBLIC_FILTERS = ['All', 'Coming Soon', 'Active', 'Pending'];
 const PAGE_SIZE = 12;
+// Card hero width passed to both <Photo width> and the preloader so they
+// request the same transformed URL — preloading the raw original would
+// warm a different URL than the cards eventually render.
+const CARD_PHOTO_WIDTH = 900;
 
 // Status → the matching per-status date column. The "All" filter sorts on
 // the generated `status_date` column instead, which resolves to whichever
@@ -133,6 +139,13 @@ function ListingsB() {
   const t = useTheme();
   const { filter, setFilter, page, setPage, listings, pageCount, counts, soldCount, loading, sortKey, dateAsc, priceAsc, chooseSort } = usePublicListings();
   const filterRef = useRef(null);
+  // Hold the skeleton up until both the query AND the card photography
+  // are ready, so the swap from skeleton to cards happens in one frame
+  // instead of "skeleton gone, images popping in one by one".
+  const imagesReady = useImagesPreloaded(
+    listings.map(l => thumbUrl(l.img, CARD_PHOTO_WIDTH)),
+  );
+  const showSkeleton = loading || !imagesReady;
 
   function goToPage(p) {
     setPage(p);
@@ -178,11 +191,11 @@ function ListingsB() {
 
       <div style={{ padding: '0 clamp(24px, 5vw, 72px) 96px', maxWidth: 1296, margin: '0 auto' }}>
         <UniformGrid variant="b">
-          {loading
+          {showSkeleton
             ? Array.from({ length: PAGE_SIZE }).map((_, i) => <SkeletonCardB key={`s-${i}`} />)
             : listings.map(l => <ListingCardStdB key={l.id} listing={l} />)}
         </UniformGrid>
-        {!loading && listings.length === 0 && (
+        {!showSkeleton && listings.length === 0 && (
           <p style={{
             textAlign: 'center', padding: '64px 0',
             fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 18, color: t.fgMuted,
@@ -267,7 +280,7 @@ function ListingCardStdB({ listing }) {
   return (
     <Link to={`/listings/${listing.id}`} style={{ ...linkStyle, background: '#fff', border: `1px solid ${t.line}` }}>
       <div style={{ position: 'relative' }}>
-        <Photo label="" tone={listing.tone} height={260} src={listing.img} />
+        <Photo label="" tone={listing.tone} height={260} src={listing.img} width={CARD_PHOTO_WIDTH} />
         <div style={{ position: 'absolute', top: 14, left: 14, padding: '5px 10px', background: '#fff' }}>
           <StatusChip status={listing.status} />
         </div>

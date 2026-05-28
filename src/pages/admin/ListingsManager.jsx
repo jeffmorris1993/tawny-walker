@@ -321,7 +321,7 @@ export default function ListingsManager() {
                   }}
                 >
                   <div style={{ width: 64, height: 48 }}>
-                    <Photo label="" tone={l.tone} height="100%" src={l.img} />
+                    <Photo label="" tone={l.tone} height="100%" src={l.img} width={240} />
                   </div>
                   <div style={{ minWidth: 0 }}>
                     <div style={{
