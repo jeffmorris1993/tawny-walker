@@ -196,7 +196,7 @@ function ListingDetailB({ L, noindex = false }) {
                 fontSize: 'clamp(17px, 1.7vw, 20px)', color: 'rgba(255,255,255,0.78)',
                 maxWidth: 520, lineHeight: 1.5,
               }}>
-                Shown by appointment with Tawny — she prefers weekday mornings, when the light is at its best.
+                Shown by appointment with Tawny.
               </p>
             </div>
             <div style={{ position: 'relative' }}>
