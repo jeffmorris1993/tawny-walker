@@ -18,6 +18,60 @@ const BUCKET = 'listing-photos';
 // fails locally with a friendly message instead of round-tripping.
 const MAX_BYTES = 10 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif']);
+// Supabase Storage's image-transform service (imgproxy) rejects source
+// images larger than ~5000 px on the long edge with "Invalid source
+// image" — and full-frame mirrorless shots from photographers routinely
+// land at 9000+ px. Downscale anything over this on the browser before
+// upload so every listing card/hero can fetch a transformed thumbnail
+// reliably. Also massively cuts storage + bandwidth cost.
+const MAX_EDGE_PX = 3000;
+const RESIZE_QUALITY = 0.85;
+
+// Decode the file, draw it into a canvas at the smaller dimensions, and
+// re-encode as JPEG. Returns the original file untouched when it's
+// already within limits or when canvas re-encoding isn't possible.
+async function downscaleIfLarge(file) {
+  if (!ALLOWED_TYPES.has(file.type)) return file;
+  if (typeof document === 'undefined') return file;
+
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = reject;
+      i.src = url;
+    });
+    const longest = Math.max(img.naturalWidth, img.naturalHeight);
+    if (longest <= MAX_EDGE_PX) return file;
+
+    const scale = MAX_EDGE_PX / longest;
+    const w = Math.max(1, Math.round(img.naturalWidth * scale));
+    const h = Math.max(1, Math.round(img.naturalHeight * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, w, h);
+
+    const blob = await new Promise((resolve) => {
+      canvas.toBlob(resolve, 'image/jpeg', RESIZE_QUALITY);
+    });
+    if (!blob) return file;
+
+    const baseName = file.name.replace(/\.[^.]+$/, '') || 'photo';
+    return new File([blob], `${baseName}.jpg`, {
+      type: 'image/jpeg',
+      lastModified: Date.now(),
+    });
+  } catch {
+    return file;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
 
 export default function PhotoUploader({ value = [], onChange, listingId }) {
   const t = useTheme();
@@ -48,18 +102,22 @@ export default function PhotoUploader({ value = [], onChange, listingId }) {
     // try/finally so a thrown network/storage error can never leave the
     // counter elevated (which would freeze the "Uploading…" CTA).
     try {
-      for (const file of files) {
+      for (const rawFile of files) {
         // Reject before the network round-trip: oversized or wrong-type
         // files surface a friendly error in the UI instead of waiting on a
         // server reject.
-        if (file.size > MAX_BYTES) {
+        if (rawFile.size > MAX_BYTES) {
           setUploadError('Photos must be 10 MB or smaller.');
           continue;
         }
-        if (!ALLOWED_TYPES.has(file.type)) {
+        if (!ALLOWED_TYPES.has(rawFile.type)) {
           setUploadError('JPEG, PNG, WebP, or AVIF only.');
           continue;
         }
+        // Downscale on the client when needed so the transform endpoint
+        // can serve thumbnails (it rejects >5000 px sources). Falls back
+        // to the original file if the canvas pipeline can't run.
+        const file = await downscaleIfLarge(rawFile);
         // Path: listing-photos/{listingId}/{timestamp}-{slug}.{ext}
         const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
         const slug = file.name.replace(/\.[^.]+$/, '').replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 40) || 'photo';

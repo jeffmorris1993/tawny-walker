@@ -19,6 +19,11 @@ export default function Photo({
   const t = useTheme();
   const p = t.photoPalettes[tone] || t.photoPalettes.warm;
   const [loaded, setLoaded] = useState(!src);
+  // Tripped when the transformed thumbnail URL fails (e.g. source image
+  // exceeds the transform service's max input dimensions). When true we
+  // drop the transform and serve the raw object URL — slower, but still
+  // renders instead of a placeholder.
+  const [transformFailed, setTransformFailed] = useState(false);
   const imgRef = useRef(null);
 
   // Run Supabase Storage URLs through the on-the-fly transform endpoint
@@ -27,12 +32,17 @@ export default function Photo({
   // the height so the cropped thumbnail keeps a usable ratio; default
   // 3:2 matches the listing photography we host. No-ops for non-Supabase
   // URLs (bundled assets, external photos).
-  const resolvedSrc = width ? thumbUrl(src, width, aspect, quality) : src;
+  const transformedSrc = width ? thumbUrl(src, width, aspect, quality) : src;
+  const resolvedSrc = transformFailed ? src : transformedSrc;
 
-  // Reset the fade-in whenever src changes (paging, switching listings),
-  // but skip straight to "loaded" if the browser already has the bytes —
-  // cached images can finish before React attaches the onLoad listener,
-  // and we don't want the fade to stall in the off state.
+  // Reset both the fade-in and the transform-failed fallback whenever
+  // src/width changes. Skip straight to "loaded" if the browser already
+  // has the bytes — cached images can finish before React attaches the
+  // onLoad listener, and we don't want the fade to stall in the off
+  // state.
+  useEffect(() => {
+    setTransformFailed(false);
+  }, [src, width]);
   useEffect(() => {
     if (!resolvedSrc) { setLoaded(true); return; }
     const img = imgRef.current;
@@ -59,6 +69,18 @@ export default function Photo({
           loading={eager ? 'eager' : 'lazy'}
           decoding="async"
           onLoad={() => setLoaded(true)}
+          onError={() => {
+            // Transform endpoint rejected the source (often: dimensions
+            // exceed the imgproxy cap on Supabase Storage). Retry with
+            // the raw object URL by tripping the fallback flag.
+            if (!transformFailed && transformedSrc !== src) {
+              setTransformFailed(true);
+            } else {
+              // Raw URL also failed — stop waiting so the placeholder
+              // sits at full opacity instead of fading a missing image.
+              setLoaded(true);
+            }
+          }}
           style={{
             position: 'absolute', inset: 0, width: '100%', height: '100%',
             objectFit: fit, objectPosition, display: 'block',
