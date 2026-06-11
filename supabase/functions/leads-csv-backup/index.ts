@@ -1,8 +1,12 @@
 // Emails a CSV snapshot of public.leads to morristechnologies1@gmail.com.
 // Triggered monthly by pg_cron + pg_net (see migration that schedules it),
-// or invokable manually with a valid Supabase JWT for a fresh export.
+// or invokable manually with the shared secret for a fresh export.
 //
-// Required secret: RESEND_API_KEY (already configured for lead-notify).
+// Required secrets:
+//   RESEND_API_KEY        — already configured for lead-notify
+//   LEADS_BACKUP_SECRET   — shared secret; caller must send it in the
+//                           `x-backup-secret` header. The pg_cron pg_net
+//                           call passes the same value.
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are auto-injected by the
 // edge runtime; the service role is needed to bypass RLS on `leads`.
 
@@ -12,6 +16,17 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const BACKUP_SECRET = Deno.env.get("LEADS_BACKUP_SECRET");
+
+// Constant-time string compare to avoid leaking the secret via timing.
+function timingSafeEqual(a: string, b: string): boolean {
+  const aBytes = new TextEncoder().encode(a);
+  const bBytes = new TextEncoder().encode(b);
+  if (aBytes.length !== bBytes.length) return false;
+  let diff = 0;
+  for (let i = 0; i < aBytes.length; i++) diff |= aBytes[i] ^ bBytes[i];
+  return diff === 0;
+}
 
 const FROM = "Tawny & Co. <noreply@tawnyandco.com>";
 const TO = ["morristechnologies1@gmail.com"];
@@ -41,9 +56,20 @@ Deno.serve(async (req: Request) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
   }
-  if (!RESEND_API_KEY || !SUPABASE_URL || !SERVICE_KEY) {
+  if (!RESEND_API_KEY || !SUPABASE_URL || !SERVICE_KEY || !BACKUP_SECRET) {
     console.error("Missing required env vars");
     return new Response(JSON.stringify({ error: "Missing env" }), { status: 500 });
+  }
+
+  // The Supabase Edge Gateway validates a JWT (anon/service/user) before
+  // we run, but the anon key is public — so we additionally require a
+  // shared secret only the cron job and operators know.
+  const presented = req.headers.get("x-backup-secret") ?? "";
+  if (!timingSafeEqual(presented, BACKUP_SECRET)) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 
   // Service role client — required to bypass RLS on `leads` (which only
