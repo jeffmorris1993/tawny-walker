@@ -9,6 +9,7 @@ import SoldArchive from './pages/SoldArchive';
 import ListingDetail from './pages/ListingDetail';
 import Inquiry from './pages/Inquiry';
 import About from './pages/About';
+import Privacy from './pages/Privacy';
 import LeadsInbox from './pages/admin/LeadsInbox';
 import LeadDetail from './pages/admin/LeadDetail';
 import ListingsManager from './pages/admin/ListingsManager';
@@ -77,6 +78,7 @@ export default function App() {
           <Route path="/listings/:id" element={<ListingDetail />} />
           <Route path="/inquiry" element={<Inquiry />} />
           <Route path="/about" element={<About />} />
+          <Route path="/privacy" element={<Privacy />} />
           <Route path="/admin/login" element={<Login />} />
           <Route path="/admin" element={<RequireAdmin><LeadsInbox /></RequireAdmin>} />
           <Route path="/admin/lead/:id" element={<RequireAdmin><LeadDetail /></RequireAdmin>} />

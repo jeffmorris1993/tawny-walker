@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { useTheme } from '../theme/DirectionContext';
 import { ROLES, ROLE_KEYS } from '../data/inquiryRoles';
 import { submitInquiry } from '../lib/queries';
@@ -963,8 +963,9 @@ function RoleForm({ role, form, setForm, errors, submitting, submitError, onSubm
         display: 'flex', justifyContent: 'space-between', alignItems: 'center',
         gap: 24, flexWrap: 'wrap',
       }}>
-        <p style={{ fontSize: 12, color: t.fgFaint, maxWidth: 380, margin: 0, lineHeight: 1.55 }}>
-          Submitting shares your details with Tawny only. Never with a third party, never with a marketing list.
+        <p style={{ fontSize: 12, color: t.fgFaint, maxWidth: 420, margin: 0, lineHeight: 1.55 }}>
+          Submitting shares your details with Tawny only. Never with a third party, never with a marketing list. By sending, you agree to our{' '}
+          <Link to="/privacy" style={{ color: 'inherit', textDecoration: 'underline' }}>Privacy Policy</Link>.
         </p>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
           {submitError && (

@@ -106,6 +106,9 @@ export default function SiteFooter() {
         color: 'rgba(248,245,238,0.45)',
       }}>
         <span>© 2026 Tawny & Co. · {STUDIO.brokeredBy}</span>
+        <Link to="/privacy" style={{
+          color: 'inherit', textDecoration: 'none', letterSpacing: 'inherit',
+        }}>Privacy Policy</Link>
         <span>Equal Housing Opportunity</span>
       </div>
 
