@@ -26,6 +26,10 @@ const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/a
 // reliably. Also massively cuts storage + bandwidth cost.
 const MAX_EDGE_PX = 3000;
 const RESIZE_QUALITY = 0.85;
+// Cap per listing so the gallery stays curated and storage costs stay
+// bounded. Bump cautiously — the public detail page lays photos out
+// expecting a finite count.
+const MAX_PHOTOS = 10;
 
 // Decode the file, draw it into a canvas at the smaller dimensions, and
 // re-encode as JPEG. Returns the original file untouched when it's
@@ -96,13 +100,25 @@ export default function PhotoUploader({ value = [], onChange, listingId }) {
       return;
     }
     setUploadError(null);
+    // Trim the pick to whatever fits under the per-listing cap before
+    // we even decode files — saves work and keeps the error message
+    // accurate when the user drops a folder of 40 shots.
+    const remaining = Math.max(0, MAX_PHOTOS - (value || []).length);
+    if (remaining === 0) {
+      setUploadError(`Limit reached — ${MAX_PHOTOS} photos per listing.`);
+      return;
+    }
+    const accepted = Array.from(files).slice(0, remaining);
+    if (files.length > remaining) {
+      setUploadError(`Only ${remaining} more photo${remaining === 1 ? '' : 's'} allowed (max ${MAX_PHOTOS}).`);
+    }
     const folder = listingId || '_drafts';
     const uploaded = [];
-    setUploading(c => c + files.length);
+    setUploading(c => c + accepted.length);
     // try/finally so a thrown network/storage error can never leave the
     // counter elevated (which would freeze the "Uploading…" CTA).
     try {
-      for (const rawFile of files) {
+      for (const rawFile of accepted) {
         // Reject before the network round-trip: oversized or wrong-type
         // files surface a friendly error in the UI instead of waiting on a
         // server reject.
@@ -140,7 +156,7 @@ export default function PhotoUploader({ value = [], onChange, listingId }) {
         }
       }
     } finally {
-      setUploading(c => Math.max(0, c - files.length));
+      setUploading(c => Math.max(0, c - accepted.length));
     }
     if (uploaded.length) {
       onChange?.([...(value || []), ...uploaded]);
@@ -289,20 +305,22 @@ export default function PhotoUploader({ value = [], onChange, listingId }) {
           );
         })}
 
-        <button
-          type="button"
-          onClick={pickFiles}
-          style={{
-            aspectRatio: '3 / 2',
-            background: t.bgPanel, border: `1px dashed ${t.line}`,
-            display: 'grid', placeItems: 'center',
-            fontFamily: t.eyebrowFont,
-            fontSize: 10.5, fontWeight: 600,
-            letterSpacing: '0.26em',
-            textTransform: 'uppercase', color: t.fgFaint,
-            cursor: isBusy ? 'wait' : 'pointer',
-          }}
-        >{isBusy ? 'Uploading…' : (value?.length ? '+ Add' : '+ Add photos')}</button>
+        {(value?.length || 0) < MAX_PHOTOS && (
+          <button
+            type="button"
+            onClick={pickFiles}
+            style={{
+              aspectRatio: '3 / 2',
+              background: t.bgPanel, border: `1px dashed ${t.line}`,
+              display: 'grid', placeItems: 'center',
+              fontFamily: t.eyebrowFont,
+              fontSize: 10.5, fontWeight: 600,
+              letterSpacing: '0.26em',
+              textTransform: 'uppercase', color: t.fgFaint,
+              cursor: isBusy ? 'wait' : 'pointer',
+            }}
+          >{isBusy ? 'Uploading…' : (value?.length ? '+ Add' : '+ Add photos')}</button>
+        )}
       </div>
 
       <style>{`
@@ -327,7 +345,7 @@ export default function PhotoUploader({ value = [], onChange, listingId }) {
         textTransform: 'uppercase', color: t.fgFaint,
         display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
       }}>
-        <span>{(value || []).length} photo{(value || []).length === 1 ? '' : 's'} · drag tiles to reorder</span>
+        <span>{(value || []).length} of {MAX_PHOTOS} photo{MAX_PHOTOS === 1 ? '' : 's'} · drag tiles to reorder</span>
         {uploadError && <span style={{ color: '#9B2A1F' }}>{uploadError}</span>}
       </div>
     </div>
