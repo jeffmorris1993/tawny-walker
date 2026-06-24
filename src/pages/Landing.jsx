@@ -127,7 +127,7 @@ import Button from '../components/Button';
 import Rule from '../components/Rule';
 import SEO from '../components/SEO';
 import { PILLARS, STUDIO } from '../data/listings';
-import { useFeaturedListings, useListingTotal } from '../lib/queries';
+import { useFeaturedListings } from '../lib/queries';
 import { formatSpecs } from '../lib/format';
 import { InquiryWidget } from './Inquiry';
 
@@ -135,10 +135,9 @@ const SCROLL_TO_INQUIRY = '/#inquiry';
 
 function LandingB() {
   const t = useTheme();
-  // Just the three featured cards + the public-side total for the CTA
-  // count. Avoids pulling the whole listings table on the homepage.
+  // Just the three featured cards. Avoids pulling the whole listings
+  // table on the homepage.
   const { data: LISTINGS } = useFeaturedListings(3);
-  const totalListings = useListingTotal();
   return (
     <div style={{ background: t.bgPage, fontFamily: t.fonts.body, color: t.fgPage }}>
       <SEO
@@ -256,7 +255,7 @@ function LandingB() {
           </div>
         </div>
         <div style={{ textAlign: 'center', marginTop: 'clamp(40px, 5vw, 64px)' }}>
-          <Button to="/listings" variant="secondary">View the Full Index ({totalListings || LISTINGS.length})</Button>
+          <Button to="/listings" variant="secondary">View the Full Index</Button>
         </div>
       </div>
 
