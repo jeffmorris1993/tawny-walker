@@ -118,6 +118,8 @@ function todayIso() {
   return `${y}-${m}-${day}`;
 }
 
+const DESCRIPTION_MAX = 280;
+
 // Map a fetched listing (DB or mock shape) into the local form shape used
 // by the composer.
 function listingToForm(L) {
@@ -315,6 +317,9 @@ export default function AddListing() {
     if (dateKey && !form?.[dateKey]) {
       next[dateKey] = `${targetStatus} date is required.`;
     }
+    if ((form?.description || '').length > DESCRIPTION_MAX) {
+      next.description = `Short description must be ${DESCRIPTION_MAX} characters or fewer.`;
+    }
     return next;
   }
 
@@ -382,6 +387,9 @@ export default function AddListing() {
   const publishLabel = editing
     ? (submitting ? 'Saving…' : 'Save Changes →')
     : (submitting ? 'Saving…' : 'Publish to Index →');
+
+  const descriptionLen = (form?.description || '').length;
+  const descriptionOver = descriptionLen > DESCRIPTION_MAX;
 
   return (
     <AdminShell>
@@ -722,10 +730,11 @@ export default function AddListing() {
             <Eyebrow color={t.accent}>Short description</Eyebrow>
             <textarea
               value={form.description}
-              onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+              onChange={e => setForm(f => ({ ...f, description: e.target.value.slice(0, DESCRIPTION_MAX) }))}
+              maxLength={DESCRIPTION_MAX}
               style={{
                 marginTop: 18, width: '100%', background: 'transparent', border: 'none',
-                borderBottom: `1px solid ${t.fgMuted}`, outline: 'none', padding: '8px 0',
+                borderBottom: `1px solid ${descriptionOver ? '#B23A2F' : t.fgMuted}`, outline: 'none', padding: '8px 0',
                 fontFamily: t.fonts.display, fontStyle: 'italic', fontSize: 20,
                 color: t.palette.emerald,
                 lineHeight: 1.5, resize: 'none', minHeight: 100, boxSizing: 'border-box',
@@ -736,8 +745,15 @@ export default function AddListing() {
               display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
             }}>
               <span>Shown as the tagline on the listing detail page · also the Index card subtitle.</span>
-              <span>{(form.description || '').length} / 280 characters</span>
+              <span style={{ color: descriptionOver ? '#B23A2F' : t.fgFaint }}>
+                {descriptionLen} / {DESCRIPTION_MAX} characters
+              </span>
             </div>
+            {descriptionOver && (
+              <div style={{ marginTop: 6, fontSize: 11, color: '#B23A2F' }}>
+                Trim to {DESCRIPTION_MAX} characters before saving.
+              </div>
+            )}
           </div>
         </div>
 
