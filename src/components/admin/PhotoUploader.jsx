@@ -29,7 +29,7 @@ const RESIZE_QUALITY = 0.85;
 // Cap per listing so the gallery stays curated and storage costs stay
 // bounded. Bump cautiously — the public detail page lays photos out
 // expecting a finite count.
-const MAX_PHOTOS = 10;
+const MAX_PHOTOS = 15;
 
 // Decode the file, draw it into a canvas at the smaller dimensions, and
 // re-encode as JPEG. Returns the original file untouched when it's
