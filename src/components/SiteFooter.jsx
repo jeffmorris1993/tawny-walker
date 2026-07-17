@@ -112,6 +112,22 @@ export default function SiteFooter() {
         <span>Equal Housing Opportunity</span>
       </div>
 
+      <div style={{
+        maxWidth: 1296, margin: '16px auto 0',
+        textAlign: 'left',
+        fontFamily: t.eyebrowFont,
+        fontSize: 10.5, fontWeight: 500,
+        letterSpacing: '0.26em',
+        textTransform: 'uppercase',
+        color: 'rgba(248,245,238,0.45)',
+      }}>
+        Designed by{' '}
+        <a href="https://sirromstudios.com" target="_blank" rel="noopener noreferrer"
+          style={{ color: 'inherit', textDecoration: 'none', letterSpacing: 'inherit' }}>
+          Sirrom Studios
+        </a>
+      </div>
+
       {/* Reserve space so the floating direction toggle never overlaps text */}
       <div style={{ height: 56, opacity: 0, pointerEvents: 'none' }} aria-hidden="true" />
 
