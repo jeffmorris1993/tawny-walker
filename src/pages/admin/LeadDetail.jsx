@@ -218,6 +218,23 @@ export default function LeadDetail() {
                 : (d.listUnsubscribedAt ? `Removed ${formatStamp(d.listUnsubscribedAt)}` : 'Not on the list')}
             </p>
 
+            {/* On the list, but the unsubscribe stamp is still set: they were
+                put back on by a public form submission rather than by the
+                studio. Nothing verifies that whoever filled the form owns the
+                address, so this is worth seeing before sending to them. */}
+            {d.onList && d.listUnsubscribedAt && (
+              <p style={{
+                marginTop: 12, padding: '10px 12px',
+                background: t.bgPage, border: `1px solid ${t.line}`,
+                borderLeft: `2px solid ${t.accent}`,
+                fontSize: 12.5, lineHeight: 1.55, color: t.fgMuted,
+              }}>
+                Re-joined through the form after asking to be removed on{' '}
+                {formatStamp(d.listUnsubscribedAt)}. Confirm they meant to before
+                including them in anything.
+              </p>
+            )}
+
             {d.onList && d.listSource && (
               <div style={{
                 marginTop: 12, fontFamily: t.eyebrowFont, fontSize: 9.5, fontWeight: 600,
