@@ -7,9 +7,10 @@ export const ABOUT_PARAGRAPHS = [
   "Whether representing clients, sourcing investment properties, or overseeing a renovation from concept to completion, Tawny brings a refined vision, sharp business instinct, and hands-on expertise to every detail. The work goes beyond transactions: it's about creating homes, and opportunities, that leave a lasting impression.",
 ];
 
-// Qualitative credibility band (no dollar figures).
+// Credibility band. Kept in lockstep with PILLARS in src/data/listings.js —
+// the two arrays render the same three claims on About and on Landing.
 export const CREDIBILITY = [
-  { h: 'Multi-Million Dollar',    s: 'Annual Sales Volume' },
+  { h: 'Over $30 Million Sold',   s: 'In Career Volume' },
   { h: 'Investment & Renovation', s: 'A Hands-On Background, On Both Sides Of The Table' },
   { h: 'An Extensive Network',    s: 'Of Agents, Investors, And Off-Market Opportunities' },
 ];

@@ -38,10 +38,19 @@ export default function StudioLog({ leadId, leadCreatedAt, leadWhen, bumpKey = 0
       const who = e.actor_name && e.actor_name.trim() ? e.actor_name : 'Studio';
       return {
         id: e.id,
-        kind: e.kind,                         // 'note' | 'status'
+        kind: e.kind,                         // 'note' | 'status' | 'inquiry' | 'list_signup'
         headline: e.kind === 'status'
-          ? `Status: ${e.previous_value || '—'} → ${e.next_value} · ${who}`
-          : `Studio note edited — ${who}`,
+          ? `Status: ${e.previous_value || 'none'} to ${e.next_value} · ${who}`
+          // An 'inquiry' event is written by submit_inquiry() on every
+          // submission. previous_value is only set when this one replaced an
+          // earlier submission, which is what makes it a returning contact.
+          : e.kind === 'inquiry'
+            ? (e.previous_value
+                ? 'New inquiry submitted, replacing an earlier one'
+                : 'Inquiry submitted')
+            : e.kind === 'list_signup'
+              ? 'Joined the Tawny & Co. list'
+              : `Studio note edited by ${who}`,
         when: formatStamp(e.created_at),
         timestamp: e.created_at,
         previous: e.previous_value,
@@ -224,7 +233,11 @@ function LogModal({ item, onClose }) {
           fontSize: 10, fontWeight: 600,
           letterSpacing: '0.28em',
           textTransform: 'uppercase', color: t.fgFaint,
-        }}>{item.kind === 'status' ? 'Status Change' : item.kind === 'note' ? 'Note Edit' : 'Intake'}</div>
+        }}>{item.kind === 'status' ? 'Status Change'
+            : item.kind === 'note' ? 'Note Edit'
+            : item.kind === 'inquiry' ? 'Inquiry Submitted'
+            : item.kind === 'list_signup' ? 'List Signup'
+            : 'Intake'}</div>
 
         <h2 style={{
           fontFamily: t.fonts.display, fontWeight: 400,
@@ -254,6 +267,28 @@ function LogModal({ item, onClose }) {
             Status changed from <em style={{ fontStyle: 'italic' }}>{item.previous || '—'}</em>
             {' '}to <em style={{ fontStyle: 'italic' }}>{item.next}</em>.
           </div>
+        )}
+
+        {/* A repeat inquiry overwrites the lead's intake, so the submission it
+            replaced only survives here. Without this the earlier answers would
+            be genuinely lost. */}
+        {item.kind === 'inquiry' && (
+          item.previous
+            ? <SubmissionBlock label="The submission this replaced" raw={item.previous} t={t} />
+            : <p style={{
+                marginTop: 22,
+                fontFamily: t.fonts.display, fontStyle: 'italic',
+                fontSize: 16, color: t.fgMuted, lineHeight: 1.55,
+              }}>Their first inquiry. The answers are on the page behind this dialog.</p>
+        )}
+
+        {item.kind === 'list_signup' && (
+          <p style={{
+            marginTop: 22,
+            fontFamily: t.fonts.display, fontStyle: 'italic',
+            fontSize: 16, color: t.fgMuted, lineHeight: 1.55,
+          }}>They asked to hear about listings and the market. Where they signed
+            up from, and what they picked, are in the List panel behind this dialog.</p>
         )}
 
         {item.kind === 'intake' && (
@@ -304,6 +339,56 @@ function NoteBlock({ label, body, t, muted }) {
         color: body ? (muted ? t.fgMuted : t.palette.emerald) : t.fgFaint,
         whiteSpace: 'pre-wrap',
       }}>{body && body.trim() ? body : '(empty)'}</div>
+    </div>
+  );
+}
+
+// Renders the JSON snapshot submit_inquiry() stores on an 'inquiry' event:
+// { role, summary, mandate_notes, intake: [{q, a}] }. Falls back to the raw
+// string if it isn't parseable, so a shape change degrades to something
+// readable rather than a blank panel.
+function SubmissionBlock({ label, raw, t }) {
+  let parsed = null;
+  try { parsed = JSON.parse(raw); } catch { /* fall through to raw */ }
+
+  if (!parsed || typeof parsed !== 'object') {
+    return <NoteBlock label={label} body={raw} t={t} muted />;
+  }
+
+  const rows = Array.isArray(parsed.intake) ? parsed.intake : [];
+  return (
+    <div style={{ marginTop: 22 }}>
+      <div style={{
+        fontFamily: t.eyebrowFont, fontSize: 10, fontWeight: 600,
+        letterSpacing: '0.28em', textTransform: 'uppercase',
+        color: t.fgFaint, marginBottom: 8,
+      }}>{label}{parsed.role ? ` · ${parsed.role}` : ''}</div>
+
+      <div style={{ border: `1px solid ${t.line}`, background: t.bgPanel, padding: '6px 18px' }}>
+        {rows.length ? rows.map((r, i) => (
+          <div key={i} style={{
+            display: 'grid', gridTemplateColumns: '150px 1fr', gap: 16,
+            padding: '11px 0',
+            borderBottom: i === rows.length - 1 ? 'none' : `1px solid ${t.lineSoft}`,
+          }}>
+            <span style={{
+              fontFamily: t.eyebrowFont, fontSize: 9, fontWeight: 600,
+              letterSpacing: '0.2em', textTransform: 'uppercase', color: t.fgFaint,
+            }}>{r.q}</span>
+            <span style={{ fontSize: 14, lineHeight: 1.5, color: t.palette.emerald }}>{r.a}</span>
+          </div>
+        )) : (
+          <div style={{ padding: '11px 0', fontSize: 14, color: t.fgFaint, fontStyle: 'italic' }}>
+            No intake answers were captured.
+          </div>
+        )}
+      </div>
+
+      {parsed.mandate_notes && (
+        <div style={{ marginTop: 14 }}>
+          <NoteBlock label="Notes at the time" body={parsed.mandate_notes} t={t} muted />
+        </div>
+      )}
     </div>
   );
 }

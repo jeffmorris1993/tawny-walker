@@ -200,7 +200,12 @@ function ListingDetailB({ L, noindex = false }) {
               </p>
             </div>
             <div style={{ position: 'relative' }}>
-              <Link to="/#inquiry" style={{ textDecoration: 'none' }}>
+              {/* Stays pointed at the inquiry, not the list. This CTA sits
+                  under "Arrange a private viewing" — sending a buyer who
+                  wants to see a house to a mailing-list signup would lose the
+                  request. The inquiry page is unlisted, not secret, so a deep
+                  link from a listing is a deliberate high-intent entrance. */}
+              <Link to="/inquiry?as=buyer" style={{ textDecoration: 'none' }}>
                 <span style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                   padding: '24px 32px', background: '#FFFFFF', color: emerald,

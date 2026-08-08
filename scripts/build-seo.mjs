@@ -219,12 +219,17 @@ function staticRoutes() {
       jsonLd: null,
     },
     {
+      // Unlisted, not secret. Kept in the prerender so a crawler that finds
+      // the URL gets a real self-canonical page carrying a robots noindex —
+      // dropping the route entirely would make Vercel's SPA rewrite serve the
+      // homepage-baked shell here instead, with the homepage's title and a
+      // canonical pointing at /. No changefreq or priority: it is excluded
+      // from the sitemap below.
       path: '/inquiry',
       file: 'inquiry/index.html',
-      title: 'Begin Your Inquiry',
-      description: "Reach out to Tawny Walker — choose Buyer, Seller, Investor, or Agent/Broker and share what you're after.",
-      changefreq: 'monthly',
-      priority: '0.6',
+      title: 'Private Inquiry',
+      description: 'A private inquiry form for Tawny & Co. clients.',
+      noindex: true,
       jsonLd: null,
     },
   ];
@@ -329,6 +334,10 @@ ${xmlEntries}
 `;
 }
 
+// Note: /inquiry is deliberately NOT disallowed here. robots.txt is world
+// readable, so listing it would advertise the very path we keep unlisted, and
+// blocking the crawl would stop a crawler ever fetching the page and seeing
+// its noindex tag. The noindex plus the sitemap exclusion do the real work.
 function buildRobots() {
   return `# Tawny & Co. — public crawling allowed except for studio surfaces.
 User-agent: *
@@ -367,7 +376,7 @@ ${sold.length ? sold.map(fmtListing).join('\n') : '- (No sold listings yet.)'}
 
 ## Contact
 
-- [Begin an inquiry](${SITE_URL}/inquiry): Buyer, Seller, Investor, or Agent/Broker intake.
+- [Join the Tawny & Co. list](${SITE_URL}/#list): New and off-market listings, sent occasionally.
 - Phone: ${STUDIO.phone}
 - Email: ${STUDIO.email}
 - ${STUDIO.brokeredBy}
@@ -399,13 +408,16 @@ async function main() {
       path: route.path,
       image: route.image || DEFAULT_IMAGE,
       jsonLd: route.jsonLd,
+      // renderTags has supported this all along; main() simply never passed
+      // it, so `noindex: true` on a route was silently dropped.
+      noindex: route.noindex,
     });
     const html = injectHead(template, tags);
     await writeFileAt(route.file, html);
     written++;
   }
 
-  await writeFileAt('sitemap.xml', buildSitemap(allRoutes, buildTime));
+  await writeFileAt('sitemap.xml', buildSitemap(allRoutes.filter(r => !r.noindex), buildTime));
   await writeFileAt('robots.txt', buildRobots());
   await writeFileAt('llms.txt', buildLlmsTxt(statics, listings));
 

@@ -6,7 +6,7 @@ import Rule from '../components/Rule';
 import SEO from '../components/SEO';
 import { STUDIO } from '../data/listings';
 
-const EFFECTIVE_DATE = 'June 10, 2026';
+const EFFECTIVE_DATE = 'August 6, 2026';
 const PRIVACY_EMAIL = STUDIO.email;
 
 const SECTIONS = [
@@ -20,7 +20,8 @@ const SECTIONS = [
     h: '2. Information we collect',
     body: [
       'We collect only what you give us through the Site and a small amount of standard technical data needed to operate it.',
-      'Information you submit through the inquiry form: your name, email address, phone number, role (buyer, seller, investor, or renovator), the details you choose to share about your property goals, budget, timeline, location preferences, and any free-text notes.',
+      'Information you submit through the inquiry form: your name, email address, phone number, the direction of your inquiry (buying, selling, investing, agent or broker, design and renovation, or still deciding), the details you choose to share about your property goals, budget, timeline, location preferences, and any free-text notes.',
+      'Information you submit when joining the Tawny & Co. list: your first and last name, your email address, your phone number, the page you signed up from, and any interests you select.',
       'Technical information collected automatically by our hosting and database providers: IP address, browser type, pages visited, and timestamps. This is used for security and basic operations, not advertising profiles.',
       'We do not knowingly collect information from anyone under 18. The Site is intended for adults inquiring about real estate services.',
     ],
@@ -30,14 +31,15 @@ const SECTIONS = [
     body: [
       'To respond to your inquiry and provide the real estate services you have asked about.',
       'To maintain client records as required by Michigan real estate licensing rules and our brokerage.',
-      'To send transactional follow-ups directly related to your inquiry (for example, scheduling a viewing or confirming a meeting). We do not add you to marketing lists.',
+      'To send transactional follow-ups directly related to your inquiry (for example, scheduling a viewing or confirming a meeting).',
+      'If you have joined the Tawny & Co. list, to occasionally share new listings, off-market opportunities, and notes about the market. You can ask to be removed at any time using the contact details in Section 11.',
       'To detect and prevent fraud, abuse of the Site, and security incidents.',
     ],
   },
   {
     h: '4. Legal basis (for visitors in the EU/UK/EEA)',
     body: [
-      'Where the GDPR or UK GDPR applies, we rely on the following legal bases: (a) your consent, given when you voluntarily submit the inquiry form, and (b) our legitimate interest in responding to you and operating the Site securely. You can withdraw consent at any time by emailing the address in Section 11; withdrawal does not affect the lawfulness of processing carried out before withdrawal.',
+      'Where the GDPR or UK GDPR applies, we rely on the following legal bases: (a) your consent, given when you voluntarily submit the inquiry form or join the Tawny & Co. list, and (b) our legitimate interest in responding to you and operating the Site securely. You can withdraw consent at any time by emailing the address in Section 11; withdrawal does not affect the lawfulness of processing carried out before withdrawal.',
     ],
   },
   {
@@ -45,9 +47,9 @@ const SECTIONS = [
     body: [
       'We do not sell your personal information and we do not share it with marketers.',
       'We rely on the following service providers ("sub-processors") to operate the Site. Each is bound by a written data-protection agreement:',
-      '· Supabase, Inc. — database and edge-function hosting for the inquiry submissions.',
-      '· Vercel, Inc. — website hosting and content delivery.',
-      '· Resend, Inc. — email delivery for inquiry notifications and monthly backup exports.',
+      '· Supabase, Inc. provides database and edge-function hosting for inquiry submissions and list signups.',
+      '· Vercel, Inc. provides website hosting and content delivery.',
+      '· Resend, Inc. provides email delivery for inquiry notifications and monthly backup exports.',
       `We may also disclose information to our brokerage (${STUDIO.brokeredBy}) when required by our supervisory and licensing obligations, and to legal or regulatory authorities when required by law.`,
     ],
   },
@@ -61,6 +63,7 @@ const SECTIONS = [
     h: '7. How long we keep your information',
     body: [
       'We keep inquiry records for as long as you remain an active or recent prospect, and for at least three (3) years after our last substantive contact so we can comply with brokerage record-keeping and respond to disputes. After that period we delete or anonymize the records, except where a longer retention is required by law (for example, tax or licensing records).',
+      'Tawny & Co. list records are kept until you ask to be removed from the list.',
       'You can ask us to delete your information sooner; see Section 9.',
     ],
   },

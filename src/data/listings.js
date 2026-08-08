@@ -5,7 +5,7 @@
 // Three qualitative pillars of the practice — used on the landing intro and
 // on the About credibility band.
 export const PILLARS = [
-  { h: 'Multi-Million Dollar',     s: 'Annual Sales Volume' },
+  { h: 'Over $30 Million Sold',    s: 'In Career Volume' },
   { h: 'Investment & Renovation',  s: 'Hands-On, Both Sides' },
   { h: 'An Extensive Network',     s: 'On- And Off-Market' },
 ];

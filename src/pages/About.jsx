@@ -9,7 +9,7 @@ import SEO from '../components/SEO';
 import { STUDIO } from '../data/listings';
 import { ABOUT_PARAGRAPHS, CREDIBILITY, DISCIPLINES, ANCHORS, ALSO_REPRESENTING } from '../data/about';
 
-const TO_INQUIRY = '/#inquiry';
+const TO_LIST = '/#list';
 
 function AboutB() {
   const t = useTheme();
@@ -192,16 +192,16 @@ function AboutB() {
       <div style={{ background: emerald, color: '#fff', padding: 'clamp(56px, 10vw, 140px) clamp(20px, 5vw, 72px)' }}>
         <div style={{ maxWidth: 1296, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'clamp(32px, 7vw, 96px)', alignItems: 'center' }}>
           <div>
-            <Eyebrow color={t.accentSoft}>A conversation</Eyebrow>
+            <Eyebrow color={t.accentSoft}>The list</Eyebrow>
             <h2 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(40px, 5.8vw, 84px)', lineHeight: 0.98, letterSpacing: '-0.022em', margin: '20px 0 0' }}>
-              One <em style={{ fontStyle: 'italic' }}>form,</em><br />four paths in.
+              Stay close to <em style={{ fontStyle: 'italic' }}>the market.</em>
             </h2>
             <p style={{ fontSize: 16, lineHeight: 1.7, color: 'rgba(255,255,255,0.75)', maxWidth: 540, marginTop: 32 }}>
-              Whether you are buying, selling, investing, or have a property to renovate, the inquiry begins with the same short form. Tawny answers personally, within one business day.
+              New listings, off-market opportunities, and what’s happening in the market. Sent occasionally, and only when there’s something worth reading.
             </p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
-            <Button to={TO_INQUIRY} variant="on-dark-primary" full>{t.ctaPrimary}</Button>
+            <Button to={TO_LIST} variant="on-dark-primary" full>{t.ctaPrimary}</Button>
             <Button to="/listings" variant="on-dark-outline" full>{t.ctaSecondary}</Button>
             <div style={{ fontFamily: t.eyebrowFont, fontSize: 10, fontWeight: 500, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', marginTop: 14, textAlign: 'center' }}>Or call · {STUDIO.phone}</div>
           </div>
@@ -215,8 +215,6 @@ function AboutB() {
           .tw-about-practice     { grid-template-columns: 1fr !important; }
           .tw-about-sticky       { position: static !important; }
           .tw-about-disciplines  { grid-template-columns: 1fr !important; gap: 16px !important; }
-        }
-        @media (max-width: 720px) {
           .tw-credibility-h      { white-space: normal !important; }
         }
         @media (max-width: 600px) {

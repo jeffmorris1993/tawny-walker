@@ -16,11 +16,15 @@ import { usePagedLeads, useLeadTotal } from '../../lib/queries';
 
 const PAGE_SIZE = 12;
 
-const ROLES = [
-  { key: 'Buyer',    label: 'Buyer' },
-  { key: 'Seller',   label: 'Seller' },
-  { key: 'Investor', label: 'Investor' },
-  { key: 'Agent',    label: 'Agent / Broker' },
+// Labels come from the theme (leadRoleLabels) so the inbox, the lead detail
+// page, and the notification email all say the same thing.
+const ROLE_KEYS = ['Buyer', 'Seller', 'Investor', 'Agent', 'Design', 'Exploring', 'Contact'];
+
+// The Tawny & Co. list is orthogonal to role: an inquirer is auto-subscribed,
+// and a 'Contact' is someone who joined the list without inquiring yet.
+const LIST_FACETS = [
+  { key: 'on',  label: 'On the list' },
+  { key: 'off', label: 'Not on the list' },
 ];
 
 const STATUSES = [
@@ -54,6 +58,7 @@ export default function LeadsInbox() {
 
   const [roleSel, setRoleSel] = useState(() => new Set());
   const [statusSel, setStatusSel] = useState(() => new Set());
+  const [listSel, setListSel] = useState(() => new Set());
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState({ key: 'status', dir: 'asc' });
   const [page, setPage] = useState(1);
@@ -66,11 +71,19 @@ export default function LeadsInbox() {
 
   // Facet definitions need the live theme for their dot colors, so they're
   // built inside the component.
-  const ROLE_FACETS = ROLES.map(r => ({ key: r.key, label: r.label, dot: roleDot(t, r.key) }));
+  const ROLE_FACETS = ROLE_KEYS.map(key => ({
+    key,
+    label: t.leadRoleLabels?.[key] || key,
+    dot: roleDot(t, key),
+  }));
   const STATUS_FACETS_LEAD = STATUSES.map(s => ({
     key: s.key,
     label: s.label,
     dot: t.leadStatusDots[s.key] || t.fgFaint,
+  }));
+  const LIST_FACET_ROW = LIST_FACETS.map(f => ({
+    ...f,
+    dot: f.key === 'on' ? t.accent : t.palette.ink4,
   }));
 
   function goToPage(p) {
@@ -88,9 +101,14 @@ export default function LeadsInbox() {
     setPage(1);
   }
 
+  // Selecting both sides of the list facet (or neither) means "don't care" —
+  // same as the role and status rows, where an empty selection is no filter.
+  const onListFilter = listSel.size === 1 ? listSel.has('on') : null;
+
   const { data: paged, total, pageCount, loading } = usePagedLeads({
     roleIn: Array.from(roleSel),
     statusIn: Array.from(statusSel),
+    onList: onListFilter,
     query: debouncedQuery || undefined,
     page,
     pageSize: PAGE_SIZE,
@@ -107,7 +125,7 @@ export default function LeadsInbox() {
   // filter change, so the paged query never fires once at the old page and
   // again at page 1.
   const togglePill = (kind, key) => {
-    const setter = kind === 'role' ? setRoleSel : setStatusSel;
+    const setter = kind === 'role' ? setRoleSel : kind === 'list' ? setListSel : setStatusSel;
     setter(prev => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key); else next.add(key);
@@ -118,10 +136,11 @@ export default function LeadsInbox() {
   const clearAll = () => {
     setRoleSel(new Set());
     setStatusSel(new Set());
+    setListSel(new Set());
     setQuery('');
     setPage(1);
   };
-  const anyActive = roleSel.size + statusSel.size + (debouncedQuery ? 1 : 0) > 0;
+  const anyActive = roleSel.size + statusSel.size + listSel.size + (debouncedQuery ? 1 : 0) > 0;
 
   const helperText = debouncedQuery
     ? `${total} ${total === 1 ? 'match' : 'matches'} in ${unfilteredTotal} ${unfilteredTotal === 1 ? 'lead' : 'leads'}`
@@ -205,6 +224,12 @@ export default function LeadsInbox() {
           selected={statusSel}
           onToggle={key => togglePill('status', key)}
         />
+        <FacetRow
+          label="The List"
+          facets={LIST_FACET_ROW}
+          selected={listSel}
+          onToggle={key => togglePill('list', key)}
+        />
       </div>
 
       {/* Lead table — column headers double as sort triggers. */}
@@ -244,7 +269,26 @@ export default function LeadsInbox() {
                     <span style={{
                       fontFamily: t.fonts.display, fontSize: 17,
                       color: t.palette.emerald,
-                    }}>{highlight(lead.name, debouncedQuery, 'tw-lead-mark')}</span>
+                      display: 'flex', alignItems: 'baseline', gap: 8, minWidth: 0,
+                    }}>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {highlight(lead.name, debouncedQuery, 'tw-lead-mark')}
+                      </span>
+                      {/* Membership is orthogonal to role, so it rides alongside
+                          the name rather than claiming a sixth column. */}
+                      {lead.onList && (
+                        <span
+                          title="On the Tawny &amp; Co. list"
+                          style={{
+                            flex: 'none',
+                            fontFamily: t.eyebrowFont, fontSize: 8, fontWeight: 600,
+                            letterSpacing: '0.2em', textTransform: 'uppercase',
+                            color: t.accent, border: `1px solid ${t.accent}`,
+                            padding: '2px 5px', lineHeight: 1,
+                          }}
+                        >List</span>
+                      )}
+                    </span>
                     <span style={{
                       fontFamily: t.eyebrowFont,
                       fontSize: 10.5, fontWeight: 600,
@@ -328,9 +372,12 @@ function LeadSkeletonRow() {
 // both directions. (No equivalent map exists in the theme so it lives here.)
 function roleDot(t, key) {
   return {
-    Buyer:    t.palette.gold,
-    Seller:   t.palette.moss,
-    Investor: t.palette.emerald,
-    Agent:    t.palette.goldSoft,
+    Buyer:     t.palette.gold,
+    Seller:    t.palette.moss,
+    Investor:  t.palette.emerald,
+    Agent:     t.palette.goldSoft,
+    Design:    t.palette.emeraldMid,
+    Exploring: t.palette.ink3,
+    Contact:   t.palette.ink4,
   }[key] || t.palette.gold;
 }

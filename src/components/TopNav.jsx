@@ -59,7 +59,7 @@ export default function TopNav({ active, dark = false }) {
             color: muted,
             textDecoration: 'none',
           }}>{STUDIO.phone}</a>
-          <Link to="/#inquiry" style={{ textDecoration: 'none' }}>
+          <Link to="/#list" style={{ textDecoration: 'none' }}>
             <span style={{
               padding: '11px 22px',
               background: dark ? '#fff' : t.palette.emerald,
@@ -116,7 +116,7 @@ export default function TopNav({ active, dark = false }) {
               }}>{it}</div>
             </Link>
           ))}
-          <Link to="/#inquiry" style={{ textDecoration: 'none' }} onClick={() => setMobileOpen(false)}>
+          <Link to="/#list" style={{ textDecoration: 'none' }} onClick={() => setMobileOpen(false)}>
             <div style={{
               marginTop: 20, padding: '14px 0', textAlign: 'center',
               border: `1px solid ${fg}`,

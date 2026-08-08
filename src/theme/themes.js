@@ -81,6 +81,21 @@ export const THEMES = {
       New: 'New', Contacted: 'Contacted', Active: 'Active',
       Closed: 'Closed', Cold: 'Cold',
     },
+    // The stored `role` values are terse, and several read badly when shown
+    // raw. `Contact` isn't an inquiry direction at all — it's someone who
+    // joined the list and hasn't inquired yet.
+    leadRoleLabels: {
+      Buyer: 'Buyer', Seller: 'Seller', Investor: 'Investor',
+      Agent: 'Agent / Broker', Design: 'Design & Renovation',
+      Exploring: 'Still Exploring', Contact: 'List Contact',
+    },
+    // Used where the label is pluralized in prose ("Buyers", "Sellers").
+    // Naive "+s" would produce "Designs" and "Explorings".
+    leadRolePlural: {
+      Buyer: 'Buyers', Seller: 'Sellers', Investor: 'Investors',
+      Agent: 'Agents & Brokers', Design: 'Design Inquiries',
+      Exploring: 'Exploring', Contact: 'List Contacts',
+    },
     leadStatusDots: {
       New: B_PALETTE.gold, Contacted: B_PALETTE.ink3,
       Active: B_PALETTE.moss, Closed: B_PALETTE.emerald,
@@ -90,9 +105,9 @@ export const THEMES = {
     indexNoun: 'Listings',
     indexNounSingular: 'Listing',
     listingNoun: 'listings',
-    ctaPrimary: 'Begin Your Inquiry',
+    ctaPrimary: 'Join the List',
     ctaSecondary: 'View Current Listings',
-    ctaNav: 'Begin Inquiry',
+    ctaNav: 'Join the List',
     wordmark: {
       family: '"Playfair Display", serif',
       ampersandFamily: '"Cormorant Garamond", serif',

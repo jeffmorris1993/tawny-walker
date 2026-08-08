@@ -6,6 +6,8 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from './supabase';
 import { PHOTOS } from '../components/Photo';
 import { formatLot } from './format';
+import { SERVICES } from '../data/inquiryServices';
+import { visibleAnswers, buildSummary } from './inquirySchema';
 
 if (!isSupabaseConfigured) {
   // Loud, dev-time warning. Pages will render empty if the queries can't
@@ -94,6 +96,14 @@ function rowToLead(row) {
     studioNote: row.studio_note,
     studioNoteSavedAt: row.studio_note_saved_at,
     intake: row.intake || [],
+    // The Tawny & Co. list. A lead is on it either because they signed up
+    // directly (role 'Contact' until they inquire) or because they submitted
+    // an inquiry, which auto-subscribes.
+    onList: !!row.on_list,
+    listJoinedAt: row.list_joined_at,
+    listSource: row.list_source,
+    listInterests: row.list_interests || [],
+    listUnsubscribedAt: row.list_unsubscribed_at,
     receivedAt: relativeTime(row.created_at),
     when: relativeTime(row.created_at, true),
     createdAt: row.created_at,
@@ -629,6 +639,8 @@ export function useLeadTotal() {
 export function usePagedLeads({
   roleIn = [],
   statusIn = [],
+  // null = don't filter; true / false = on or off the Tawny & Co. list.
+  onList = null,
   query,
   page = 1,
   pageSize = 12,
@@ -666,6 +678,7 @@ export function usePagedLeads({
         .range(from, to);
       if (roleIn?.length)   req = req.in('role',   roleIn);
       if (statusIn?.length) req = req.in('status', statusIn);
+      if (onList !== null)  req = req.eq('on_list', onList);
       if (q) {
         const safe = escapeOrToken(q);
         req = req.or(
@@ -686,7 +699,7 @@ export function usePagedLeads({
     }
     load();
     return () => { alive = false; };
-  }, [rolesKey, statusesKey, q, page, pageSize, sort, sortDir]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [rolesKey, statusesKey, onList, q, page, pageSize, sort, sortDir]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
   return { data, total, pageCount, loading };
@@ -795,6 +808,23 @@ async function currentActor() {
   };
 }
 
+// Add or remove a lead from the Tawny & Co. list. This is how a "please take
+// me off" request gets honored — there is no self-serve unsubscribe link yet,
+// because nothing sends to the list yet. Studio-only: RLS restricts UPDATE on
+// leads to authenticated.
+export async function setListMembership(id, onList) {
+  if (noClient()) return { error: { message: 'Supabase not configured' } };
+  const { error } = await supabase
+    .from('leads')
+    .update({
+      on_list: onList,
+      list_unsubscribed_at: onList ? null : new Date().toISOString(),
+    })
+    .eq('id', id);
+  if (error) console.error('[tw] list membership update failed', error);
+  return { error };
+}
+
 export async function updateLeadStatus(id, status, previousStatus) {
   if (noClient()) return { error: { message: 'Supabase not configured' } };
   const { error } = await supabase.from('leads').update({ status }).eq('id', id);
@@ -838,104 +868,117 @@ export async function detachListing(leadId, listingId) {
     .eq('listing_id', listingId);
 }
 
+// ─── The Tawny & Co. list ───────────────────────────────────────────────────
+// Joining the list writes to `leads` like everything else — one person is one
+// row. A brand-new address becomes a 'Contact'; an address already in the
+// system just gets flipped onto the list, leaving their role, status, and
+// intake untouched.
+//
+// Goes through a SECURITY DEFINER function rather than a table insert for two
+// reasons: anon has no SELECT on leads, so "do we already know this person?"
+// can only be answered server-side; and a plain insert against the unique
+// email index would return a 409 on a repeat signup, which is an
+// email-enumeration oracle. The function returns void, so a new signup and a
+// repeat signup are indistinguishable from the browser.
+export async function joinList({ firstName, lastName, email, phone, source = 'home-list', interests = [] }) {
+  if (noClient()) return { error: { message: 'Supabase not configured' } };
+  const { error } = await supabase.rpc('join_list', {
+    p_first_name: firstName,
+    p_last_name: lastName || null,
+    p_email: email,
+    p_phone: phone || null,
+    p_source: source,
+    p_interests: interests,
+  });
+  if (error) console.error('[tw] join list failed', error);
+  if (!error) invalidateLeadTotal();
+  return { error };
+}
+
 // ─── Form submission ────────────────────────────────────────────────────────
-// Each public-form submission inserts straight into `leads`. The intake JSON
-// on the lead captures the full Q/A breakdown; mandate_notes captures the
-// free-text fields. No separate audit table.
-export async function submitInquiry({ role, name, email, phone, contact, payload, message }) {
-  const leadInsert = inquiryToLead({ role, name, email, phone, contact, payload, message });
+// The guided inquiry writes through the submit_inquiry function rather than a
+// table insert. anon has no SELECT on leads, so deciding whether this person
+// already exists — and upgrading their row in place rather than creating a
+// duplicate — can only happen server-side. The function also preserves the
+// previous submission into lead_events and emits the event the notification
+// webhook fires on.
+export async function submitInquiry({ serviceKey, values }) {
+  const lead = inquiryToLead({ serviceKey, values });
+  if (!lead) return { data: null, error: { message: 'Unknown inquiry direction' } };
   if (noClient()) return { data: null, error: { message: 'Supabase not configured' } };
-  // Don't chain .select() — anon has INSERT but no SELECT on leads, so
-  // a RETURNING * round-trip would fail RLS. We only need success/error.
-  const { error } = await supabase.from('leads').insert(leadInsert);
-  if (error) console.error('[tw] lead insert failed', error);
+
+  const { error } = await supabase.rpc('submit_inquiry', {
+    p_first_name:    lead.first_name,
+    p_last_name:     lead.last_name,
+    p_email:         lead.email,
+    p_phone:         lead.phone,
+    p_role:          lead.role,
+    p_tone:          lead.tone,
+    p_entity:        lead.entity,
+    p_city:          lead.city,
+    p_summary:       lead.summary,
+    p_mandate_notes: lead.mandate_notes,
+    p_intake:        lead.intake,
+  });
+
+  if (error) console.error('[tw] inquiry submit failed', error);
   if (!error) invalidateLeadTotal();
   return { data: null, error };
 }
 
-const ROLE_CAP = { buyer: 'Buyer', seller: 'Seller', investor: 'Investor', agent: 'Agent' };
-const ROLE_TONE = { buyer: 'warm', seller: 'bone', investor: 'dusk', agent: 'sage' };
+// Map the wizard's answers onto a leads row.
+//
+// Routing is driven entirely by each field's `crm` marker in
+// src/data/inquiryServices.js — never by matching on label text, which is what
+// the previous version did and why renaming a question could silently drop the
+// `entity` column.
+//
+// The intake shape is a hard contract: [{ q, a }] with `q` as the human label.
+// It is read by src/pages/admin/LeadDetail.jsx, the lead-notify edge function,
+// and leads-csv-backup. Changing it breaks all three.
+export function inquiryToLead({ serviceKey, values }) {
+  const service = SERVICES[serviceKey];
+  if (!service) return null;
 
-// Pull common fields out of a form payload to populate a `leads` row.
-function inquiryToLead({ role, name, email, phone, contact, payload, message }) {
-  const [firstName, ...rest] = String(name || '').trim().split(/\s+/);
-  const lastName = rest.join(' ') || null;
+  const row = {
+    first_name: 'Unknown',   // leads.first_name is NOT NULL
+    last_name: null,
+    email: null,
+    phone: null,
+    role: service.role,
+    tone: service.tone,
+    entity: null,
+    city: null,
+    summary: null,
+    mandate_notes: null,
+    intake: [],
+  };
 
-  // Prefer explicit email/phone (current form). Fall back to a legacy
-  // single "contact" string if a caller is still on the old signature.
-  let emailVal = (email || '').trim() || null;
-  let phoneVal = (phone || '').trim() || null;
-  if (!emailVal && !phoneVal && contact) {
-    const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact);
-    emailVal = looksLikeEmail ? contact : null;
-    phoneVal = looksLikeEmail ? null    : contact;
-  }
+  const notes = [];
+  const intake = [];
 
-  const fields = (payload && payload.fields) || {};
-  const chips = (payload && payload.chips) || {};
-  const budgets = (payload && payload.budgets) || {};
-  const notes = (payload && payload.notes) || {};
+  for (const rowItem of visibleAnswers(service, values)) {
+    const { field, label, answer } = rowItem;
 
-  const entity = fields['Entity'] || fields['Brokerage / org'] || null;
-  // The form doesn't ask for "city" explicitly, but a few labels carry one:
-  const city = fields['City, State'] || fields['City'] || null;
-
-  // One-line inbox summary: pull a handful of the most informative fields.
-  const summaryParts = [];
-  for (const key of ['Household', 'Property type', 'Investor type', 'I am a…', 'Hold horizon', 'Time frame to buy', 'Time frame to sell']) {
-    if (fields[key]) summaryParts.push(fields[key]);
-  }
-  for (const list of Object.values(chips)) {
-    if (Array.isArray(list) && list.length) {
-      summaryParts.push(list.slice(0, 3).join(' · '));
-      break;
+    switch (field.crm) {
+      case 'first_name': if (answer) row.first_name = answer; break;
+      case 'last_name':  row.last_name = answer || null; break;
+      case 'email':      row.email = answer || null; break;
+      case 'phone':      row.phone = answer || null; break;
+      // Entity is both a column (so the studio can filter on it) and an
+      // intake row (so it reads in context with the rest of the answers).
+      case 'entity':     if (answer) { row.entity = answer; intake.push({ q: label, a: answer }); } break;
+      case 'city':       if (answer) { row.city = answer; intake.push({ q: label, a: answer }); } break;
+      // Free-text notes are their own column, not a Q&A row.
+      case 'notes':      if (answer) notes.push(answer); break;
+      default:           if (answer) intake.push({ q: label, a: answer });
     }
   }
-  for (const b of Object.values(budgets)) {
-    if (b && b.display) { summaryParts.push(b.display); break; }
-  }
-  const summary = summaryParts.length ? summaryParts.join(' · ') : (message ? message.slice(0, 160) : null);
 
-  // The intake list rendered on the lead detail page. The multi-select
-  // dropdowns ("Other → please specify") write their typed value into a
-  // companion field named "<label> — other"; fold those into the chip
-  // entry so the studio sees one row per question, not two.
-  const OTHER_SUFFIX = ' — other';
-  const intake = [];
-  for (const [q, a] of Object.entries(fields)) {
-    if (!a) continue;
-    if (q === 'Name' || q === 'Email' || q === 'Phone' || q === 'Best contact') continue;
-    // Skip "<label> — other" rows; they get folded into the chip entry below.
-    if (q.endsWith(OTHER_SUFFIX)) continue;
-    intake.push({ q, a });
-  }
-  for (const [q, arr] of Object.entries(chips)) {
-    if (!Array.isArray(arr) || arr.length === 0) continue;
-    const otherText = (fields[`${q}${OTHER_SUFFIX}`] || '').trim();
-    const items = arr.map(v => (v === 'Other' && otherText) ? `Other: ${otherText}` : v);
-    intake.push({ q, a: items.join(' · ') });
-  }
-  for (const [q, b] of Object.entries(budgets)) {
-    if (b && b.display) intake.push({ q, a: b.display });
-  }
-  const mandateNotes = Object.values(notes).filter(Boolean).join('\n\n') || null;
-
-  // Public RLS grants anon INSERT only on the columns below. `status`,
-  // `stars`, `studio_note`, and `referred_by` are studio-only fields and
-  // fall back to their DB defaults (status='New', stars=0, others null).
-  return {
-    first_name: firstName || 'Unknown',
-    last_name: lastName,
-    email: emailVal,
-    phone: phoneVal,
-    role: ROLE_CAP[role] || 'Buyer',
-    entity,
-    city,
-    tone: ROLE_TONE[role] || 'warm',
-    summary,
-    mandate_notes: mandateNotes,
-    intake,
-  };
+  row.intake = intake;
+  row.mandate_notes = notes.join('\n\n') || null;
+  row.summary = buildSummary(service, values);
+  return row;
 }
 
 // ─── Auth ──────────────────────────────────────────────────────────────────

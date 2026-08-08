@@ -5,7 +5,7 @@ import Eyebrow from '../../components/Eyebrow';
 import AdminShell from '../../components/AdminShell';
 import StatusChanger from '../../components/admin/StatusChanger';
 import StudioLog from '../../components/admin/StudioLog';
-import { useLead, updateLeadStatus, updateLeadNote } from '../../lib/queries';
+import { useLead, updateLeadStatus, updateLeadNote, setListMembership } from '../../lib/queries';
 
 export default function LeadDetail() {
   const t = useTheme();
@@ -19,6 +19,7 @@ export default function LeadDetail() {
   // Bump after every event write so StudioLog refetches and the new entry
   // appears immediately.
   const [logBump, setLogBump] = useState(0);
+  const [listSaving, setListSaving] = useState(false);
 
   // Sync local edit state when the loaded lead changes.
   useEffect(() => {
@@ -37,6 +38,16 @@ export default function LeadDetail() {
     // Refresh the lead row + bump the studio log so the new event appears.
     refresh();
     setLogBump(b => b + 1);
+  }
+
+  // There is no self-serve unsubscribe link yet — nothing sends to the list
+  // — so this toggle is how a "please take me off" request gets honored.
+  async function handleListToggle() {
+    if (!d || listSaving) return;
+    setListSaving(true);
+    await setListMembership(d.id, !d.onList);
+    setListSaving(false);
+    refresh();
   }
 
   async function handleNoteBlur() {
@@ -86,7 +97,7 @@ export default function LeadDetail() {
         color: t.fgFaint, marginBottom: 24,
       }}>
         <Link to="/admin" style={{ color: t.fgFaint, textDecoration: 'none' }}>Leads</Link>
-        {' / '}{d.type}s{' / '}
+        {' / '}{t.leadRolePlural?.[d.type] || `${d.type}s`}{' / '}
         <span style={{ color: headlineColor }}>{d.name}</span>
       </div>
 
@@ -96,7 +107,7 @@ export default function LeadDetail() {
         paddingBottom: 32, borderBottom: `1px solid ${t.line}`,
       }}>
         <div>
-          <Eyebrow>{d.type} Intake · received {d.receivedAt}</Eyebrow>
+          <Eyebrow>{t.leadRoleLabels?.[d.type] || d.type} Intake · received {d.receivedAt}</Eyebrow>
           <h1 style={{
             fontFamily: t.fonts.display, fontWeight: 400,
             fontSize: 'clamp(36px, 3.9vw, 56px)', margin: '14px 0 0',
@@ -192,6 +203,58 @@ export default function LeadDetail() {
               letterSpacing: '0.26em',
               textTransform: 'uppercase', color: t.fgFaint,
             }}>{noteSaving ? 'Saving…' : (noteSaved ? `Saved · ${noteSaved}` : 'Click out to save')}</div>
+          </div>
+
+          {/* The Tawny & Co. list — membership, and where it came from. */}
+          <div style={{ marginTop: 32, padding: 24, background: t.bgPanel, border: `1px solid ${t.line}` }}>
+            <Eyebrow color={t.accent}>The Tawny &amp; Co. list</Eyebrow>
+            <p style={{
+              marginTop: 14, fontFamily: t.fonts.display, fontStyle: 'italic',
+              fontSize: 18, lineHeight: 1.5,
+              color: d.onList ? t.palette.emerald : t.fgFaint,
+            }}>
+              {d.onList
+                ? (d.listJoinedAt ? `On the list since ${formatStamp(d.listJoinedAt)}` : 'On the list')
+                : (d.listUnsubscribedAt ? `Removed ${formatStamp(d.listUnsubscribedAt)}` : 'Not on the list')}
+            </p>
+
+            {d.onList && d.listSource && (
+              <div style={{
+                marginTop: 12, fontFamily: t.eyebrowFont, fontSize: 9.5, fontWeight: 600,
+                letterSpacing: '0.24em', textTransform: 'uppercase', color: t.fgFaint,
+              }}>Joined via {d.listSource.replace(/-/g, ' ')}</div>
+            )}
+
+            {!!d.listInterests?.length && (
+              <div style={{ marginTop: 14, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {d.listInterests.map(i => (
+                  <span key={i} style={{
+                    fontFamily: t.eyebrowFont, fontSize: 9, fontWeight: 600,
+                    letterSpacing: '0.16em', textTransform: 'uppercase',
+                    color: t.fgMuted, border: `1px solid ${t.line}`,
+                    background: t.bgPage, padding: '4px 8px', lineHeight: 1.2,
+                  }}>{i}</span>
+                ))}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={handleListToggle}
+              disabled={listSaving}
+              style={{
+                marginTop: 18, padding: '9px 0', background: 'none', border: 'none',
+                borderBottom: `1px solid ${t.line}`,
+                fontFamily: t.eyebrowFont, fontSize: 9.5, fontWeight: 600,
+                letterSpacing: '0.24em', textTransform: 'uppercase',
+                color: listSaving ? t.fgFaint : t.fgMuted,
+                cursor: listSaving ? 'default' : 'pointer',
+              }}
+              onMouseEnter={e => { if (!listSaving) e.currentTarget.style.color = t.palette.emerald; }}
+              onMouseLeave={e => { if (!listSaving) e.currentTarget.style.color = t.fgMuted; }}
+            >
+              {listSaving ? 'Saving…' : (d.onList ? 'Remove from list' : 'Add to list')}
+            </button>
           </div>
 
           <div style={{ marginTop: 32 }}>

@@ -269,7 +269,7 @@ insert into public.leads (
   '66666666-6666-6666-6666-666666666666',
   'Brookmark', 'Holdings', 'partners@brookmark.com', '+1 312 555 0900',
   'Investor', 'Brookmark Holdings', 'Chicago', 'Vega Family Office referral',
-  'Qualified', 'dusk', 3,
+  'Active', 'dusk', 3,
   'Boutique hotel + mixed-use · $8M ready · prefers off-market.',
   'Hotel + mixed-use mandate. Cash buyer.',
   'Tee them up for the Townsend penthouse if it falls out of pending. Coordinate with Marisol on 1031.',

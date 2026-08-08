@@ -10,9 +10,11 @@ export function required(value, label = 'This field') {
   return null;
 }
 
-export function isEmail(value) {
+// `message` lets a caller supply its own wording while the pattern stays
+// defined in exactly one place.
+export function isEmail(value, message = 'Enter a valid email address.') {
   if (!value) return null;
-  return EMAIL_RE.test(value) ? null : 'Enter a valid email address.';
+  return EMAIL_RE.test(value) ? null : message;
 }
 
 export function isPhone(value) {

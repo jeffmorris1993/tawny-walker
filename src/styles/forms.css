@@ -1,0 +1,381 @@
+/* Tawny & Co. form primitives — the List signup and the guided inquiry.
+ *
+ * Why a stylesheet in an otherwise inline-styled app: these rules cannot be
+ * expressed as React style objects at all.
+ *   · ::-webkit-slider-thumb / ::-moz-range-thumb — required for the dual
+ *     budget range, which has no accessible alternative
+ *   · ::placeholder
+ *   · :focus-visible on every control (the previous inquiry form set
+ *     `outline: none` with no replacement, so it had no visible focus state)
+ *   · @media (prefers-reduced-motion: reduce)
+ *
+ * Every colour and font here resolves through a --tcf-* custom property set
+ * by the mounting component from the theme object, so src/theme/themes.js
+ * remains the single source of truth and this file stays direction-agnostic.
+ * Sensible fallbacks are inlined so a stray usage still renders.
+ */
+
+.tcf {
+  --tcf-emerald: #0B3D2E;
+  --tcf-emerald-deep: #082A20;
+  --tcf-gold: #B59568;
+  --tcf-gold-soft: #D9C5A2;
+  --tcf-ink: #1B2820;
+  --tcf-ink2: #5F6A62;
+  --tcf-ink3: #97A095;
+  --tcf-ink4: #C8CDC4;
+  --tcf-line: #E5E7E1;
+  --tcf-line-soft: #EFF1EC;
+  --tcf-paper: #F4F6F2;
+  --tcf-error: #8C4A4A;
+  --tcf-error-bg: #FDF7F5;
+  --tcf-display: Georgia, serif;
+  --tcf-body: Inter, sans-serif;
+}
+
+/* Screen-reader-only. Clip-rect rather than display:none so the content is
+   still announced. */
+.tcf-sr {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── labels ─────────────────────────────────────────────────────────────── */
+.tcf-label {
+  display: block;
+  font-family: var(--tcf-body);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--tcf-ink2);
+  margin-bottom: 10px;
+  padding: 0;
+}
+.tcf-req,
+.tcf-opt {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  margin-left: 10px;
+}
+.tcf-req { font-weight: 600; color: var(--tcf-gold); }
+.tcf-opt { font-weight: 500; color: var(--tcf-ink3); }
+
+/* ── text inputs ────────────────────────────────────────────────────────── */
+.tcf-input,
+.tcf-select,
+.tcf-area {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--tcf-body);
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--tcf-ink);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--tcf-ink4);
+  border-radius: 0;
+  padding: 12px 0;
+  min-height: 44px;   /* touch target */
+}
+.tcf-area {
+  border: 1px solid var(--tcf-line);
+  padding: 14px;
+  min-height: 104px;
+  line-height: 1.6;
+  resize: vertical;
+}
+.tcf-select {
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  padding-right: 26px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--tcf-emerald) 50%),
+    linear-gradient(135deg, var(--tcf-emerald) 50%, transparent 50%);
+  background-position: calc(100% - 9px) 22px, calc(100% - 5px) 22px;
+  background-size: 4px 4px;
+  background-repeat: no-repeat;
+}
+.tcf-input::placeholder,
+.tcf-area::placeholder { color: var(--tcf-ink3); }
+
+.tcf-input:focus-visible,
+.tcf-select:focus-visible,
+.tcf-area:focus-visible {
+  outline: 2px solid var(--tcf-gold);
+  outline-offset: 3px;
+  border-bottom-color: var(--tcf-emerald);
+}
+
+.tcf-invalid {
+  border-bottom-color: var(--tcf-error) !important;
+  border-color: var(--tcf-error) !important;
+}
+
+/* ── errors ─────────────────────────────────────────────────────────────── */
+.tcf-err {
+  display: flex;
+  gap: 7px;
+  align-items: flex-start;
+  font-family: var(--tcf-body);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--tcf-error);
+  margin: 8px 0 0;
+}
+
+.tcf-summary {
+  border: 1px solid var(--tcf-error);
+  background: var(--tcf-error-bg);
+  padding: 18px 22px;
+  margin-bottom: 30px;
+}
+.tcf-summary h3 {
+  font-family: var(--tcf-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--tcf-error);
+  margin: 0 0 10px;
+}
+.tcf-summary ul { margin: 0; padding-left: 18px; }
+.tcf-summary li {
+  font-family: var(--tcf-body);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--tcf-ink2);
+}
+.tcf-summary button {
+  font: inherit;
+  color: var(--tcf-error);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* ── buttons ────────────────────────────────────────────────────────────── */
+.tcf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--tcf-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  padding: 18px 32px;
+  min-height: 52px;
+  background: var(--tcf-emerald);
+  color: #fff;
+  border: 1px solid var(--tcf-emerald);
+  cursor: pointer;
+  transition: background .2s, border-color .2s, color .2s;
+}
+.tcf-btn:hover:not(:disabled) {
+  background: var(--tcf-emerald-deep);
+  border-color: var(--tcf-emerald-deep);
+}
+.tcf-btn:disabled { opacity: .55; cursor: default; }
+
+.tcf-btn-ghost {
+  background: transparent;
+  color: var(--tcf-emerald);
+  border-color: var(--tcf-ink4);
+}
+.tcf-btn-ghost:hover:not(:disabled) {
+  background: var(--tcf-paper);
+  border-color: var(--tcf-emerald);
+  color: var(--tcf-emerald);
+}
+
+.tcf-link {
+  font-family: var(--tcf-body);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--tcf-ink2);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--tcf-ink4);
+  padding: 5px 0;
+  cursor: pointer;
+}
+.tcf-link:hover { color: var(--tcf-emerald); border-bottom-color: var(--tcf-emerald); }
+
+.tcf-btn:focus-visible,
+.tcf-link:focus-visible {
+  outline: 2px solid var(--tcf-gold);
+  outline-offset: 3px;
+}
+
+/* ── chips + radios ─────────────────────────────────────────────────────── */
+.tcf-chip,
+.tcf-radio {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--tcf-body);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 13px 17px;
+  min-height: 44px;
+  background: #fff;
+  border: 1px solid var(--tcf-line);
+  color: var(--tcf-ink2);
+  cursor: pointer;
+  transition: border-color .2s, background .2s, color .2s;
+}
+.tcf-chip:hover,
+.tcf-radio:hover { border-color: var(--tcf-gold); color: var(--tcf-emerald); }
+.tcf-chip[aria-pressed="true"],
+.tcf-radio.is-on {
+  background: var(--tcf-emerald);
+  border-color: var(--tcf-emerald);
+  color: #fff;
+}
+.tcf-chip:focus-visible { outline: 2px solid var(--tcf-gold); outline-offset: 3px; }
+.tcf-radio:focus-within { outline: 2px solid var(--tcf-gold); outline-offset: 3px; }
+
+/* ── direction cards (guided inquiry step I) ────────────────────────────── */
+.tcf-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 22px;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  background: #fff;
+  border: 1px solid var(--tcf-line);
+  padding: 22px 26px;
+  cursor: pointer;
+  font: inherit;
+  transition: border-color .25s, background .25s;
+}
+.tcf-card:hover { border-color: var(--tcf-gold); background: #FDFCF9; }
+.tcf-card[aria-pressed="true"] { border-color: var(--tcf-emerald); background: var(--tcf-paper); }
+.tcf-card:focus-visible { outline: 2px solid var(--tcf-gold); outline-offset: 3px; }
+
+/* ── progress segments ──────────────────────────────────────────────────── */
+.tcf-seg { flex: 1; height: 2px; background: var(--tcf-line); }
+.tcf-seg.is-done { background: var(--tcf-gold); }
+.tcf-seg.is-now  { background: var(--tcf-emerald); }
+
+/* ── dual range ─────────────────────────────────────────────────────────── */
+/* Two native range inputs overlaid on one track. Native inputs are used
+   deliberately: they bring keyboard, touch, and screen-reader support that a
+   hand-rolled pointer implementation does not.
+   Known trade-off: the inputs must be pointer-events:none so the upper one
+   doesn't swallow every click meant for the lower, which means clicking the
+   bare track can't jump a thumb — only dragging a thumb or arrowing it does.
+   The thumbs are sized up to compensate on touch. */
+.tcf-range { position: relative; height: 36px; margin-top: 6px; }
+.tcf-track {
+  position: absolute; left: 0; right: 0; top: 17px;
+  height: 2px; background: var(--tcf-line);
+}
+.tcf-track i { position: absolute; top: 0; bottom: 0; background: var(--tcf-emerald); }
+
+.tcf-range input[type="range"] {
+  position: absolute; left: 0; top: 8px;
+  width: 100%; height: 20px; margin: 0;
+  background: none;
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: none;   /* re-enabled on the thumbs below */
+}
+.tcf-range input[type="range"]::-webkit-slider-runnable-track { background: none; height: 20px; }
+.tcf-range input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  pointer-events: all;
+  width: 22px; height: 22px;
+  margin-top: -1px;
+  border-radius: 50%;
+  background: var(--tcf-emerald);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px var(--tcf-emerald);
+  cursor: grab;
+}
+.tcf-range input[type="range"]::-moz-range-track { background: none; height: 20px; }
+.tcf-range input[type="range"]::-moz-range-thumb {
+  pointer-events: all;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--tcf-emerald);
+  border: 2px solid #fff;
+  cursor: grab;
+}
+.tcf-range input[type="range"]:focus-visible { outline: 2px solid var(--tcf-gold); outline-offset: 4px; }
+
+/* ── dark surfaces (the inquiry's editorial aside, footer placements) ───── */
+.tcf-dark .tcf-label { color: rgba(248, 245, 238, .72); }
+.tcf-dark .tcf-opt   { color: rgba(248, 245, 238, .5); }
+.tcf-dark .tcf-input,
+.tcf-dark .tcf-area {
+  color: #F8F5EE;
+  border-bottom-color: rgba(248, 245, 238, .32);
+  border-color: rgba(248, 245, 238, .32);
+}
+.tcf-dark .tcf-input::placeholder,
+.tcf-dark .tcf-area::placeholder { color: rgba(248, 245, 238, .45); }
+.tcf-dark .tcf-input:focus-visible,
+.tcf-dark .tcf-area:focus-visible { border-bottom-color: var(--tcf-gold); }
+.tcf-dark .tcf-chip {
+  background: transparent;
+  border-color: rgba(248, 245, 238, .28);
+  color: rgba(248, 245, 238, .82);
+}
+.tcf-dark .tcf-chip:hover { border-color: var(--tcf-gold-soft); color: #fff; }
+.tcf-dark .tcf-chip[aria-pressed="true"] {
+  background: var(--tcf-gold);
+  border-color: var(--tcf-gold);
+  color: var(--tcf-emerald-deep);
+}
+.tcf-dark .tcf-btn {
+  background: var(--tcf-gold);
+  border-color: var(--tcf-gold);
+  color: var(--tcf-emerald-deep);
+}
+.tcf-dark .tcf-btn:hover:not(:disabled) {
+  background: var(--tcf-gold-soft);
+  border-color: var(--tcf-gold-soft);
+}
+.tcf-dark .tcf-link {
+  color: rgba(248, 245, 238, .7);
+  border-bottom-color: rgba(248, 245, 238, .32);
+}
+.tcf-dark .tcf-link:hover { color: #fff; border-bottom-color: var(--tcf-gold); }
+.tcf-dark .tcf-err { color: #E9B9AC; }
+
+/* ── layout helpers ─────────────────────────────────────────────────────── */
+.tcf-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px 26px;
+  align-items: start;
+}
+@media (max-width: 640px) {
+  .tcf-grid-2 { grid-template-columns: 1fr; }
+}
+
+/* ── motion ─────────────────────────────────────────────────────────────── */
+.tcf-fade { animation: tcfIn .42s cubic-bezier(.2, .7, .3, 1) both; }
+@keyframes tcfIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tcf-fade { animation: none; }
+  .tcf-card, .tcf-chip, .tcf-btn, .tcf-radio { transition: none; }
+}

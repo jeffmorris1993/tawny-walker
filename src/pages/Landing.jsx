@@ -88,7 +88,7 @@ function HeroVideoSection() {
             </h1>
             <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', flex: '0 0 auto', pointerEvents: 'auto' }}>
               <Button to="/listings" variant="on-dark-outline">View {t.indexNoun}</Button>
-              <Button to={SCROLL_TO_INQUIRY} variant="on-dark-primary">{t.ctaPrimary}</Button>
+              <Button to={SCROLL_TO_LIST} variant="on-dark-primary">{t.ctaPrimary}</Button>
             </div>
           </div>
         </div>
@@ -107,7 +107,7 @@ function HeroVideoSection() {
         </h1>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <Button to="/listings" variant={belowfoldOutline}>View {t.indexNoun}</Button>
-          <Button to={SCROLL_TO_INQUIRY} variant={belowfoldPrimary}>{t.ctaPrimary}</Button>
+          <Button to={SCROLL_TO_LIST} variant={belowfoldPrimary}>{t.ctaPrimary}</Button>
         </div>
       </div>
       <style>{`
@@ -125,13 +125,13 @@ import Eyebrow from '../components/Eyebrow';
 import StatusChip from '../components/StatusChip';
 import Button from '../components/Button';
 import Rule from '../components/Rule';
+import ListSection from '../components/ListSection';
 import SEO from '../components/SEO';
 import { PILLARS, STUDIO } from '../data/listings';
 import { useFeaturedListings } from '../lib/queries';
 import { formatSpecs } from '../lib/format';
-import { InquiryWidget } from './Inquiry';
 
-const SCROLL_TO_INQUIRY = '/#inquiry';
+const SCROLL_TO_LIST = '/#list';
 
 function LandingB() {
   const t = useTheme();
@@ -203,37 +203,17 @@ function LandingB() {
         </div>
       </div>
 
-      {/* EMBEDDED INQUIRY — emerald centerpiece */}
-      <div id="inquiry" style={{ background: t.palette.emerald, color: '#fff', padding: 'clamp(56px, 10vw, 140px) clamp(20px, 5vw, 72px)' }}>
-        <div style={{ textAlign: 'center', marginBottom: 'clamp(40px, 6vw, 64px)' }}>
-          <Eyebrow color={t.accentSoft}>One door, four conversations</Eyebrow>
-          <h2 style={{
-            fontFamily: t.fonts.display, fontWeight: 400,
-            fontSize: 'clamp(34px, 5.5vw, 76px)', lineHeight: 1, letterSpacing: '-0.02em',
-            margin: '24px 0 0',
-          }}>
-            Tell me how I <em style={{ fontStyle: 'italic' }}>can help.</em>
-          </h2>
-          <p style={{
-            fontFamily: t.fonts.display, fontStyle: 'italic',
-            fontSize: 'clamp(16px, 1.5vw, 20px)', lineHeight: 1.5, color: 'rgba(255,255,255,0.78)',
-            maxWidth: 620, margin: '28px auto 0',
-          }}>
-            One short form: buyer, seller, investor, or visiting agent. The intake tailors itself to the kind of conversation you want to have.
-          </p>
-        </div>
-
-        <div style={{
-          maxWidth: 1180, margin: '0 auto', background: '#fff', color: t.fgPage,
-          padding: 'clamp(24px, 4vw, 56px) clamp(20px, 4vw, 56px)',
-          boxShadow: '0 40px 80px -32px rgba(0,0,0,0.4)',
-        }}>
-          <InquiryWidget showHeading={false} />
-        </div>
-      </div>
+      {/* THE LIST — replaces the embedded inquiry. The guided inquiry now
+          lives on an unlisted page reached by a link Tawny sends or a QR
+          code, so the home page's one public action is joining the list. */}
+      <ListSection />
 
       {/* FEATURED */}
-      <div style={{ background: t.bgPanel, padding: 'clamp(56px, 10vw, 140px) clamp(20px, 5vw, 72px)' }}>
+      {/* White, not paper: the List section above is now paper, and two
+          paper slabs back to back read as one undifferentiated band. The
+          listing cards carry their own photography so they don't need the
+          panel tint to separate from the ground. */}
+      <div style={{ background: t.bgPage, padding: 'clamp(56px, 10vw, 140px) clamp(20px, 5vw, 72px)' }}>
         <div style={{ textAlign: 'center', marginBottom: 'clamp(40px, 6vw, 64px)' }}>
           <Eyebrow>The {t.indexNoun}</Eyebrow>
           <h2 style={{
@@ -259,20 +239,20 @@ function LandingB() {
         </div>
       </div>
 
-      {/* CTA — inquiry-focused */}
+      {/* CTA — the list */}
       <div style={{ background: t.palette.emerald, color: '#fff', padding: 'clamp(56px, 10vw, 140px) clamp(20px, 5vw, 72px)' }}>
         <div style={{ maxWidth: 1296, margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'clamp(32px, 7vw, 96px)', alignItems: 'center' }}>
           <div>
-            <Eyebrow color={t.accentSoft}>A conversation</Eyebrow>
+            <Eyebrow color={t.accentSoft}>The list</Eyebrow>
             <h2 style={{ fontFamily: t.fonts.display, fontWeight: 400, fontSize: 'clamp(40px, 5.8vw, 84px)', lineHeight: 0.98, letterSpacing: '-0.022em', margin: '20px 0 0' }}>
-              One <em style={{ fontStyle: 'italic' }}>form,</em><br />four paths in.
+              Stay close to <em style={{ fontStyle: 'italic' }}>the market.</em>
             </h2>
             <p style={{ fontSize: 16, lineHeight: 1.7, color: 'rgba(248,245,238,0.78)', maxWidth: 540, marginTop: 32 }}>
-              Whether you are buying, selling, investing, or have a property to renovate, the inquiry begins with the same short form. Tawny answers personally, within one business day.
+              New listings, off-market opportunities, and what’s happening in the market. Sent occasionally, and only when there’s something worth reading.
             </p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
-            <Button to={SCROLL_TO_INQUIRY} variant="on-dark-primary" full>{t.ctaPrimary}</Button>
+            <Button to={SCROLL_TO_LIST} variant="on-dark-primary" full>{t.ctaPrimary}</Button>
             <Button to="/listings" variant="on-dark-outline" full>{t.ctaSecondary}</Button>
             <div style={{ fontFamily: t.eyebrowFont, fontSize: 10, fontWeight: 500, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(248,245,238,0.55)', marginTop: 14, textAlign: 'center' }}>
               Or call · {STUDIO.phone}
@@ -289,7 +269,7 @@ function LandingB() {
            (Surface Pro 7 etc). Stack the intro grid to 1 column so the
            portrait gets the full row width — same treatment as the About
            page. Also adds a gap below the credibility row so it doesn't
-           sit flush against the emerald inquiry section. */
+           sit flush against the section that follows. */
         @media (max-width: 1200px) {
           .tw-landing-intro .tw-listings-grid { grid-template-columns: 1fr !important; gap: 48px !important; }
           .tw-landing-portrait {
