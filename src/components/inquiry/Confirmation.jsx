@@ -88,7 +88,7 @@ export default function Confirmation({ service, values }) {
         </div>
 
         <div>
-          <Photo src={PHOTOS.kitchenMarbleIsl} label="BIRMINGHAM RESIDENCE" tone="bloom" height={300} />
+          <Photo src={PHOTOS.kitchenMarbleIsl} label="" tone="bloom" height={300} />
           <div style={{ marginTop: 26, paddingTop: 24, borderTop: `1px solid ${t.line}` }}>
             <Eyebrow>One more thing</Eyebrow>
             <p style={{ fontSize: 14, lineHeight: 1.75, color: t.fgMuted, marginTop: 12 }}>

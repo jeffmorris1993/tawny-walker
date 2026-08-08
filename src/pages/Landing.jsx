@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../theme/DirectionContext';
+import { B_PALETTE } from '../theme/themes';
 import Photo, { PHOTOS } from '../components/Photo';
 
 const HERO_VIDEO_SRC = '/videos/hero_video_2.mp4';
@@ -11,7 +12,7 @@ const HERO_VIDEO_SRC = '/videos/hero_video_2.mp4';
 const HERO_VIDEO_POSTER = '/videos/hero_video_2-poster.jpg';
 
 // Hero frame sits on cream — colors below-fold (mobile) adapt to that.
-const HERO_FRAME_COLOR = '#F6F2EA';
+const HERO_FRAME_COLOR = B_PALETTE.cream;
 
 function HeroVideoSection() {
   const t = useTheme();

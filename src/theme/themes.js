@@ -10,6 +10,10 @@ export const B_PALETTE = {
   moss: '#3A6A55',
   gold: '#B59568',
   goldSoft: '#D9C5A2',
+  // The warm frame the hero video sits in. Shared with the guided inquiry's
+  // editorial panel, which needs to be something other than emeraldDeep since
+  // the footer uses that exact value and the two ran together.
+  cream: '#F6F2EA',
   white: '#FFFFFF',
   paper: '#F4F6F2',
   ink: '#1B2820',

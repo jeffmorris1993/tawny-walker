@@ -59,8 +59,7 @@ export const SERVICES = {
     short: 'Buying',
     tagline: 'Find a home worth living in.',
     desc: 'Find the right property based on your lifestyle, timing, and goals.',
-    ctx: 'Most buyers begin with a neighborhood and a feeling. We work backwards from there, into timing, financing, and the handful of homes actually worth seeing.',
-    quote: '“I treat every buyer like they only get one shot at this. Many of them only do.”',
+    ctx: 'Most buyers begin with a neighborhood and a feeling. The rest follows from there: timing, financing, and the handful of homes actually worth seeing.',
     groups: [{
       title: 'The search',
       fields: [
@@ -92,8 +91,7 @@ export const SERVICES = {
     short: 'Selling',
     tagline: 'List with intention, not urgency.',
     desc: 'Explore your property’s potential and the best strategy for your next move.',
-    ctx: 'Selling well is mostly preparation. Tell me about the property and where you are in your thinking. There is no obligation in a valuation conversation.',
-    quote: '“The best sales happen quietly. The second-best happen patiently.”',
+    ctx: 'Selling well is mostly preparation. The property and where you are in your thinking are enough to start, and a valuation conversation carries no obligation.',
     groups: [{
       title: 'The property',
       fields: [
@@ -126,8 +124,7 @@ export const SERVICES = {
     short: 'Investing',
     tagline: 'Build a portfolio, quietly.',
     desc: 'Identify opportunities aligned with your budget and investment strategy.',
-    ctx: 'I keep a short list of buildings the market has misread. The more specific your mandate, the faster I can tell you whether something fits it.',
-    quote: '“I find buildings the rest of the market has misread, then introduce them to people who recognize them.”',
+    ctx: 'There is usually a short list of buildings the market has misread. The more specific the mandate, the faster it becomes clear whether something fits it.',
     aboutTitle: 'Principal & vehicle',
     aboutExtra: [
       { name: 'entity', label: 'Entity', type: 'text', crm: 'entity',
@@ -163,8 +160,7 @@ export const SERVICES = {
     short: 'Agent / broker',
     tagline: 'Stay in the loop on upcoming listings.',
     desc: 'Stay in the loop on upcoming listings and exclusive off-market opportunities.',
-    ctx: 'Co-brokes are honored and referrals are answered the same day. Leave your brokerage and where you post, and you’ll hear about listings before they’re public.',
-    quote: '“The agents I share early listings with are the ones who answer their phone.”',
+    ctx: 'Co-brokes and referrals are welcome. A brokerage and somewhere to find you online is enough to hear about listings before they reach the portals.',
     aboutExtra: [
       { name: 'brokerage', label: 'Brokerage / org', type: 'text', crm: 'entity', summary: 1,
         placeholder: 'e.g. Coastal & Magnolia, NYC' },
@@ -188,8 +184,7 @@ export const SERVICES = {
     short: 'Design & renovation',
     tagline: 'Make the house feel inevitable.',
     desc: 'Transform a property through thoughtful design, renovation, and planning.',
-    ctx: 'Design work begins with the room you keep walking past. Tell me about the property and the outcome you want, and I’ll bring the right trades to it.',
-    quote: '“A good renovation should feel inevitable when it’s finished, as if the house was always meant to be that way.”',
+    ctx: 'Design work usually begins with the room that keeps getting walked past. A sense of the property and the outcome you want is enough to start.',
     groups: [{
       title: 'The project',
       fields: [
@@ -219,8 +214,7 @@ export const SERVICES = {
     short: 'Not sure yet',
     tagline: 'Start with a conversation.',
     desc: 'Start with a conversation and we’ll help you determine the right direction.',
-    ctx: 'Not knowing yet is a perfectly good place to start. Two questions, and then we talk. No plan required on your end.',
-    quote: '“Half of my favorite clients started by telling me they weren’t sure what they needed.”',
+    ctx: 'Not knowing yet is a perfectly good place to start. Two questions here, then a conversation. No plan required.',
     groups: [{
       title: 'What you’re weighing',
       fields: [
