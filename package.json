@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && node scripts/build-seo.mjs",
+    "photos": "node scripts/optimize-photos.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },
